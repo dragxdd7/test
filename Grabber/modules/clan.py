@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
-from . import user_collection, clan_collection, join_requests_collection, app, database
+from . import user_collection, clan_collection, join_requests_collection, app,db as database
 
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
