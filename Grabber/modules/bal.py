@@ -84,5 +84,3 @@ async def format_user_balances(client: Client, message: Message):
         message_text = "No balances found."
 
     await message.reply_text(message_text)
-
-app.run()
