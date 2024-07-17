@@ -138,6 +138,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
     current_turn_id = int(data[4])
     a_health = int(data[5])
     b_health = int(data[6])
+    print(data)
 
     if query.from_user.id != current_turn_id:
         await query.answer("It's not your turn!", show_alert=True)
