@@ -8,6 +8,8 @@ weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
     {'name': 'Bow', 'price': 800, 'damage': 15},
     {'name': 'Staff', 'price': 1000, 'damage': 20}
+    {'name': 'Knife', 'price': 200, 'damage': 5},
+    {'name': 'Snipper', 'price': 5000, 'damage': 30},
 ]
 
 async def weapons(client, message):
