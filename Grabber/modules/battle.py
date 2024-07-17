@@ -107,6 +107,7 @@ async def handle_battle_accept(client, query: CallbackQuery):
     x = user_a_data.get('weapons', [])
     y = [g["name"] for g in x]
     print(y)
+    print(weapons_data)
 
     a_weapon_buttons = [
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
