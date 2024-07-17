@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
-from . import user_collection, clan_collection, join_requests_collection, app,db as database
+from . import user_collection, clan_collection, join_requests_collection, app, db as database
 
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
@@ -88,7 +88,7 @@ async def create_clan(client, message):
         await clan_collection.insert_one(clan_data)
         await user_collection.update_one({'id': user_id}, {'$set': {'clan_id': clan_id}})
 
-        await message.reply_text(f"`Clan '{clan_name}' created successfully with ID {clan_id}!`", parse_mode='MarkdownV2')
+        await message.reply_text(f"`Clan '{clan_name}' created successfully with ID {clan_id}!`")
 
     except Exception as e:
         await message.reply_text(f"Error creating clan: {str(e)}")
@@ -155,7 +155,7 @@ async def delete_clan(client, message):
     await clan_collection.delete_one({'clan_id': clan_id})
     await user_collection.update_many({'clan_id': clan_id}, {'$unset': {'clan_id': ""}})
 
-    await message.reply_text(f"`Clan '{clan_data['name']}' has been deleted.`", parse_mode='MarkdownV2')
+    await message.reply_text(f"`Clan '{clan_data['name']}' has been deleted.`")
 
 @app.on_callback_query(filters.regex(r'^leave_clan:'))
 async def leave_clan_callback(client, callback_query):
