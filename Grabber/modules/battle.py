@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 from pymongo import MongoClient
 import random
 import asyncio
-from . import user_collection, clan_collection, application, Grabberu
+from . import user_collection, clan_collection,app as application, Grabberu
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -150,10 +150,13 @@ async def handle_battle_attack(client, query: CallbackQuery):
         await query.answer("Users not found.")
         return
 
-    attacker_name = user_a_data.get('first_name', 'User A') if current_turn_id == user_a_id else 'User B'
-    defender_name = user_b_data.get('first_name', 'User B') if current_turn_id == user_a_id else 'User A'
+    attacker_data = user_a_data if current_turn_id == user_a_id else user_b_data
+    defender_data = user_b_data if current_turn_id == user_a_id else user_a_data
 
-    attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
+    attacker_name = attacker_data.get('first_name', 'User A')
+    defender_name = defender_data.get('first_name', 'User B')
+
+    attacker_weapons = attacker_data.get('weapons', [])
     defender_health = a_health if current_turn_id == user_b_id else b_health
 
     valid_weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
@@ -186,7 +189,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
 
     next_turn_name = user_b_data.get('first_name', 'User B') if next_turn_id == user_b_id else user_a_data.get('first_name', 'User A')
 
-    defender_weapons = user_b_data.get('weapons', []) if next_turn_id == user_b_id else user_a_data.get('weapons', [])
+    defender_weapons = defender_data.get('weapons', [])
     weapon_buttons = [
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
         for weapon in weapons_data if weapon['name'] in [w['name'] for w in defender_weapons]
