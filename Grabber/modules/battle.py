@@ -104,24 +104,30 @@ async def handle_battle_accept(client, query: CallbackQuery):
     a_health = 100
     b_health = 100
 
-    x = user_a_data.get('weapons', [])
-    y = [g["name"] for g in x]
-    print(y)
-   
+    user_a_weapons = user_a_data.get('weapons', [])
+
+    # Split weapons into two rows
+    num_weapons = len(user_a_weapons)
+    half_index = num_weapons // 2
 
     a_weapon_buttons = [
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
-        for weapon in weapons_data if weapon['name'] in y 
+        for weapon in user_a_weapons[:half_index]
     ]
-    print(a_weapon_buttons)
-    print(weapons_data)
+
+    b_weapon_buttons = [
+        [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
+        for weapon in user_a_weapons[half_index:]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(a_weapon_buttons + b_weapon_buttons)
 
     battle_message = await query.message.edit_text(
         f"{user_b_name} accepted the challenge!\n"
         f"{user_a_name}'s health: {a_health}/100\n"
         f"{user_b_name}'s health: {b_health}/100\n"
         f"{user_a_name}, choose your weapon:",
-        reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
+        reply_markup=reply_markup
     )
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
@@ -150,11 +156,11 @@ async def handle_battle_attack(client, query: CallbackQuery):
         await query.answer("Users not found.")
         return
 
+    attacker_name = query.from_user.first_name  # Fetch attacker name directly
+    defender_name = user_b_data.get('first_name', 'User B') if current_turn_id == user_a_id else user_a_data.get('first_name', 'User A')
+
     attacker_data = user_a_data if current_turn_id == user_a_id else user_b_data
     defender_data = user_b_data if current_turn_id == user_a_id else user_a_data
-
-    attacker_name = attacker_data.get('first_name', 'User A')
-    defender_name = defender_data.get('first_name', 'User B')
 
     attacker_weapons = attacker_data.get('weapons', [])
     defender_health = a_health if current_turn_id == user_b_id else b_health
@@ -198,26 +204,27 @@ async def handle_battle_attack(client, query: CallbackQuery):
     await query.message.edit_text(
         f"{attacker_name} attacked with {weapon_name}!\n"
         f"{defender_name} has {defender_health}/100 health left.\n"
+        f"Your health: {a_health}/100\n"
+        f"Opponent's health: {b_health}/100\n"
         f"{next_turn_name}, choose your weapon:",
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
 
 async def end_battle(winner_id, loser_id):
-    winner_data = await user_collection.find_one_and_update(
-        {'id': winner_id},
-        {'$inc': {'gold': 100}},
-        return_document=True
-    )
-
     loser_data = await user_collection.find_one_and_update(
         {'id': loser_id},
         {'$set': {'gold': 0}},
         return_document=True
     )
 
-    if winner_data and loser_data:
-        winner_name = winner_data.get('first_name', 'Winner')
-        loser_name = loser_data.get('first_name', 'Loser')
+    if loser_data:
+        loser_gold = loser_data.get('gold', 0)
+
+        await user_collection.find_one_and_update(
+            {'id': winner_id},
+            {'$inc': {'gold': loser_gold}},
+            return_document=True
+        )
 
         await user_collection.update_one(
             {'id': winner_id},
@@ -229,10 +236,14 @@ async def end_battle(winner_id, loser_id):
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
 
-        # Assuming application is a pyrogram Client instance
+        winner_data = await user_collection.find_one({'id': winner_id})
+        winner_name = winner_data.get('first_name', 'Winner') if winner_data else 'Winner'
+
+        loser_name = loser_data.get('first_name', 'Loser')
+
         await application.send_message(
             chat_id=winner_id,
-            text=f"Congratulations! You won the battle against {loser_name}. You earned 100 gold."
+            text=f"Congratulations! You won the battle against {loser_name}. You earned {loser_gold} gold."
         )
 
         await application.send_message(
