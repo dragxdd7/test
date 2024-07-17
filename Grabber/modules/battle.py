@@ -209,8 +209,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
     
     except Exception as e:
         print(f"Error in handle_battle_attack: {e}")
-       await handle_error(client, query.message, e)
-
+       
 async def end_battle(winner_id, loser_id):
     try:
         winner_data = await user_collection.find_one_and_update(
