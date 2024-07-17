@@ -226,13 +226,13 @@ async def end_battle(winner_id, loser_id):
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
 
+        # Assuming application is a pyrogram Client instance
         await application.send_message(
-            winner_id,
-            f"Congratulations! You won the battle against {loser_name}. You earned 100 gold."
+            chat_id=winner_id,
+            text=f"Congratulations! You won the battle against {loser_name}. You earned 100 gold."
         )
 
         await application.send_message(
-            loser_id,
-            f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
+            chat_id=loser_id,
+            text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
         )
-
