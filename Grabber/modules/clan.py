@@ -25,7 +25,7 @@ async def my_clan(client, message):
         f"🏰 Clan Information 🏰\n\n"
         f"Clan ID: {clan_data['clan_id']}\n"  # Display Clan ID
         f"Clan: {clan_data['name']} 🏆\n"
-        f"Level: {clan_data.get('level', 1)}\n"
+        f"Level: {calculate_clan_level(clan_data)}\n"
         f"XP: {clan_data.get('cxp', 0)}\n"
         f"Leader: {clan_data['leader_name']}\n"
         f"Members: {member_count}/20\n\n"
@@ -121,7 +121,7 @@ async def join_clan(client, message):
          InlineKeyboardButton("Reject", callback_data=f"rj:{user_id}:{clan_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await client.send_message(chat_id=leader_id, text=f"{message.from_user.first_name} wants to join your clan.", reply_markup=reply_markup)
+    await client.send_message(chat_id=leader_id, text=f"{message.from_user.first_name} wants to join your clan.\nUser ID: {user_id}", reply_markup=reply_markup)
     await message.reply_text("Your request to join the clan has been sent to the leader.")
 
 @app.on_callback_query(filters.regex(r'^leave_clan:'))
@@ -177,3 +177,6 @@ async def delete_clan(client, message):
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
 
+def calculate_clan_level(clan_data):
+    cxp = clan_data.get('cxp', 0)
+    return cxp // 30 + 1 
