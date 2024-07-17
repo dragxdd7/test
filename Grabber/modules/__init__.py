@@ -10,6 +10,7 @@ StartTime = time.time()
 
 sudb = db.sudo
 devb = db.dev 
+app = Grabberu
 
 dev_users = {6919722801}
 
