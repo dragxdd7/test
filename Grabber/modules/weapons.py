@@ -77,6 +77,10 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery, user_id):
 
     # Proceed with the purchase logic
     new_gold_balance = current_gold - weapon_price
+    if new_gold_balance < 0:
+        await callback_query.answer("Insufficient gold balance. Please earn more gold.")
+        return
+
     await user_collection.update_one({'id': user_id}, {'$set': {'gold': new_gold_balance}})
 
     weapon_details = {
@@ -91,7 +95,6 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery, user_id):
 
     await remove_expired_weapons(user_id)
 
-# Modify cmd_weapons to restrict access
 @app.on_message(filters.command("weapons"))
 async def cmd_weapons(client, message):
     user_id = message.from_user.id
