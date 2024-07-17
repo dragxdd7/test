@@ -149,6 +149,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
     
     except Exception as e:
         await handle_error(client, query.message, e)
+print("defender:",defender_weapons)
+print("attacker:",attacker_weapons)
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
