@@ -65,6 +65,14 @@ async def battle_command(client, message):
         user_a_name = user_a_data.get('first_name', 'User A')
         user_b_name = user_b_data.get('first_name', 'User B')
 
+        # Log attacker's weapons
+        attacker_weapons = user_a_data.get('weapons', [])
+        print(f"Attacker Weapons: {attacker_weapons}")
+
+        # Log defender's weapons
+        defender_weapons = user_b_data.get('weapons', [])
+        print(f"Defender Weapons: {defender_weapons}")
+
         keyboard = [
             [InlineKeyboardButton("Fight", callback_data=f"battle_accept:{user_a_id}:{user_b_id}"),
              InlineKeyboardButton("Run", callback_data=f"battle_decline:{user_a_id}:{user_b_id}")]
