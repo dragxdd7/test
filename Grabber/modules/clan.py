@@ -126,24 +126,28 @@ async def join_clan(client, message):
 
 @app.on_callback_query(filters.regex(r'^leave_clan:'))
 async def leave_clan(client, callback_query):
-    user_id = callback_query.from_user.id
-    clan_id = callback_query.data.split(':')[1]
+    try:
+        user_id = callback_query.from_user.id
+        clan_id = callback_query.data.split(':')[1]
 
-    user_data = await user_collection.find_one({'id': user_id})
-    if not user_data or user_data.get('clan_id') != clan_id:
-        await callback_query.answer("You are not in this clan.")
-        return
+        user_data = await user_collection.find_one({'id': user_id})
+        if not user_data or user_data.get('clan_id') != int(clan_id):
+            await callback_query.answer("You are not in this clan.")
+            return
 
-    clan_data = await clan_collection.find_one({'clan_id': clan_id})
-    if not clan_data or clan_data['leader_id'] == user_id:
-        await callback_query.answer("Clan leader cannot leave the clan. Use /dclan to delete the clan.")
-        return
+        clan_data = await clan_collection.find_one({'clan_id': int(clan_id)})
+        if not clan_data or clan_data['leader_id'] == user_id:
+            await callback_query.answer("Clan leader cannot leave the clan. Use /dclan to delete the clan.")
+            return
 
-    await clan_collection.update_one({'clan_id': clan_id}, {'$pull': {'members': user_id}})
-    await user_collection.update_one({'id': user_id}, {'$unset': {'clan_id': ""}})
+        await clan_collection.update_one({'clan_id': int(clan_id)}, {'$pull': {'members': user_id}})
+        await user_collection.update_one({'id': user_id}, {'$unset': {'clan_id': ""}})
 
-    await callback_query.answer("You have left the clan.")
-    await callback_query.edit_message_text("You have successfully left the clan.")
+        await callback_query.answer("You have left the clan.")
+        await callback_query.edit_message_text("You have successfully left the clan.")
+
+    except Exception as e:
+        await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
 
 @app.on_message(filters.command("dclan"))
 async def delete_clan(client, message):
@@ -172,3 +176,4 @@ async def delete_clan(client, message):
 
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
+
