@@ -7,7 +7,6 @@ import random
 import asyncio
 from . import user_collection, clan_collection, application, Grabberu
 
-# Define weapons data with name, price, and damage
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
     {'name': 'Bow', 'price': 800, 'damage': 15},
@@ -16,7 +15,6 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
-# Function to format large numbers
 def custom_format_number(num):
     if int(num) >= 10**6:
         exponent = int(math.log10(num)) - 5
@@ -24,21 +22,19 @@ def custom_format_number(num):
         return f"{base:,.0f}({exponent:+})"
     return f"{num:,.0f}"
 
-# Function to format timedelta into days, hours, minutes, and seconds
 def format_timedelta(delta):
     minutes, seconds = divmod(delta.seconds, 60)
     hours, minutes = divmod(minutes, 60)
     days = delta.days
     if days > 0:
-        return f"{days}d {hours}h {minutes}m {seconds}s"
+        return f"{days}d {hours}m {minutes}s"
     elif hours > 0:
-        return f"{hours}h {minutes}m {seconds}s"
+        return f"{hours}h {minutes}s"
     elif minutes > 0:
         return f"{minutes}m {seconds}s"
     else:
         return f"{seconds}s"
 
-# Command handler for /battle when replying to a message
 @Grabberu.on_message(filters.command("battle") & filters.reply)
 async def battle_command(client, message):
     user_a_id = message.from_user.id
@@ -77,29 +73,24 @@ async def battle_command(client, message):
     # Log defender's weapons
     defender_weapons = user_b_data.get('weapons', [])
 
-    # Prepare fight or run buttons
     keyboard = [
         [InlineKeyboardButton("Fight", callback_data=f"battle_accept:{user_a_id}:{user_b_id}"),
          InlineKeyboardButton("Run", callback_data=f"battle_decline:{user_a_id}:{user_b_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    # Ask the opponent to accept or decline the battle
     await message.reply_to_message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
 
-# Callback query handler for accepting the battle
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
     data = query.data.split(':')
     user_a_id = int(data[1])
     user_b_id = int(data[2])
 
-    # Ensure only the challenged user can respond
     if query.from_user.id != user_b_id:
         await query.answer("Only the challenged user can respond.", show_alert=True)
         return
 
-    # Retrieve users' data from the database
     user_a_data = await user_collection.find_one({'id': user_a_id})
     user_b_data = await user_collection.find_one({'id': user_b_id})
 
@@ -110,21 +101,22 @@ async def handle_battle_accept(client, query: CallbackQuery):
     user_a_name = user_a_data.get('first_name', 'User A')
     user_b_name = user_b_data.get('first_name', 'User B')
 
-    # Initialize health for both users
     a_health = 100
     b_health = 100
 
-    # Get attacker's weapons
-    attacker_weapons = user_a_data.get('weapons', [])
+    x = user_a_data.get('weapons', [])
+    y = [g["name"] for g in x]
+    print(y)
+   
 
-    # Prepare weapon buttons for the attacker
     a_weapon_buttons = [
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
-        for weapon in weapons_data if weapon['name'] in attacker_weapons
+        for weapon in weapons_data if weapon['name'] in y 
     ]
+    print(a_weapon_buttons)
+    print(weapons_data)
 
-    # Edit the message to show battle initiation
-    await query.message.edit_text(
+    battle_message = await query.message.edit_text(
         f"{user_b_name} accepted the challenge!\n"
         f"{user_a_name}'s health: {a_health}/100\n"
         f"{user_b_name}'s health: {b_health}/100\n"
@@ -132,13 +124,11 @@ async def handle_battle_accept(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
     )
 
-# Callback query handler for declining the battle
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
 async def handle_battle_decline(client, query: CallbackQuery):
     await query.answer("Challenge declined!")
     await query.message.edit_text("The battle challenge was declined.")
 
-# Callback query handler for attacking with a weapon (continued)
 @Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
 async def handle_battle_attack(client, query: CallbackQuery):
     data = query.data.split(':')
@@ -149,12 +139,10 @@ async def handle_battle_attack(client, query: CallbackQuery):
     a_health = int(data[5])
     b_health = int(data[6])
 
-    # Ensure it's the current turn user's action
     if query.from_user.id != current_turn_id:
         await query.answer("It's not your turn!", show_alert=True)
         return
 
-    # Retrieve users' data from the database
     user_a_data = await user_collection.find_one({'id': user_a_id})
     user_b_data = await user_collection.find_one({'id': user_b_id})
 
@@ -168,7 +156,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
     attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
     defender_health = a_health if current_turn_id == user_b_id else b_health
 
-    # Find the selected weapon's damage
     weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
     if not weapon or weapon_name not in attacker_weapons:
         await query.answer("Invalid weapon choice!", show_alert=True)
@@ -179,7 +166,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
     if defender_health < 0:
         defender_health = 0
 
-    # Update the defender's health
     if current_turn_id == user_a_id:
         b_health = defender_health
         next_turn_id = user_b_id
@@ -187,7 +173,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
         a_health = defender_health
         next_turn_id = user_a_id
 
-    # Check if there's a winner
     if a_health == 0 or b_health == 0:
         winner_id = user_a_id if a_health > 0 else user_b_id
         loser_id = user_b_id if winner_id == user_a_id else user_a_id
@@ -207,7 +192,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
         for weapon in weapons_data if weapon['name'] in defender_weapons
     ]
 
-    # Edit the message to continue the battle
     await query.message.edit_text(
         f"{attacker_name} attacked with {weapon_name}!\n"
         f"{defender_name} has {defender_health}/100 health left.\n"
@@ -215,7 +199,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
 
-# Function to end the battle, update winner's and loser's gold
 async def end_battle(winner_id, loser_id):
     winner_data = await user_collection.find_one_and_update(
         {'id': winner_id},
@@ -233,7 +216,6 @@ async def end_battle(winner_id, loser_id):
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
 
-        # Set a cooldown for both users
         await user_collection.update_one(
             {'id': winner_id},
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
@@ -244,7 +226,6 @@ async def end_battle(winner_id, loser_id):
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
 
-        # Send messages to winner and loser
         await application.send_message(
             winner_id,
             f"Congratulations! You won the battle against {loser_name}. You earned 100 gold."
@@ -254,3 +235,4 @@ async def end_battle(winner_id, loser_id):
             loser_id,
             f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
         )
+
