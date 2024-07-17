@@ -1,7 +1,8 @@
 from pymongo import ReturnDocument
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import sudo_filter, application, user_totals_collection, app
+from . import sudo_filter, application,  app
+from Grabber import user_totals_collection
 
 @app.on_message(filters.command("changetime") & ~filters.edited & filters.group & filters.admins)
 async def change_time(client: Client, message: Message):
