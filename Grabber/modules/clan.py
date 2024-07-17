@@ -180,3 +180,34 @@ def generate_unique_numeric_code():
 def calculate_clan_level(clan_data):
     cxp = clan_data.get('cxp', 0)
     return cxp // 30 + 1 
+
+@app.on_callback_query(filters.regex(r'^aj:'))
+async def accept_join_request(client, callback_query):
+    try:
+        _, user_id, clan_id = callback_query.data.split(':')
+
+        # Update join_requests_collection and clan_collection
+        await join_requests_collection.delete_one({'user_id': int(user_id), 'clan_id': clan_id})
+        await clan_collection.update_one({'clan_id': clan_id}, {'$push': {'members': int(user_id)}})
+        await user_collection.update_one({'id': int(user_id)}, {'$set': {'clan_id': clan_id}})
+
+        await callback_query.answer("Join request accepted!")
+        await callback_query.edit_message_text("Join request accepted. Welcome to the clan!")
+
+    except Exception as e:
+        await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
+
+
+@app.on_callback_query(filters.regex(r'^rj:'))
+async def reject_join_request(client, callback_query):
+    try:
+        _, user_id, clan_id = callback_query.data.split(':')
+
+        # Remove the join request from join_requests_collection
+        await join_requests_collection.delete_one({'user_id': int(user_id), 'clan_id': clan_id})
+
+        await callback_query.answer("Join request rejected.")
+        await callback_query.edit_message_text("Join request rejected.")
+
+    except Exception as e:
+        await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
