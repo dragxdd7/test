@@ -6,9 +6,6 @@ from functools import wraps
 from telegram import Update
 from Grabber.utils import * 
 
-
-
-
 StartTime = time.time()
 
 sudb = db.sudo
