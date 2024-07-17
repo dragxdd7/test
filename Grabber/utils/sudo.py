@@ -1,4 +1,6 @@
 from Grabber import db
+from pyrogram import Client, filters
+from pyrogram.types import Message
 
 sudb = db.sudo
 
