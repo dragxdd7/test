@@ -109,6 +109,10 @@ async def handle_battle_accept(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
     )
 
+    # Print the generated markup
+    print(battle_message.text)
+    print(battle_message.reply_markup.to_dict())
+
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
 async def handle_battle_decline(client, query: CallbackQuery):
     await query.answer("Challenge declined!")
