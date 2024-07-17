@@ -104,6 +104,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
         attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
         defender_health = a_health if current_turn_id == user_b_id else b_health
         
+        print(f"Attacker Weapons: {attacker_weapons}")  # Print attacker's weapons
+        
         weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
         if not weapon or weapon_name not in attacker_weapons:
             await query.answer("Invalid weapon choice!", show_alert=True)
@@ -121,6 +123,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
             a_health = defender_health
             next_turn_id = user_a_id
 
+        print(f"Defender Weapons: {defender_weapons}")  # Print defender's weapons
+        
         if a_health == 0 or b_health == 0:
             winner_id = user_a_id if a_health > 0 else user_b_id
             loser_id = user_b_id if winner_id == user_a_id else user_a_id
@@ -139,13 +143,13 @@ async def handle_battle_attack(client, query: CallbackQuery):
             [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
             for weapon in weapons_data if weapon['name'] in defender_weapons
         ]
-       
         
         await query.message.edit_text(
             f"{attacker_name} attacked with {weapon_name}!\n"
             f"{defender_name} has {defender_health}/100 health left.\n"
             f"{next_turn_name}, choose your weapon:",
-            reply_markup=InlineKeyboardMarkup(weapon_buttons[:100])        )
+            reply_markup=InlineKeyboardMarkup(weapon_buttons)
+        )
     
     except Exception as e:
         await handle_error(client, query.message, e)
