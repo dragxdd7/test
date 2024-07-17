@@ -12,8 +12,7 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
-async def weapons(client, message):
-    user_id = message.from_user.id
+async def weapons(client, message, user_id):
     user_data = await user_collection.find_one({'id': user_id})
 
     if not user_data:
@@ -24,11 +23,17 @@ async def weapons(client, message):
     owned_weapons = set(w['name'] for w in user_data.get('weapons', []))
 
     keyboard = []
-    for weapon in weapons_data:
+    row = []
+    for i, weapon in enumerate(weapons_data, start=1):
+        button_text = f"{weapon['name']} - {weapon['price']} gold"
         if weapon['name'] in owned_weapons:
-            keyboard.append([InlineKeyboardButton(f"{weapon['name']} (Owned)", callback_data='ignore')])
-        else:
-            keyboard.append([InlineKeyboardButton(f"{weapon['name']} - {weapon['price']} gold", callback_data=f"buy_weapon:{weapon['name']}:{weapon['price']}")])
+            button_text = f"{weapon['name']} (Owned)"
+        row.append(InlineKeyboardButton(button_text, callback_data=f"buy_weapon:{weapon['name']}:{weapon['price']}"))
+        
+        # Add row every two items or at the end of the list
+        if i % 2 == 0 or i == len(weapons_data):
+            keyboard.append(row)
+            row = []
 
     reply_markup = InlineKeyboardMarkup(keyboard)
     await message.reply_text("Choose a weapon to buy:", reply_markup=reply_markup)
@@ -40,8 +45,7 @@ async def remove_expired_weapons(user_id: int):
         updated_weapons = [w for w in user_data['weapons'] if (current_time - w.get('purchase_time', 0)) <= (7 * 24 * 60 * 60)]
         await user_collection.update_one({'id': user_id}, {'$set': {'weapons': updated_weapons}})
 
-async def handle_buy_weapon(client, callback_query: CallbackQuery):
-    user_id = callback_query.from_user.id
+async def handle_buy_weapon(client, callback_query: CallbackQuery, user_id):
     data = callback_query.data.split(':')
 
     if len(data) != 3:
@@ -87,10 +91,13 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery):
 
     await remove_expired_weapons(user_id)
 
+# Modify cmd_weapons to restrict access
 @app.on_message(filters.command("weapons"))
 async def cmd_weapons(client, message):
-    await weapons(client, message)
+    user_id = message.from_user.id
+    await weapons(client, message, user_id)
 
 @app.on_callback_query(filters.regex(r'^buy_weapon:'))
 async def cbk_buy_weapon(client, callback_query):
-    await handle_buy_weapon(client, callback_query)
+    user_id = callback_query.from_user.id
+    await handle_buy_weapon(client, callback_query, user_id)
