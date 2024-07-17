@@ -44,3 +44,6 @@ guild = db["guild_team"]
 gban = db["gban"]
 clan_collection = db['clans']
 join_requests_collection = db['join_requests']
+clan_collection = database['clans']
+join_requests_collection = database['join_requests']
+
