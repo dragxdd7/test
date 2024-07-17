@@ -1,10 +1,10 @@
-from pymongo import ReturnDocument
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import sudo_filter, application,  app
+from pymongo import ReturnDocument
+from . import sudo_filter, app 
 from Grabber import user_totals_collection
 
-@app.on_message(filters.command("changetime") & ~ filters.group & filters.admins)
+@app.on_message(filters.command("changetime") & ~filters.group & sudo_filter)
 async def change_time(client: Client, message: Message):
     try:
         user = await client.get_chat_member(message.chat.id, message.from_user.id)
@@ -38,8 +38,7 @@ async def change_time(client: Client, message: Message):
     except Exception as e:
         await message.reply_text('Failed to change character appearance frequency.')
 
-@app.on_message(filters.command("ctime"))
-@sudo_filter
+@app.on_message(filters.command("ctime") & sudo_filter)
 async def change_time_sudo(client: Client, message: Message):
     try:
         args = message.command[1:]
