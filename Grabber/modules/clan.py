@@ -88,7 +88,7 @@ async def create_clan(client, message):
         await clan_collection.insert_one(clan_data)
         await user_collection.update_one({'id': user_id}, {'$set': {'clan_id': clan_id}})
 
-        await message.reply_text(f"`Clan '{clan_name}' created successfully with ID {clan_id}!`")
+        await message.reply_text(f"Clan '{clan_name}' created successfully with ID `{clan_id}!`")
 
     except Exception as e:
         await message.reply_text(f"Error creating clan: {str(e)}")
@@ -161,11 +161,11 @@ async def delete_clan(client, message):
 async def leave_clan_callback(client, callback_query):
     try:
         user_id = callback_query.from_user.id
-        clan_id = int(callback_query.data.split(':')[1])
+        clan_id = callback_query.data.split(':')[1]  # Do not cast to int
 
         user_data = await user_collection.find_one({'id': user_id})
         if not user_data or user_data.get('clan_id') != clan_id:
-            await callback_query.answer("You are not in this clan.")
+            await callback_query.answer("You are not in this clan.", show_alert=True)
             return
 
         clan_data = await clan_collection.find_one({'clan_id': clan_id})
@@ -176,7 +176,7 @@ async def leave_clan_callback(client, callback_query):
         await clan_collection.update_one({'clan_id': clan_id}, {'$pull': {'members': user_id}})
         await user_collection.update_one({'id': user_id}, {'$unset': {'clan_id': ""}})
 
-        await callback_query.answer("You have left the clan.")
+        await callback_query.answer("You have left the clan.", show_alert=True)
         await callback_query.edit_message_text("You have successfully left the clan.")
 
     except Exception as e:
@@ -191,7 +191,7 @@ async def accept_join_request(client, callback_query):
         await clan_collection.update_one({'clan_id': clan_id}, {'$push': {'members': int(user_id)}})
         await user_collection.update_one({'id': int(user_id)}, {'$set': {'clan_id': clan_id}})
 
-        await callback_query.answer("Join request accepted!")
+        await callback_query.answer("Join request accepted!", show_alert=True)
         await callback_query.edit_message_text("Join request accepted. Welcome to the clan!")
 
     except Exception as e:
@@ -204,8 +204,8 @@ async def reject_join_request(client, callback_query):
 
         await join_requests_collection.delete_one({'user_id': int(user_id), 'clan_id': clan_id})
 
-        await callback_query.answer("Join request rejected.")
-        await callback_query.edit_message_text("Join request rejected.")
+        await callback_query.answer("Join request rejected.", show_alert=True)
+        await callback_query.edit_message_text("Join request rejected.", show_alert=True)
 
     except Exception as e:
         await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
