@@ -1,7 +1,7 @@
 import logging
 import sys
 import time
-from Grabber import user_collection , application, db, collection, clan_collection , Grabberu 
+from Grabber import user_collection , application, db, collection, clan_collection , Grabberu ,clan_collection, join_requests_collection
 from functools import wraps
 from telegram import Update
 from Grabber.utils import * 
