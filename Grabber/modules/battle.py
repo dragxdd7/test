@@ -35,43 +35,44 @@ def format_timedelta(delta):
     else:
         return f"{seconds}s"
 
-@Grabberu.on_message(filters.command("battle") & filters.reply)
-async def battle_command(client, message):
-    user_a_id = message.from_user.id
-    user_a_data = await user_collection.find_one({'id': user_a_id})
+@Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
+async def handle_battle_accept(client, query: CallbackQuery):
+    data = query.data.split(':')
+    user_a_id = int(data[1])
+    user_b_id = int(data[2])
 
-    if not user_a_data or ('clan_id' not in user_a_data and 'leader_id' not in user_a_data):
-        await message.reply_text("You need to be part of a clan or a clan leader to use this command.")
+    if query.from_user.id != user_b_id:
+        await query.answer("Only the challenged user can respond.", show_alert=True)
         return
 
-    user_b_id = message.reply_to_message.from_user.id
-    user_b_data = await user_collection.find_one_and_update(
-        {'id': user_b_id},
-        {'$setOnInsert': {'id': user_b_id, 'first_name': message.reply_to_message.from_user.first_name, 'gold': 0, 'weapons': []}},
-        upsert=True,
-        return_document=True
-    )
+    user_a_data = await user_collection.find_one({'id': user_a_id})
+    user_b_data = await user_collection.find_one({'id': user_b_id})
 
-    if not user_b_data:
-        await message.reply_text("Opponent information not found and could not be created.")
+    if not user_a_data or not user_b_data:
+        await query.answer("Users not found.")
         return
 
     user_a_name = user_a_data.get('first_name', 'User A')
     user_b_name = user_b_data.get('first_name', 'User B')
 
-    # Log attacker's weapons
-    attacker_weapons = user_a_data.get('weapons', [])
+    a_health = 100
+    b_health = 100
+    print(user_a_data.get('weapons', [{}])[0])
+    return
 
-    # Log defender's weapons
-    defender_weapons = user_b_data.get('weapons', [])
-
-    keyboard = [
-        [InlineKeyboardButton("Fight", callback_data=f"battle_accept:{user_a_id}:{user_b_id}"),
-         InlineKeyboardButton("Run", callback_data=f"battle_decline:{user_a_id}:{user_b_id}")]
+    a_weapon_buttons = [
+        [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
+        for weapon in weapons_data if weapon['name'] in user_a_data.get('weapons', [{}])[0]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    print(a_weapon_buttons)
 
-    await message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
+    battle_message = await query.message.edit_text(
+        f"{user_b_name} accepted the challenge!\n"
+        f"{user_a_name}'s health: {a_health}/100\n"
+        f"{user_b_name}'s health: {b_health}/100\n"
+        f"{user_a_name}, choose your weapon:",
+        reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
+    )
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
