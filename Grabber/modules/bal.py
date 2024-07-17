@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, ParseMode
 from . import Grabberu as app, user_collection, show, sbank, sudo_filter
 from datetime import datetime
 
@@ -17,18 +17,18 @@ async def balance(client: Client, message: Message):
         potion_amount = user_data.get('potion_amount', 0)
         potion_expiry = user_data.get('potion_expiry')
 
-        formatted_balance = f"**🔹 Your Current Balance:** `Ŧ{balance_amount:,.0f}`\n"
-        formatted_saved = f"**🔸 Amount Saved:** `Ŧ{saved_amount:,.0f}`\n"
-        formatted_loan = f"**🔻 Loan Amount:** `Ŧ{loan_amount:,.0f}`\n"
-        formatted_potion = f"**🔹 Potion Amount:** {potion_amount}\n"
+        formatted_balance = f"🔹 <b>Your Current Balance:</b> <code>Ŧ{balance_amount:,.0f}</code>\n"
+        formatted_saved = f"🔸 <b>Amount Saved:</b> <code>Ŧ{saved_amount:,.0f}</code>\n"
+        formatted_loan = f"🔻 <b>Loan Amount:</b> <code>Ŧ{loan_amount:,.0f}</code>\n"
+        formatted_potion = f"🔹 <b>Potion Amount:</b> {potion_amount}\n"
 
         if potion_expiry:
             time_remaining = potion_expiry - datetime.now()
-            formatted_potion += f"**⏳ Potion Time Remaining:** {time_remaining}\n"
+            formatted_potion += f"⏳ <b>Potion Time Remaining:</b> {time_remaining}\n"
 
         balance_message = formatted_balance + formatted_saved + formatted_loan + formatted_potion
 
-        await message.reply_text(balance_message, parse_mode='Markdown')
+        await message.reply_text(balance_message, parse_mode=ParseMode.HTML)
     else:
         balance_message = "You haven't added any character yet. Please add a character to unlock all features."
-        await message.reply_text(balance_message, parse_mode='Markdown')
+        await message.reply_text(balance_message, parse_mode=ParseMode.HTML)
