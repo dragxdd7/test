@@ -10,18 +10,21 @@ join_requests_collection = database['join_requests']
 async def my_clan(client, message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id})
+    
     if not user_data or 'clan_id' not in user_data:
         await message.reply_text("You are not in any clan. Create one with /createclan.")
         return
 
     clan_id = user_data['clan_id']
     clan_data = await clan_collection.find_one({'clan_id': clan_id})
+    
     if not clan_data:
         await message.reply_text("Clan not found.")
         return
 
     member_count = len(clan_data['members'])
     message_text = (
+        f"```\n"
         f"🏰 Clan Information 🏰\n\n"
         f"Clan ID: {clan_data['clan_id']}\n"  # Display Clan ID
         f"Clan: {clan_data['name']} 🏆\n"
@@ -30,6 +33,7 @@ async def my_clan(client, message):
         f"Leader: {clan_data['leader_name']}\n"
         f"Members: {member_count}/20\n\n"
         f"Join our mighty clan and conquer the fantasy world together! 💪🌟"
+        f"```"
     )
 
     if clan_data['leader_id'] != user_id:
