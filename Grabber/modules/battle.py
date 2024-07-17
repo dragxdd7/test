@@ -139,18 +139,17 @@ async def handle_battle_attack(client, query: CallbackQuery):
             [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
             for weapon in weapons_data if weapon['name'] in defender_weapons
         ]
+       
         
         await query.message.edit_text(
             f"{attacker_name} attacked with {weapon_name}!\n"
             f"{defender_name} has {defender_health}/100 health left.\n"
             f"{next_turn_name}, choose your weapon:",
-            reply_markup=InlineKeyboardMarkup(weapon_buttons[:100])  # Limiting to 100 buttons
-        )
+            reply_markup=InlineKeyboardMarkup(weapon_buttons[:100])        )
     
     except Exception as e:
         await handle_error(client, query.message, e)
-print("defender:",defender_weapons)
-print("attacker:",attacker_weapons)
+
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
