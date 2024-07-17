@@ -100,6 +100,7 @@ async def handle_battle_accept(client, query: CallbackQuery):
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
         for weapon in weapons_data if weapon['name'] in user_a_data.get('weapons', [])
     ]
+    print(a_weapon_buttons)
 
     battle_message = await query.message.edit_text(
         f"{user_b_name} accepted the challenge!\n"
@@ -108,10 +109,6 @@ async def handle_battle_accept(client, query: CallbackQuery):
         f"{user_a_name}, choose your weapon:",
         reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
     )
-
-    # Print the generated markup
-    print(battle_message.text)
-    print(battle_message.reply_markup.to_dict())
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
 async def handle_battle_decline(client, query: CallbackQuery):
