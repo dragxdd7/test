@@ -1,0 +1,85 @@
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+import uuid
+import time
+from . import app, user_collection
+
+weapons_data = [
+    {'name': 'Sword', 'price': 500, 'damage': 10},
+    {'name': 'Bow', 'price': 800, 'damage': 15},
+    {'name': 'Staff', 'price': 1000, 'damage': 20}
+]
+
+async def weapons(client, message):
+    user_id = message.from_user.id
+    user_data = await user_collection.find_one({'id': user_id})
+
+    if not user_data:
+        await message.reply_text("Please start the bot first.")
+        return
+
+    current_gold = user_data.get('gold', 0)
+
+    keyboard = []
+    for weapon in weapons_data:
+        if 'weapons' not in user_data or weapon['name'] not in [w['name'] for w in user_data['weapons']]:
+            keyboard.append([InlineKeyboardButton(f"{weapon['name']} - {weapon['price']} gold", callback_data=f"buy_weapon:{weapon['name']}:{weapon['price']}")])
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await message.reply_text("Choose a weapon to buy:", reply_markup=reply_markup)
+
+async def remove_expired_weapons(user_id: int):
+    user_data = await user_collection.find_one({'id': user_id})
+    if user_data and 'weapons' in user_data:
+        current_time = time.time()
+        updated_weapons = [w for w in user_data['weapons'] if (current_time - w.get('purchase_time', 0)) <= (7 * 24 * 60 * 60)]
+        await user_collection.update_one({'id': user_id}, {'$set': {'weapons': updated_weapons}})
+
+async def handle_buy_weapon(client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+    data = callback_query.data.split(':')
+
+    if len(data) != 3:
+        await callback_query.answer("Invalid weapon selection.")
+        return
+
+    weapon_name = data[1]
+    weapon_price = int(data[2])
+
+    user_data = await user_collection.find_one({'id': user_id})
+    if not user_data:
+        await callback_query.answer("Please start the bot first.")
+        return
+
+    current_gold = user_data.get('gold', 0)
+    if current_gold < weapon_price:
+        await callback_query.answer("You don't have enough gold to buy this weapon.")
+        return
+
+    if 'weapons' in user_data and any(w['name'] == weapon_name for w in user_data['weapons']):
+        await callback_query.answer("You already own this weapon.")
+        return
+
+    new_gold_balance = current_gold - weapon_price
+    await user_collection.update_one({'id': user_id}, {'$set': {'gold': new_gold_balance}})
+
+    weapon_details = {
+        'name': weapon_name,
+        'damage': next((weapon['damage'] for weapon in weapons_data if weapon['name'] == weapon_name), 0),
+        'purchase_time': time.time()  # Timestamp for purchase
+    }
+    await user_collection.update_one({'id': user_id}, {'$push': {'weapons': weapon_details}}, upsert=True)
+
+    await callback_query.answer(f"You bought {weapon_name} for {weapon_price} gold.")
+    await callback_query.edit_message_text(f"You bought {weapon_name} for {weapon_price} gold. Enjoy your new weapon!")
+
+    await remove_expired_weapons(user_id)
+
+# Register your handlers
+@app.on_message(filters.command("weapons"))
+async def cmd_weapons(client, message):
+    await weapons(client, message)
+
+@app.on_callback_query(filters.regex(r'^buy_weapon:'))
+async def cbk_buy_weapon(client, callback_query):
+    await handle_buy_weapon(client, callback_query)
