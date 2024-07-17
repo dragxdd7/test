@@ -147,8 +147,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
         await query.answer("Users not found.")
         return
 
-    attacker_name = user_a_data['first_name', 'User A'] if current_turn_id == user_a_id else user_b_data['first_name', 'User B']
-    defender_name = user_b_data['first_name', 'User B'] if current_turn_id == user_a_id else user_a_data['first_name', 'User B']
+    attacker_name = user_a_data.get('first_name', 'User A') if current_turn_id == user_a_id else user_b_data.get('first_name', 'User B')
+    defender_name = user_b_data.get('first_name', 'User B') if current_turn_id == user_a_id else user_a_data.get('first_name', 'User A')
 
     attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
     defender_health = a_health if current_turn_id == user_b_id else b_health
