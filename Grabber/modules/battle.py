@@ -56,6 +56,14 @@ async def battle_command(client, message):
         await message.reply_text("Opponent information not found and could not be created.")
         return
 
+    # Check if both users are in the same clan
+    user_a_clan_id = user_a_data.get('clan_id')
+    user_b_clan_id = user_b_data.get('clan_id')
+
+    if user_a_clan_id and user_b_clan_id and user_a_clan_id == user_b_clan_id:
+        await message.reply_text("You cannot battle someone from the same clan.")
+        return
+
     user_a_name = user_a_data.get('first_name', 'User A')
     user_b_name = user_b_data.get('first_name', 'User B')
 
@@ -71,7 +79,7 @@ async def battle_command(client, message):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
+    await message.reply_to_message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
