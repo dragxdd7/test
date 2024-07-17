@@ -114,6 +114,7 @@ async def handle_battle_accept(client, query: CallbackQuery):
         for weapon in weapons_data if weapon['name'] in y 
     ]
     print(a_weapon_buttons)
+    print(weapons_data)
 
     battle_message = await query.message.edit_text(
         f"{user_b_name} accepted the challenge!\n"
