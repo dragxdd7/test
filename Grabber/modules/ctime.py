@@ -4,7 +4,7 @@ from pyrogram.types import Message
 from . import sudo_filter, application,  app
 from Grabber import user_totals_collection
 
-@app.on_message(filters.command("changetime") & ~filters.edited & filters.group & filters.admins)
+@app.on_message(filters.command("changetime") & ~ filters.group & filters.admins)
 async def change_time(client: Client, message: Message):
     try:
         user = await client.get_chat_member(message.chat.id, message.from_user.id)
@@ -38,8 +38,7 @@ async def change_time(client: Client, message: Message):
     except Exception as e:
         await message.reply_text('Failed to change character appearance frequency.')
 
-# Define change_time_sudo function with sudo filter
-@app.on_message(filters.command("ctime") & ~filters.edited)
+@app.on_message(filters.command("ctime"))
 @sudo_filter
 async def change_time_sudo(client: Client, message: Message):
     try:
