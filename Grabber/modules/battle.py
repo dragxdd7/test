@@ -82,7 +82,8 @@ async def battle_command(client, message):
         await message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
 
     except Exception as e:
-        await handle_error(client, message, e)
+        #await handle_error(client, message, e)
+        print(f"Error in end_battle: {e}")
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
 async def handle_battle_attack(client, query: CallbackQuery):
@@ -160,8 +161,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
         )
     
     except Exception as e:
-        await handle_error(client, query.message, e)
-
+        #await handle_error(client, query.message, e)
+        print(f"Error in end_battle: {e}")
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
@@ -201,7 +202,8 @@ async def handle_battle_accept(client, query: CallbackQuery):
         )
     
     except Exception as e:
-        await handle_error(client, query.message, e)
+        #await handle_error(client, query.message, e)
+print(f"Error in end_battle: {e}")
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
 async def handle_battle_decline(client, query: CallbackQuery):
@@ -210,7 +212,9 @@ async def handle_battle_decline(client, query: CallbackQuery):
         await query.message.edit_text("The battle challenge was declined.")
     
     except Exception as e:
-        await handle_error(client, query.message, e)
+        #await handle_error(client, query.message, e)
+        print(f"Error in end_battle: {e}")
+
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
 async def handle_battle_attack(client, query: CallbackQuery):
@@ -284,7 +288,10 @@ async def handle_battle_attack(client, query: CallbackQuery):
         )
     
     except Exception as e:
-        await handle_error(client, query.message, e)
+        #await handle_error(client, query.message, e)
+        print(f"Error in end_battle: {e}")
+
+
 
 async def end_battle(winner_id: int, loser_id: int):
     try:
