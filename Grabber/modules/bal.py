@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, ParseMode
+from pyrogram.types import Message
 from . import Grabberu as app, user_collection, show, sbank, sudo_filter
 from datetime import datetime
 
@@ -28,7 +28,7 @@ async def balance(client: Client, message: Message):
 
         balance_message = formatted_balance + formatted_saved + formatted_loan + formatted_potion
 
-        await message.reply_text(balance_message, parse_mode=ParseMode.HTML)
+        await message.reply_text(balance_message, parse_mode='html')
     else:
         balance_message = "You haven't added any character yet. Please add a character to unlock all features."
-        await message.reply_text(balance_message, parse_mode=ParseMode.HTML)
+        await message.reply_text(balance_message, parse_mode='html')
