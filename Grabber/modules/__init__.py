@@ -5,7 +5,7 @@ from Grabber import user_collection , application, db, collection, clan_collecti
 from functools import wraps
 from telegram import Update
 from Grabber.utils import * 
-from Grabber.database import *
+
 
 
 
