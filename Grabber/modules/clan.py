@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from . import collection, user_collection, Grabberu as app, error, disable, limit, db as database
+from . import collection, user_collection, Grabberu as app, db as database
 import uuid
 
 clan_collection = database['clans']
