@@ -1,23 +1,28 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from . import collection, user_collection, Grabberu as app, db as database
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
-clan_collection = database['clans']
-join_requests_collection = database['join_requests']
+from . import user_collection, clan_collection, join_requests_collection, app, database
+
+def generate_unique_numeric_code():
+    return str(random.randint(1000000000, 9999999999))
+
+def calculate_clan_level(clan_data):
+    cxp = clan_data.get('cxp', 0)
+    return cxp // 30 + 1
 
 @app.on_message(filters.command("myclan"))
 async def my_clan(client, message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id})
-    
+
     if not user_data or 'clan_id' not in user_data:
         await message.reply_text("You are not in any clan. Create one with /createclan.")
         return
 
     clan_id = user_data['clan_id']
     clan_data = await clan_collection.find_one({'clan_id': clan_id})
-    
+
     if not clan_data:
         await message.reply_text("Clan not found.")
         return
@@ -25,8 +30,7 @@ async def my_clan(client, message):
     member_count = len(clan_data['members'])
     message_text = (
         f"```\n"
-        f"🏰 Clan Information 🏰\n\n"
-        f"Clan ID: {clan_data['clan_id']}\n"  # Display Clan ID
+        f"Clan ID: {clan_data['clan_id']}\n"
         f"Clan: {clan_data['name']} 🏆\n"
         f"Level: {calculate_clan_level(clan_data)}\n"
         f"XP: {clan_data.get('cxp', 0)}\n"
@@ -72,7 +76,7 @@ async def create_clan(client, message):
                 break
 
         clan_data = {
-            'clan_id': clan_id,  # Ensure clan_id is integer
+            'clan_id': clan_id,
             'name': clan_name,
             'leader_id': user_id,
             'leader_name': message.from_user.first_name,
@@ -84,7 +88,7 @@ async def create_clan(client, message):
         await clan_collection.insert_one(clan_data)
         await user_collection.update_one({'id': user_id}, {'$set': {'clan_id': clan_id}})
 
-        await message.reply_text(f"Clan '{clan_name}' created successfully with ID {clan_id}!")
+        await message.reply_text(f"`Clan '{clan_name}' created successfully with ID {clan_id}!`", parse_mode='MarkdownV2')
 
     except Exception as e:
         await message.reply_text(f"Error creating clan: {str(e)}")
@@ -128,31 +132,6 @@ async def join_clan(client, message):
     await client.send_message(chat_id=leader_id, text=f"{message.from_user.first_name} wants to join your clan.\nUser ID: {user_id}", reply_markup=reply_markup)
     await message.reply_text("Your request to join the clan has been sent to the leader.")
 
-@app.on_callback_query(filters.regex(r'^leave_clan:'))
-async def leave_clan(client, callback_query):
-    try:
-        user_id = callback_query.from_user.id
-        clan_id = callback_query.data.split(':')[1]
-
-        user_data = await user_collection.find_one({'id': user_id})
-        if not user_data or user_data.get('clan_id') != int(clan_id):
-            await callback_query.answer("You are not in this clan.")
-            return
-
-        clan_data = await clan_collection.find_one({'clan_id': int(clan_id)})
-        if not clan_data or clan_data['leader_id'] == user_id:
-            await callback_query.answer("Clan leader cannot leave the clan. Use /dclan to delete the clan.")
-            return
-
-        await clan_collection.update_one({'clan_id': int(clan_id)}, {'$pull': {'members': user_id}})
-        await user_collection.update_one({'id': user_id}, {'$unset': {'clan_id': ""}})
-
-        await callback_query.answer("You have left the clan.")
-        await callback_query.edit_message_text("You have successfully left the clan.")
-
-    except Exception as e:
-        await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
-
 @app.on_message(filters.command("dclan"))
 async def delete_clan(client, message):
     user_id = message.from_user.id
@@ -176,21 +155,38 @@ async def delete_clan(client, message):
     await clan_collection.delete_one({'clan_id': clan_id})
     await user_collection.update_many({'clan_id': clan_id}, {'$unset': {'clan_id': ""}})
 
-    await message.reply_text(f"Clan '{clan_data['name']}' has been deleted.")
+    await message.reply_text(f"`Clan '{clan_data['name']}' has been deleted.`", parse_mode='MarkdownV2')
 
-def generate_unique_numeric_code():
-    return str(random.randint(1000000000, 9999999999))
+@app.on_callback_query(filters.regex(r'^leave_clan:'))
+async def leave_clan_callback(client, callback_query):
+    try:
+        user_id = callback_query.from_user.id
+        clan_id = int(callback_query.data.split(':')[1])
 
-def calculate_clan_level(clan_data):
-    cxp = clan_data.get('cxp', 0)
-    return cxp // 30 + 1 
+        user_data = await user_collection.find_one({'id': user_id})
+        if not user_data or user_data.get('clan_id') != clan_id:
+            await callback_query.answer("You are not in this clan.")
+            return
+
+        clan_data = await clan_collection.find_one({'clan_id': clan_id})
+        if not clan_data or clan_data['leader_id'] == user_id:
+            await callback_query.answer("Clan leader cannot leave the clan. Use /dclan to delete the clan.")
+            return
+
+        await clan_collection.update_one({'clan_id': clan_id}, {'$pull': {'members': user_id}})
+        await user_collection.update_one({'id': user_id}, {'$unset': {'clan_id': ""}})
+
+        await callback_query.answer("You have left the clan.")
+        await callback_query.edit_message_text("You have successfully left the clan.")
+
+    except Exception as e:
+        await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
 
 @app.on_callback_query(filters.regex(r'^aj:'))
 async def accept_join_request(client, callback_query):
     try:
         _, user_id, clan_id = callback_query.data.split(':')
 
-        # Update join_requests_collection and clan_collection
         await join_requests_collection.delete_one({'user_id': int(user_id), 'clan_id': clan_id})
         await clan_collection.update_one({'clan_id': clan_id}, {'$push': {'members': int(user_id)}})
         await user_collection.update_one({'id': int(user_id)}, {'$set': {'clan_id': clan_id}})
@@ -201,13 +197,11 @@ async def accept_join_request(client, callback_query):
     except Exception as e:
         await callback_query.answer(f"An error occurred: {str(e)}", show_alert=True)
 
-
 @app.on_callback_query(filters.regex(r'^rj:'))
 async def reject_join_request(client, callback_query):
     try:
         _, user_id, clan_id = callback_query.data.split(':')
 
-        # Remove the join request from join_requests_collection
         await join_requests_collection.delete_one({'user_id': int(user_id), 'clan_id': clan_id})
 
         await callback_query.answer("Join request rejected.")
