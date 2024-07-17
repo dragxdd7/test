@@ -21,10 +21,13 @@ async def weapons(client, message):
         return
 
     current_gold = user_data.get('gold', 0)
+    owned_weapons = set(w['name'] for w in user_data.get('weapons', []))
 
     keyboard = []
     for weapon in weapons_data:
-        if 'weapons' not in user_data or weapon['name'] not in [w['name'] for w in user_data['weapons']]:
+        if weapon['name'] in owned_weapons:
+            keyboard.append([InlineKeyboardButton(f"{weapon['name']} (Owned)", callback_data='ignore')])
+        else:
             keyboard.append([InlineKeyboardButton(f"{weapon['name']} - {weapon['price']} gold", callback_data=f"buy_weapon:{weapon['name']}:{weapon['price']}")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -58,10 +61,17 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery):
         await callback_query.answer("You don't have enough gold to buy this weapon.")
         return
 
-    if 'weapons' in user_data and any(w['name'] == weapon_name for w in user_data['weapons']):
+    owned_weapons = set(w['name'] for w in user_data.get('weapons', []))
+    if weapon_name in owned_weapons:
         await callback_query.answer("You already own this weapon.")
         return
 
+    # Ensure the callback is for the current user
+    if callback_query.from_user.id != user_id:
+        await callback_query.answer("This is not your purchase.")
+        return
+
+    # Proceed with the purchase logic
     new_gold_balance = current_gold - weapon_price
     await user_collection.update_one({'id': user_id}, {'$set': {'gold': new_gold_balance}})
 
@@ -77,7 +87,6 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery):
 
     await remove_expired_weapons(user_id)
 
-# Register your handlers
 @app.on_message(filters.command("weapons"))
 async def cmd_weapons(client, message):
     await weapons(client, message)
