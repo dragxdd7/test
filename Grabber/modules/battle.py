@@ -6,7 +6,7 @@ from pymongo import MongoClient
 import random
 import asyncio
 from pymongo.errors import BulkWriteError
-from . import user_collection, application, Grabberu
+from . import user_collection, clan_collection, application, Grabberu
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -27,13 +27,16 @@ def format_timedelta(delta):
     hours, minutes = divmod(minutes, 60)
     days = delta.days
     if days > 0:
-        return f"{days}d {hours}h {minutes}m {seconds}s"
+        return f"{days}d {hours}m {minutes}s"
     elif hours > 0:
-        return f"{hours}h {minutes}m {seconds}s"
+        return f"{hours}h {minutes}s"
     elif minutes > 0:
         return f"{minutes}m {seconds}s"
     else:
         return f"{seconds}s"
+
+async def handle_error(client, message, exception):
+    await message.reply_text(f"An error occurred: {str(exception)}")
 
 @Grabberu.on_message(filters.command("battle") & filters.reply)
 async def battle_command(client, message):
@@ -78,6 +81,10 @@ async def handle_battle_accept(client, query: CallbackQuery):
         user_a_id = int(data[1])
         user_b_id = int(data[2])
         
+        if query.from_user.id != user_b_id:
+            await query.answer("Only the challenged user can respond.", show_alert=True)
+            return
+        
         user_a_data = await user_collection.find_one({'id': user_a_id})
         user_b_data = await user_collection.find_one({'id': user_b_id})
         
@@ -90,20 +97,19 @@ async def handle_battle_accept(client, query: CallbackQuery):
         
         a_health = 100
         b_health = 100
+
+        a_weapon_buttons = [
+            [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
+            for weapon in weapons_data if weapon['name'] in user_a_data.get('weapons', [])
+        ]
+
         battle_message = await query.message.edit_text(
-            f"{user_a_name} accepted the challenge!\n"
+            f"{user_b_name} accepted the challenge!\n"
             f"{user_a_name}'s health: {a_health}/100\n"
             f"{user_b_name}'s health: {b_health}/100\n"
-            "Choose your weapon:"
+            f"{user_a_name}, choose your weapon:",
+            reply_markup=InlineKeyboardMarkup(a_weapon_buttons)
         )
-        
-        a_weapon_buttons = []
-        for weapon in weapons_data:
-            a_weapon_buttons.append([InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}")])
-        
-        a_weapon_markup = InlineKeyboardMarkup(a_weapon_buttons)
-        
-        await battle_message.edit_reply_markup(reply_markup=a_weapon_markup)
     
     except Exception as e:
         await handle_error(client, query.message, e)
@@ -124,13 +130,74 @@ async def handle_battle_attack(client, query: CallbackQuery):
         weapon_name = data[1]
         user_a_id = int(data[2])
         user_b_id = int(data[3])
+        current_turn_id = int(data[4])
+        a_health = int(data[5])
+        b_health = int(data[6])
         
-        await query.answer("Battle attack handled successfully!")
+        if query.from_user.id != current_turn_id:
+            await query.answer("It's not your turn!", show_alert=True)
+            return
+        
+        user_a_data = await user_collection.find_one({'id': user_a_id})
+        user_b_data = await user_collection.find_one({'id': user_b_id})
+        
+        if not user_a_data or not user_b_data:
+            await query.answer("Users not found.")
+            return
+        
+        attacker_name = user_a_data['first_name'] if current_turn_id == user_a_id else user_b_data['first_name']
+        defender_name = user_b_data['first_name'] if current_turn_id == user_a_id else user_a_data['first_name']
+        
+        attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
+        defender_health = a_health if current_turn_id == user_b_id else b_health
+        
+        weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
+        if not weapon or weapon_name not in attacker_weapons:
+            await query.answer("Invalid weapon choice!", show_alert=True)
+            return
+        
+        damage = weapon['damage']
+        defender_health -= damage
+        if defender_health < 0:
+            defender_health = 0
+        
+        if current_turn_id == user_a_id:
+            b_health = defender_health
+            next_turn_id = user_b_id
+        else:
+            a_health = defender_health
+            next_turn_id = user_a_id
+
+        if a_health == 0 or b_health == 0:
+            winner_id = user_a_id if a_health > 0 else user_b_id
+            loser_id = user_b_id if winner_id == user_a_id else user_a_id
+            await end_battle(winner_id, loser_id)
+            await query.message.edit_text(
+                f"{attacker_name} attacked with {weapon_name}!\n"
+                f"{defender_name} has {defender_health}/100 health left.\n"
+                f"{attacker_name} wins the battle!"
+            )
+            return
+        
+        next_turn_name = user_b_data['first_name'] if next_turn_id == user_b_id else user_a_data['first_name']
+        
+        defender_weapons = user_b_data.get('weapons', []) if next_turn_id == user_b_id else user_a_data.get('weapons', [])
+        weapon_buttons = [
+            [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
+            for weapon in weapons_data if weapon['name'] in defender_weapons
+        ]
+        
+        await query.message.edit_text(
+            f"{attacker_name} attacked with {weapon_name}!\n"
+            f"{defender_name} has {defender_health}/100 health left.\n"
+            f"{next_turn_name}, choose your weapon:",
+            reply_markup=InlineKeyboardMarkup(weapon_buttons)
+        )
     
     except Exception as e:
         await handle_error(client, query.message, e)
 
-async def end_battle(winner_id: int, loser_id):
+async def end_battle(winner_id: int, loser_id: int):
     try:
         winner_data = await user_collection.find_one({'id': winner_id})
         loser_data = await user_collection.find_one({'id': loser_id})
@@ -143,10 +210,101 @@ async def end_battle(winner_id: int, loser_id):
         
         winner_new_gold = winner_gold + loser_gold
         await user_collection.update_one({'id': winner_id}, {'$set': {'gold': winner_new_gold}})
+        await user_collection.update_one({'id': loser_id}, {'$set': {'gold': 0}})
         
+        winner_clan_id = winner_data.get('clan_id')
+        loser_clan_id = loser_data.get('clan_id')
+
+        if winner_clan_id:
+            await clan_collection.update_one({'id': winner_clan_id}, {'$inc': {'cxp': 3}})
+        if loser_clan_id:
+            await clan_collection.update_one({'id': loser_clan_id}, {'$inc': {'cxp': 1}})
+
         await application.send_message(winner_id, "Congratulations! You won the battle and received the opponent's gold.")
         await application.send_message(loser_id, "You lost the battle and your gold has been transferred to the winner.")
     
     except Exception as e:
         print(f"Error in end_battle: {e}")
 
+@Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
+async def handle_battle_decline(client, query: CallbackQuery):
+    try:
+        await query.answer("Challenge declined!")
+        await query.message.edit_text("The battle challenge was declined.")
+    
+    except Exception as e:
+        await handle_error(client, query.message, e)
+
+@Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
+async def handle_battle_attack(client, query: CallbackQuery):
+    try:
+        data = query.data.split(':')
+        weapon_name = data[1]
+        user_a_id = int(data[2])
+        user_b_id = int(data[3])
+        current_turn_id = int(data[4])
+        a_health = int(data[5])
+        b_health = int(data[6])
+        
+        if query.from_user.id != current_turn_id:
+            await query.answer("It's not your turn!", show_alert=True)
+            return
+        
+        user_a_data = await user_collection.find_one({'id': user_a_id})
+        user_b_data = await user_collection.find_one({'id': user_b_id})
+        
+        if not user_a_data or not user_b_data:
+            await query.answer("Users not found.")
+            return
+        
+        attacker_name = user_a_data['first_name'] if current_turn_id == user_a_id else user_b_data['first_name']
+        defender_name = user_b_data['first_name'] if current_turn_id == user_a_id else user_a_data['first_name']
+        
+        attacker_weapons = user_a_data.get('weapons', []) if current_turn_id == user_a_id else user_b_data.get('weapons', [])
+        defender_health = a_health if current_turn_id == user_b_id else b_health
+        
+        weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
+        if not weapon or weapon_name not in attacker_weapons:
+            await query.answer("Invalid weapon choice!", show_alert=True)
+            return
+        
+        damage = weapon['damage']
+        defender_health -= damage
+        if defender_health < 0:
+            defender_health = 0
+        
+        if current_turn_id == user_a_id:
+            b_health = defender_health
+            next_turn_id = user_b_id
+        else:
+            a_health = defender_health
+            next_turn_id = user_a_id
+
+        if a_health == 0 or b_health == 0:
+            winner_id = user_a_id if a_health > 0 else user_b_id
+            loser_id = user_b_id if winner_id == user_a_id else user_a_id
+            await end_battle(winner_id, loser_id)
+            await query.message.edit_text(
+                f"{attacker_name} attacked with {weapon_name}!\n"
+                f"{defender_name} has {defender_health}/100 health left.\n"
+                f"{attacker_name} wins the battle!"
+            )
+            return
+        
+        next_turn_name = user_b_data['first_name'] if next_turn_id == user_b_id else user_a_data['first_name']
+        
+        defender_weapons = user_b_data.get('weapons', []) if next_turn_id == user_b_id else user_a_data.get('weapons', [])
+        weapon_buttons = [
+            [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
+            for weapon in weapons_data if weapon['name'] in defender_weapons
+        ]
+        
+        await query.message.edit_text(
+            f"{attacker_name} attacked with {weapon_name}!\n"
+            f"{defender_name} has {defender_health}/100 health left.\n"
+            f"{next_turn_name}, choose your weapon:",
+            reply_markup=InlineKeyboardMarkup(weapon_buttons)
+        )
+    
+    except Exception as e:
+        await handle_error(client, query.message, e)
