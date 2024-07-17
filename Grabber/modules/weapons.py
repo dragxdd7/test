@@ -1,8 +1,11 @@
+import math
+from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-import uuid
-import time
-from . import app, user_collection
+from pymongo import MongoClient
+import random
+import asyncio
+from . import user_collection, clan_collection, app as application, Grabberu
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -12,95 +15,241 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
-async def weapons(client, message, user_id):
-    user_data = await user_collection.find_one({'id': user_id})
+def custom_format_number(num):
+    if int(num) >= 10**6:
+        exponent = int(math.log10(num)) - 5
+        base = num // (10 ** exponent)
+        return f"{base:,.0f}({exponent:+})"
+    return f"{num:,.0f}"
 
-    if not user_data:
-        await message.reply_text("Please start the bot first.")
+def format_timedelta(delta):
+    minutes, seconds = divmod(delta.seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    days = delta.days
+    if days > 0:
+        return f"{days}d {hours}h {minutes}m"
+    elif hours > 0:
+        return f"{hours}h {minutes}m"
+    elif minutes > 0:
+        return f"{minutes}m {seconds}s"
+    else:
+        return f"{seconds}s"
+
+@Grabberu.on_message(filters.command("battle") & filters.reply)
+async def battle_command(client, message):
+    user_a_id = message.from_user.id
+    user_a_data = await user_collection.find_one({'id': user_a_id})
+
+    if not user_a_data or ('clan_id' not in user_a_data and 'leader_id' not in user_a_data):
+        await message.reply_text("You need to be part of a clan or a clan leader to use this command.")
         return
 
-    current_gold = user_data.get('gold', 0)
-    owned_weapons = set(w['name'] for w in user_data.get('weapons', []))
+    user_b_id = message.reply_to_message.from_user.id
+    user_b_name = message.reply_to_message.from_user.first_name
 
-    keyboard = []
-    row = []
-    for i, weapon in enumerate(weapons_data, start=1):
-        button_text = f"{weapon['name']} - {weapon['price']} gold"
-        if weapon['name'] in owned_weapons:
-            button_text = f"{weapon['name']} (Owned)"
-        row.append(InlineKeyboardButton(button_text, callback_data=f"buy_weapon:{weapon['name']}:{weapon['price']}"))
-        
-        # Add row every two items or at the end of the list
-        if i % 2 == 0 or i == len(weapons_data):
-            keyboard.append(row)
-            row = []
+    user_a_name = message.from_user.first_name
 
+    await initiate_battle(user_a_id, user_a_name, user_b_id, user_b_name)
+
+async def initiate_battle(user_a_id, user_a_name, user_b_id, user_b_name):
+    user_b_data = await user_collection.find_one_and_update(
+        {'id': user_b_id},
+        {'$setOnInsert': {'id': user_b_id, 'first_name': user_b_name, 'gold': 0, 'weapons': []}},
+        upsert=True,
+        return_document=True
+    )
+
+    if not user_b_data:
+        # Handle error if opponent information couldn't be created
+        return
+
+    # Check if both users are in the same clan
+    user_a_data = await user_collection.find_one({'id': user_a_id})
+    user_a_clan_id = user_a_data.get('clan_id') if user_a_data else None
+    user_b_clan_id = user_b_data.get('clan_id')
+
+    if user_a_clan_id and user_b_clan_id and user_a_clan_id == user_b_clan_id:
+        # Handle same clan battle restriction
+        return
+
+    await send_battle_challenge(user_a_name, user_b_name, user_a_id, user_b_id)
+
+async def send_battle_challenge(user_a_name, user_b_name, user_a_id, user_b_id):
+    keyboard = [
+        [InlineKeyboardButton("Fight", callback_data=f"battle_accept:{user_a_id}:{user_b_id}"),
+         InlineKeyboardButton("Run", callback_data=f"battle_decline:{user_a_id}:{user_b_id}")]
+    ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("Choose a weapon to buy:", reply_markup=reply_markup)
 
-async def remove_expired_weapons(user_id: int):
-    user_data = await user_collection.find_one({'id': user_id})
-    if user_data and 'weapons' in user_data:
-        current_time = time.time()
-        updated_weapons = [w for w in user_data['weapons'] if (current_time - w.get('purchase_time', 0)) <= (7 * 24 * 60 * 60)]
-        await user_collection.update_one({'id': user_id}, {'$set': {'weapons': updated_weapons}})
+    await application.send_message(
+        chat_id=user_b_id,
+        text=f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?",
+        reply_markup=reply_markup
+    )
 
-async def handle_buy_weapon(client, callback_query: CallbackQuery, user_id):
-    data = callback_query.data.split(':')
+@Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
+async def handle_battle_accept(client, query: CallbackQuery):
+    data = query.data.split(':')
+    user_a_id = int(data[1])
+    user_b_id = int(data[2])
 
-    if len(data) != 3:
-        await callback_query.answer("Invalid weapon selection.")
+    if query.from_user.id != user_b_id:
+        await query.answer("Only the challenged user can respond.", show_alert=True)
         return
 
+    user_a_data = await user_collection.find_one({'id': user_a_id})
+    user_b_data = await user_collection.find_one({'id': user_b_id})
+
+    if not user_a_data or not user_b_data:
+        await query.answer("Users not found.")
+        return
+
+    user_a_name = user_a_data.get('first_name', 'User A')
+    user_b_name = user_b_data.get('first_name', 'User B')
+
+    a_health = 100
+    b_health = 100
+
+    user_a_weapons = user_a_data.get('weapons', [])
+
+    # Split weapons into two rows
+    num_weapons = len(user_a_weapons)
+    half_index = num_weapons // 2
+
+    a_weapon_buttons = [
+        [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
+        for weapon in user_a_weapons[:half_index]
+    ]
+
+    b_weapon_buttons = [
+        [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
+        for weapon in user_a_weapons[half_index:]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(a_weapon_buttons + b_weapon_buttons)
+
+    battle_message = await query.message.edit_text(
+        f"{user_b_name} accepted the challenge!\n"
+        f"{user_a_name}'s health: {a_health}/100\n"
+        f"{user_b_name}'s health: {b_health}/100\n"
+        f"{user_a_name}, choose your weapon:",
+        reply_markup=reply_markup
+    )
+
+@Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
+async def handle_battle_decline(client, query: CallbackQuery):
+    await query.answer("Challenge declined!")
+    await query.message.edit_text("The battle challenge was declined.")
+
+@Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
+async def handle_battle_attack(client, query: CallbackQuery):
+    data = query.data.split(':')
     weapon_name = data[1]
-    weapon_price = int(data[2])
+    user_a_id = int(data[2])
+    user_b_id = int(data[3])
+    current_turn_id = int(data[4])
+    a_health = int(data[5])
+    b_health = int(data[6])
 
-    user_data = await user_collection.find_one({'id': user_id})
-    if not user_data:
-        await callback_query.answer("Please start the bot first.")
+    if query.from_user.id != current_turn_id:
+        await query.answer("It's not your turn!", show_alert=True)
         return
 
-    current_gold = user_data.get('gold', 0)
-    if current_gold < weapon_price:
-        await callback_query.answer("You don't have enough gold to buy this weapon.")
+    user_a_data = await user_collection.find_one({'id': user_a_id})
+    user_b_data = await user_collection.find_one({'id': user_b_id})
+
+    if not user_a_data or not user_b_data:
+        await query.answer("Users not found.")
         return
 
-    owned_weapons = set(w['name'] for w in user_data.get('weapons', []))
-    if weapon_name in owned_weapons:
-        await callback_query.answer("You already own this weapon.")
+    attacker_id = query.from_user.id
+    defender_id = user_b_id if current_turn_id == user_a_id else user_a_id
+
+    attacker_data = user_a_data if current_turn_id == user_a_id else user_b_data
+    defender_data = user_b_data if current_turn_id == user_a_id else user_a_data
+
+    attacker_name = attacker_data.get('first_name', 'Attacker')
+    defender_name = defender_data.get('first_name', 'Defender')
+
+    attacker_weapons = attacker_data.get('weapons', [])
+    defender_health = a_health if current_turn_id == user_b_id else b_health
+
+    valid_weapon = next((w for w in weapons_data if w['name'] == weapon_name), None)
+    if not valid_weapon or weapon_name not in [w['name'] for w in attacker_weapons]:
+        await query.answer("Invalid weapon choice!", show_alert=True)
         return
 
-    # Ensure the callback is for the current user
-    if callback_query.from_user.id != user_id:
-        await callback_query.answer("This is not your purchase.")
+    damage = valid_weapon['damage']
+    defender_health -= damage
+    if defender_health < 0:
+        defender_health = 0
+
+    if current_turn_id == user_a_id:
+        b_health = defender_health
+        next_turn_id = user_b_id
+    else:
+        a_health = defender_health
+        next_turn_id = user_a_id
+
+    if a_health == 0 or b_health == 0:
+        winner_id = user_a_id if a_health > 0 else user_b_id
+        loser_id = user_b_id if winner_id == user_a_id else user_a_id
+        await end_battle(winner_id, loser_id, attacker_name, defender_name)
         return
 
-    # Proceed with the purchase logic
-    new_gold_balance = current_gold - weapon_price
-    if new_gold_balance < 0:
-        await callback_query.answer("Insufficient gold balance. Please earn more gold.")
-        return
+    next_turn_name = defender_name if next_turn_id == user_b_id else attacker_name
 
-    await user_collection.update_one({'id': user_id}, {'$set': {'gold': new_gold_balance}})
+    defender_weapons = defender_data.get('weapons', [])
+    weapon_buttons = [
+        [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{next_turn_id}:{a_health}:{b_health}")]
+        for weapon in weapons_data if weapon['name'] in [w['name'] for w in defender_weapons]
+    ]
 
-    weapon_details = {
-        'name': weapon_name,
-        'damage': next((weapon['damage'] for weapon in weapons_data if weapon['name'] == weapon_name), 0),
-        'purchase_time': time.time()  # Timestamp for purchase
-    }
-    await user_collection.update_one({'id': user_id}, {'$push': {'weapons': weapon_details}}, upsert=True)
+    health_lines = (
+        f"Your health: {a_health}/100\n"
+        f"Opponent's health: {b_health}/100\n"
+    )
 
-    await callback_query.answer(f"You bought {weapon_name} for {weapon_price} gold.")
-    await callback_query.edit_message_text(f"You bought {weapon_name} for {weapon_price} gold. Enjoy your new weapon!")
+    await query.message.edit_text(
+        f"{attacker_name} attacked with {weapon_name}!\n"
+        f"{defender_name} has {defender_health}/100 health left.\n"
+        f"{health_lines if attacker_id == current_turn_id else ''}"
+        f"{next_turn_name}, choose your weapon:",
+        reply_markup=InlineKeyboardMarkup(weapon_buttons)
+    )
 
-    await remove_expired_weapons(user_id)
+async def end_battle(winner_id, loser_id, winner_name, loser_name):
+    loser_data = await user_collection.find_one_and_update(
+        {'id': loser_id},
+        {'$set': {'gold': 0}},
+        return_document=True
+    )
 
-@app.on_message(filters.command("weapons"))
-async def cmd_weapons(client, message):
-    user_id = message.from_user.id
-    await weapons(client, message, user_id)
+    if loser_data:
+        loser_gold = loser_data.get('gold', 0)
 
-@app.on_callback_query(filters.regex(r'^buy_weapon:'))
-async def cbk_buy_weapon(client, callback_query):
-    user_id = callback_query.from_user.id
-    await handle_buy_weapon(client, callback_query, user_id)
+        await user_collection.find_one_and_update(
+            {'id': winner_id},
+            {'$inc': {'gold': loser_gold}},
+            return_document=True
+        )
+
+        await user_collection.update_one(
+            {'id': winner_id},
+            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+        )
+
+        await user_collection.update_one(
+            {'id': loser_id},
+            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+        )
+
+        await application.send_message(
+            chat_id=winner_id,
+            text=f"Congratulations! You won the battle against {loser_name}. You earned {loser_gold} gold."
+        )
+
+        await application.send_message(
+            chat_id=loser_id,
+            text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
+        )
