@@ -156,11 +156,14 @@ async def handle_battle_attack(client, query: CallbackQuery):
         await query.answer("Users not found.")
         return
 
-    attacker_name = query.from_user.first_name  # Fetch attacker name directly
-    defender_name = user_b_data.get('first_name', 'User B') if current_turn_id == user_a_id else user_a_data.get('first_name', 'User A')
+    attacker_id = query.from_user.id
+    defender_id = user_b_id if current_turn_id == user_a_id else user_a_id
 
     attacker_data = user_a_data if current_turn_id == user_a_id else user_b_data
     defender_data = user_b_data if current_turn_id == user_a_id else user_a_data
+
+    attacker_name = attacker_data.get('first_name', 'Attacker')
+    defender_name = defender_data.get('first_name', 'Defender')
 
     attacker_weapons = attacker_data.get('weapons', [])
     defender_health = a_health if current_turn_id == user_b_id else b_health
@@ -186,14 +189,18 @@ async def handle_battle_attack(client, query: CallbackQuery):
         winner_id = user_a_id if a_health > 0 else user_b_id
         loser_id = user_b_id if winner_id == user_a_id else user_a_id
         await end_battle(winner_id, loser_id)
+        winner_data = await user_collection.find_one({'id': winner_id})
+        loser_data = await user_collection.find_one({'id': loser_id})
+        winner_name = winner_data.get('first_name', 'Winner')
+        loser_name = loser_data.get('first_name', 'Loser')
         await query.message.edit_text(
             f"{attacker_name} attacked with {weapon_name}!\n"
             f"{defender_name} has {defender_health}/100 health left.\n"
-            f"{attacker_name} wins the battle!"
+            f"{winner_name} wins the battle!"
         )
         return
 
-    next_turn_name = user_b_data.get('first_name', 'User B') if next_turn_id == user_b_id else user_a_data.get('first_name', 'User A')
+    next_turn_name = defender_name if next_turn_id == user_b_id else attacker_name
 
     defender_weapons = defender_data.get('weapons', [])
     weapon_buttons = [
@@ -201,11 +208,15 @@ async def handle_battle_attack(client, query: CallbackQuery):
         for weapon in weapons_data if weapon['name'] in [w['name'] for w in defender_weapons]
     ]
 
+    health_lines = (
+        f"Your health: {a_health}/100\n"
+        f"Opponent's health: {b_health}/100\n"
+    )
+
     await query.message.edit_text(
         f"{attacker_name} attacked with {weapon_name}!\n"
         f"{defender_name} has {defender_health}/100 health left.\n"
-        f"Your health: {a_health}/100\n"
-        f"Opponent's health: {b_health}/100\n"
+        f"{health_lines if attacker_id == current_turn_id else ''}"
         f"{next_turn_name}, choose your weapon:",
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
