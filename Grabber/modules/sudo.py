@@ -9,7 +9,7 @@ devb = db.dev
 PROTECTED_IDS = {6893383681, 7011990425}
 
 @app.on_message(filters.command("addsudo") & dev_filter)
-async def add_sudo(update: Message):
+async def add_sudo(client, update: Message):
     m = update
     if m.reply_to_message:
         tar = m.reply_to_message.from_user.id
@@ -33,7 +33,7 @@ async def add_sudo(update: Message):
         await m.reply_text('Failed to add user to sudo list.')
 
 @app.on_message(filters.command("rmsudo") & dev_filter)
-async def remove_sudo(update: Message):
+async def remove_sudo(client, update: Message):
     m = update
     if m.reply_to_message:
         tar = m.reply_to_message.from_user.id
@@ -54,7 +54,7 @@ async def remove_sudo(update: Message):
         await m.reply_text('Failed to remove user from sudo list.')
 
 @app.on_message(filters.command("adddev") & dev_filter)
-async def add_dev(update: Message):
+async def add_dev(client, update: Message):
     m = update
     if m.reply_to_message:
         tar = m.reply_to_message.from_user.id
@@ -75,7 +75,7 @@ async def add_dev(update: Message):
         await m.reply_text('Failed to add user to dev list.')
 
 @app.on_message(filters.command("rmdev") & dev_filter)
-async def remove_dev(update: Message):
+async def remove_dev(client, update: Message):
     m = update
     if m.reply_to_message:
         tar = m.reply_to_message.from_user.id
@@ -99,7 +99,7 @@ async def remove_dev(update: Message):
         await m.reply_text('Failed to remove user from dev list.')
 
 @app.on_message(filters.command("sudolist") & sudo_filter)
-async def sudo_list(update: Message):
+async def sudo_list(client, update: Message):
     try:
         sudo_list = await sudb.distinct('user_id')
         if not sudo_list:
@@ -111,7 +111,7 @@ async def sudo_list(update: Message):
         await update.reply_text('Error fetching sudo list.')
 
 @app.on_message(filters.command("devlist") & sudo_filter)
-async def dev_list(update: Message):
+async def dev_list(client, update: Message):
     try:
         dev_users_list = await devb.distinct('user_id')
         if not dev_users_list:
