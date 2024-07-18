@@ -38,7 +38,6 @@ async def handle_marriage(client, message, receiver_id):
     except Exception as e:
         print(f"Error handling marriage: {e}")
 
-@app.on_message(filters.command("marry"))
 async def handle_dice(client, message, receiver_id):
     try:
         dice_message = await client.send_dice(chat_id=message.chat.id)
@@ -86,3 +85,9 @@ async def dice_command(client, message: Message):
     else:
         await handle_dice(client, message, receiver_id)
 
+@app.on_message(filters.command("marry"))
+async def marry_command(client, message: Message):
+    receiver_id = message.from_user.id
+    await handle_marriage(client, message, receiver_id)
+
+app.run()
