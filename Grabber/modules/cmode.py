@@ -5,8 +5,7 @@ import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
-from . import add, deduct, show, abank, dbank, sbank
-from Grabber import app, user_collection, collection
+from . import add, deduct, show, abank, dbank, sbank, app, user_collection, collection
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
