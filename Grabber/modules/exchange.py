@@ -1,3 +1,4 @@
+import pytz
 import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -8,21 +9,23 @@ exchange_usage = {}
 
 async def exchange_command(client: Client, message: Message, args: list[str]) -> None:
     user_id = message.from_user.id
-    
-    if datetime.datetime.now().weekday() != 6:
-        await message.reply_text("The /exchange command is only available on Sundays.")
+
+    tz = pytz.timezone('Asia/Kolkata')
+    now = datetime.datetime.now(tz)
+
+    if now.weekday() != 5:  # 5 is Saturday
+        await message.reply_text("The /exchange command is only available on Saturdays.")
         return
     
-    now = datetime.datetime.now().time()
-    start_time = datetime.time(5, 30)
-    end_time = datetime.time(0, 30)
+    start_time = tz.localize(datetime.datetime.combine(now.date(), datetime.time(5, 30)))
+    end_time = tz.localize(datetime.datetime.combine(now.date(), datetime.time(0, 30))) + datetime.timedelta(days=1
     
     if not (start_time <= now <= end_time):
-        await message.reply_text("The /exchange command is only available between 5:30 am and 12:30 midnight on Sundays.")
+        await message.reply_text("The /exchange command is only available between 5:30 am and 12:30 midnight on Saturdays.")
         return
     
     if user_id not in exchange_usage:
-        exchange_usage[user_id] = {'count': 0, 'timestamp': datetime.datetime.now()}
+        exchange_usage[user_id] = {'count': 0, 'timestamp': now}
     
     usage_info = exchange_usage[user_id]
     if usage_info['count'] >= 3:
