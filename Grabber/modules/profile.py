@@ -1,7 +1,7 @@
 import math
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
-from . import app, application, user_collection, collection, smex
+from . import app, user_collection, collection
 
 def custom_format_number(num):
     if int(num) >= 10**6:
@@ -9,21 +9,6 @@ def custom_format_number(num):
         base = num // (10 ** exponent)
         return f"{base:,.0f}({exponent:+})"
     return f"{num:,.0f}"
-
-def parse_amount(amount_str):
-    if "+" in amount_str:
-        base_str, exponent_str = amount_str.split("+")
-        y = [i for i in base_str if i != ","]
-        base_str = "".join(y)
-        base = int(base_str)
-        exponent = int(exponent_str)
-        amount = base * (10 ** exponent)
-    else:
-        y = [i for i in amount_str if i != ","]
-        amount_str = "".join(y)
-        amount = int(amount_str)
-
-    return amount
 
 @app.on_message(filters.command('xprofile'))
 async def balance(client, message):
@@ -35,7 +20,7 @@ async def balance(client, message):
             projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'xp': 1, 'gender': 1}
         )
 
-        profile = message.from_user
+        user_info = await client.get_users(user_id)
 
         if user_data:
             balance_amount = int(user_data.get('balance', 0))
@@ -51,15 +36,23 @@ async def balance(client, message):
 
             gender_icon = '👦🏻' if gender == 'male' else '👧🏻' if gender == 'female' else '👶🏻'
 
+            # Construct user's name
+            if user_info.first_name and user_info.last_name:
+                user_name = f"{user_info.first_name} {user_info.last_name}"
+            elif user_info.first_name:
+                user_name = user_info.first_name
+            else:
+                user_name = "Unknown"
+
             balance_message = (
                 f"\t\t 𝐏𝐑𝐎𝐅𝐈𝐋𝐄\n\n"
-                f"ɴᴀᴍᴇ: {profile.full_name} [{gender_icon}]\n"
-                f"ɪᴅ: <code>{profile.id}</code>\n\n"
-                f"ᴄᴏɪɴꜱ: Ŧ<code>{custom_format_number(balance_amount)}</code>\n"
-                f"ʙᴀɴᴋ: Ŧ<code>{custom_format_number(bank_balance)}</code>\n"
-                f"ᴄʜᴀʀᴀᴄᴛᴇʀꜱ: <code>{total_characters}</code>/<code>{total_database_characters}</code>\n"
-                f"ʟᴇᴠᴇʟ: <code>{user_level}</code>\n"
-                f"ᴇxᴘ: <code>{user_xp}</code>\n"
+                f"ɴᴀᴍᴇ: {user_name} [{gender_icon}]\n"
+                f"ɪᴅ: `{user_info.id}`\n\n"
+                f"ᴄᴏɪɴꜱ: Ŧ`{custom_format_number(balance_amount)}`\n"
+                f"ʙᴀɴᴋ: Ŧ`{custom_format_number(bank_balance)}`\n"
+                f"ᴄʜᴀʀᴀᴄᴛᴇʀꜱ: `{total_characters}/{total_database_characters}`\n"
+                f"ʟᴇᴠᴇʟ: `{user_level}`\n"
+                f"ᴇxᴘ: `{user_xp}`\n"
             )
 
             photos = await client.get_profile_photos(user_id)
@@ -74,4 +67,3 @@ async def balance(client, message):
 
     except Exception as e:
         await client.send_message(message.chat.id, f"An error occurred: {e}")
-
