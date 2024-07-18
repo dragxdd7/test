@@ -9,73 +9,76 @@ async def harem_command(client, message):
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
-    if not user:
+    if not user or 'characters' not in user:
         message_text = '**𝙔𝙤𝙪 𝙃𝙖𝙫𝙚𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...**'
         await message.reply_text(message_text)
         return
 
-    cmode = user.get('collection_mode', 'All')
+    try:
+        cmode = user.get('collection_mode', 'All')
 
-    if cmode != 'All':
-        characters = [char for char in user['characters'] if char.get('rarity') == cmode]
-    else:
-        characters = user['characters']
+        if cmode != 'All':
+            characters = [char for char in user['characters'] if char.get('rarity') == cmode]
+        else:
+            characters = user['characters']
 
-    characters = sorted(characters, key=lambda x: (x['anime'], x['id']))
-    character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: x['id'])}
-    unique_characters = list({character['id']: character for character in characters}.values())
-    total_pages = math.ceil(len(unique_characters) / 7)
+        characters = sorted(characters, key=lambda x: (x['anime'], x['id']))
+        character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: x['id'])}
+        unique_characters = list({character['id']: character for character in characters}.values())
+        total_pages = math.ceil(len(unique_characters) / 7)
 
-    page = 0  # Default to the first page
-    harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
-    harem_message += "--------------------------------------\n\n"
+        page = 0  # Default to the first page
+        harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
+        harem_message += "--------------------------------------\n\n"
 
-    current_characters = unique_characters[page * 7:(page + 1) * 7]
+        current_characters = unique_characters[page * 7:(page + 1) * 7]
 
-    for character in current_characters:
-        count = character_counts[character['id']]
-        harem_message += (
-            f"♦️ **{character['name']} (x{count})**\n"
-            f"   Anime: {character['anime']}\n"
-            f"   ID: {character['id']}\n"
-            f"   {character['rarity']}\n\n"
-        )
+        for character in current_characters:
+            count = character_counts[character['id']]
+            harem_message += (
+                f"♦️ **{character['name']} (x{count})**\n"
+                f"   Anime: {character['anime']}\n"
+                f"   ID: {character['id']}\n"
+                f"   {character['rarity']}\n\n"
+            )
 
-    harem_message += "--------------------------------------\n"
-    total_count = len(characters)
-    harem_message += f"**Total Characters: {total_count}**"
+        harem_message += "--------------------------------------\n"
+        total_count = len(characters)
+        harem_message += f"**Total Characters: {total_count}**"
 
-    keyboard = [[InlineKeyboardButton(f"ɪɴʟɪɴᴇ ({total_count})", switch_inline_query_current_chat=f"collection.{user_id}")]]
-    if total_pages > 1:
-        nav_buttons = []
-        if page > 0:
-            nav_buttons.append(InlineKeyboardButton("◄", callback_data=f"harem:{page - 1}:{user_id}"))
-        if page < total_pages - 1:
-            nav_buttons.append(InlineKeyboardButton("►", callback_data=f"harem:{page + 1}:{user_id}"))
-        keyboard.append(nav_buttons)
+        keyboard = [[InlineKeyboardButton(f"ɪɴʟɪɴᴇ ({total_count})", switch_inline_query_current_chat=f"collection.{user_id}")]]
+        if total_pages > 1:
+            nav_buttons = []
+            if page > 0:
+                nav_buttons.append(InlineKeyboardButton("◄", callback_data=f"harem:{page - 1}:{user_id}"))
+            if page < total_pages - 1:
+                nav_buttons.append(InlineKeyboardButton("►", callback_data=f"harem:{page + 1}:{user_id}"))
+            keyboard.append(nav_buttons)
 
-        skip_buttons = []
-        if page > 4:
-            skip_buttons.append(InlineKeyboardButton("x5◀", callback_data=f"harem:{page - 5}:{user_id}"))
-        if page < total_pages - 5:
-            skip_buttons.append(InlineKeyboardButton("▶5x", callback_data=f"harem:{page + 5}:{user_id}"))
-        keyboard.append(skip_buttons)
+            skip_buttons = []
+            if page > 4:
+                skip_buttons.append(InlineKeyboardButton("x5◀", callback_data=f"harem:{page - 5}:{user_id}"))
+            if page < total_pages - 5:
+                skip_buttons.append(InlineKeyboardButton("▶5x", callback_data=f"harem:{page + 5}:{user_id}"))
+            keyboard.append(skip_buttons)
 
-    close_button = [InlineKeyboardButton("Close", callback_data=f"saleslist:close_{user_id}")]
-    keyboard.append(close_button)
+        close_button = [InlineKeyboardButton("Close", callback_data=f"saleslist:close_{user_id}")]
+        keyboard.append(close_button)
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-    if 'favorites' in user and user['favorites']:
-        fav_character_id = user['favorites'][0]
-        fav_character = next((c for c in user['characters'] if c['id'] == fav_character_id), None)
+        if 'favorites' in user and user['favorites']:
+            fav_character_id = user['favorites'][0]
+            fav_character = next((c for c in user['characters'] if c['id'] == fav_character_id), None)
 
-        if fav_character and 'img_url' in fav_character:
-            await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
-            return
+            if fav_character and 'img_url' in fav_character:
+                await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
+                return
 
-    await message.reply_text(harem_message, reply_markup=reply_markup)
+        await message.reply_text(harem_message, reply_markup=reply_markup)
 
+    except KeyError as e:
+        await message.reply_text(f"An error occurred: {e}")
 
 @app.on_callback_query(filters.regex(r"harem:\d+:\d+"))
 async def harem_callback(client, callback_query):
