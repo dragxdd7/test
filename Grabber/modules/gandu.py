@@ -41,7 +41,7 @@ async def set_message_limit(client, message: Message):
     except (IndexError, ValueError):
         await message.reply_text("Please provide a valid message limit (integer).")
 
-@app.on_message(filters.text)
+
 async def handle_messages(client, message: Message):
     if message.chat.id in group_message_counts:
         group_message_counts[message.chat.id]['count'] += 1
