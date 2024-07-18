@@ -196,7 +196,7 @@ async def bc(_, query: CallbackQuery):
     except Exception as e:
         print(f"Error: {e}")
 
-@app.on_message(filters.all)
+@app.on_message(filters.text, group=1)
 async def hm(update, context):
     await message_counter(update, context)
 
