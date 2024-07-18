@@ -56,9 +56,8 @@ async def balance(client, message):
             )
 
             # Fetch profile photos using user_info object
-            profile_photos = await client.get_profile_photos(user_info.id)
-            if profile_photos.total_count > 0:
-                photo_file_id = profile_photos.photos[0].file_id
+            if user_info.photo:
+                photo_file_id = user_info.photo.big_file_id
                 await client.send_photo(message.chat.id, photo=photo_file_id, caption=balance_message)
             else:
                 await client.send_message(message.chat.id, balance_message)
