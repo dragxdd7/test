@@ -1,11 +1,16 @@
+from . import app, collection, user_collection
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from . import app, collection, user_collection
+
+@app.on_message(filters.command("fav"))
+async def fav_command(client, message):
+    await fav(client, message)
+
 
 async def fav(client, message):
     user_id = message.from_user.id
 
-    if not message.command:
+    if len(message.command) < 2:
         await message.reply_text('𝙋𝙡𝙚𝙖𝙨𝙚 𝙥𝙧𝙤𝙫𝙞𝙙𝙚 Slave 𝙞𝙙...')
         return
 
@@ -34,7 +39,12 @@ async def fav(client, message):
 
     msg = await message.reply_text(f"Do you want to set {character['name']} as your favorite?", reply_markup=keyboard)
 
-    user['pending_message_id'] = msg.message_id
+    # Check if 'msg' is not None and has the 'message_id' attribute
+    if msg and hasattr(msg, 'message_id'):
+        user['pending_message_id'] = msg.message_id
+    else:
+        await message.reply_text('Failed to set favorite due to an unexpected error.')
+
     await user_collection.update_one({'id': user_id}, {'$set': user})
 
 
@@ -63,9 +73,3 @@ async def fav_cancel_callback(_, callback_query):
         await user_collection.update_one({'id': user_id}, {'$unset': {'pending_favorite': '', 'pending_message_id': ''}})
         await callback_query.message.delete()
         await callback_query.answer('You have cancelled setting a favorite.', show_alert=True)
-
-
-@app.on_message(filters.command("fav"))
-async def fav_command(client, message):
-    await fav(client, message)
-
