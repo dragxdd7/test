@@ -4,7 +4,7 @@ from pymongo import ReturnDocument
 from . import sudo_filter, app 
 from Grabber import user_totals_collection
 
-@app.on_message(filters.command("changetime") & ~sudo_filter)
+@app.on_message(filters.command("changetime"))
 async def change_time(client: Client, message: Message):
     try:
         user = await client.get_chat_member(message.chat.id, message.from_user.id)
