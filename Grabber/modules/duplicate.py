@@ -1,7 +1,7 @@
 import io
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import collection, user_collection, application
+from . import collection, user_collection, app
 
 async def duplicate(client: Client, message: Message) -> None:
     user_id = message.from_user.id
