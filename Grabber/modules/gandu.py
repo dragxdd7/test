@@ -28,7 +28,7 @@ def generate_random_image(word: str) -> bytes:
 
     return img_byte_arr.read()
 
-@app.on_message(filters.command("wtime") & sudo_filter.sudo_filter)
+@app.on_message(filters.command("wtime") & sudo_filter)
 async def set_message_limit(client, message: Message):
     try:
         limit = int(message.command[1])
