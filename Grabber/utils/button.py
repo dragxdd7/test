@@ -1,10 +1,11 @@
 from typing import Optional
 from telegram import Update
 from telegram.ext import CallbackContext
+from Grabber.modules.spawn import last_characters 
 
 from Grabber import user_collection
 
-last_characters = {}
+
 
 async def show(user_id):
     user = await user_collection.find_one({"id": user_id})
@@ -40,7 +41,7 @@ async def button_click(update: Update, context: CallbackContext) -> None:
         if user_balance >= 10000:
             await deduct(user_id, 10000)
             name = last_characters.get(chat_id, {}).get('name', 'Unknown')
-            await query.answer(text=f"ᴛʜᴇ ᴄᴀʀ ɴᴀᴍᴇ ɪs: {name}", show_alert=True)
+            await query.answer(text=f"ᴛʜᴇ  ɴᴀᴍᴇ ɪs: {name}", show_alert=True)
         else:
             await query.answer(text="ʏᴏᴜ ᴅᴏɴ'ᴛ ʜᴀᴠᴇ sᴜғғɪᴄɪᴇɴᴛ ʙᴀʟᴀɴᴄᴇ.", show_alert=True)
     else:
