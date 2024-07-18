@@ -1,6 +1,6 @@
 import asyncio
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update
+from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
 from Grabber import collection, user_collection, application
 from . import app, dev_filter
 
@@ -23,10 +23,10 @@ async def info_command(client, message):
     username, character_count = await get_user_info(target_user_id)
 
     message_text = (
-        f"ᴜꜱᴇʀ ɪɴꜰᴏ:\n\n"
-        f"ɪᴅ: {target_user_id}\n"
-        f"ᴜꜱᴇʀɴᴀᴍᴇ: {target_user_name}\n"
-        f"ᴛᴏᴛᴀʟ ʜᴀʀᴇᴍ: {character_count}"
+        f"User Info:\n\n"
+        f"ID: {target_user_id}\n"
+        f"Username: {target_user_name}\n"
+        f"Total Characters: {character_count}"
     )
 
     keyboard = IKM(
@@ -35,7 +35,7 @@ async def info_command(client, message):
         ]
     )
 
-    user_profile_photos = await client.get_user_profile_photos(target_user_id)
+    user_profile_photos = await client.get_profile_photos(target_user_id)
 
     if user_profile_photos.total_count > 0:
         file_id = user_profile_photos.photos[0].file_id
