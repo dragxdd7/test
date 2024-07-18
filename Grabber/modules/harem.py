@@ -4,14 +4,14 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from . import user_collection, app
 
-
-async def harem(message, client, page):
+# Define the harem function
+async def harem_command(client, message):
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
         message_text = '𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...'
-        await message.reply_text(message_text)
+        await client.send_message(message.chat.id, message_text)
         return
 
     cmode = user.get('collection_mode', 'All')
@@ -26,6 +26,7 @@ async def harem(message, client, page):
     unique_characters = list({character['id']: character for character in characters}.values())
     total_pages = math.ceil(len(unique_characters) / 7)
 
+    page = 0
     harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
     harem_message += "--------------------------------------\n\n"
 
@@ -96,4 +97,4 @@ async def harem_callback(client, callback_query):
         await callback_query.answer("This is not your Harem", show_alert=True)
         return
 
-    await harem(callback_query.message, client, page)
+    await harem_command(client, callback_query.message)
