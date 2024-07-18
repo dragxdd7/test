@@ -5,8 +5,9 @@ import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
-from . import add, deduct, show, abank, dbank, sbank, user_collection, app
+import os
 import logging
+from . import add, deduct, show, abank, dbank, sbank, user_collection, app
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -26,8 +27,11 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         dp_size = (200, 200)
 
         if user_dp_url:
-            response = requests.get(user_dp_url)
-            user_dp = Image.open(BytesIO(response.content))
+            if user_dp_url.startswith('/'):  # It's a local file path
+                user_dp = Image.open(user_dp_url)
+            else:  # It's a URL
+                response = requests.get(user_dp_url)
+                user_dp = Image.open(BytesIO(response.content))
             user_dp.thumbnail(dp_size)
             img.paste(user_dp, (text_x, text_y))
             text_x += dp_size[0] + 10
@@ -58,8 +62,8 @@ async def cmode(client, message):
             break
 
         if file_id:
-            file = await client.download_media(file_id)
-            user_dp_url = file
+            file_path = await client.download_media(file_id)
+            user_dp_url = os.path.abspath(file_path)  # Get the absolute file path
         else:
             user_dp_url = None
 
@@ -131,8 +135,8 @@ async def cmode_callback(client, query: CallbackQuery):
             break
 
         if file_id:
-            file = await client.download_media(file_id)
-            user_dp_url = file
+            file_path = await client.download_media(file_id)
+            user_dp_url = os.path.abspath(file_path)  # Get the absolute file path
         else:
             user_dp_url = None
 
