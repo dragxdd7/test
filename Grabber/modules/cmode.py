@@ -41,9 +41,11 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 
 @app.on_message(filters.command("cmode"))
 async def cmode(client, message):
+    logging.info("Received /cmode command")
     try:
         user_id = message.from_user.id
         username = message.from_user.username
+        logging.info("User ID: %s, Username: %s", user_id, username)
 
         profile_photos = await client.get_chat_photos(message.from_user.id)
         if profile_photos.total_count > 0:
@@ -57,6 +59,7 @@ async def cmode(client, message):
         current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
 
         img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
+        logging.info("Image path: %s", img_path)
 
         cmode_buttons = [
             [IKB("🟠 Rare", callback_data=f"cmode:rare:{user_id}"), IKB("🥴 Spacial", callback_data=f"cmode:spacial:{user_id}")],
@@ -70,60 +73,7 @@ async def cmode(client, message):
         reply_markup = IKM(cmode_buttons)
 
         await client.send_photo(chat_id=message.chat.id, photo=img_path, caption="Choose your collection mode:", reply_markup=reply_markup)
+        logging.info("Photo sent successfully")
 
     except Exception as e:
-        pass
-
-@app.on_callback_query(filters.regex("^cmode:"))
-async def cmode_callback(client, query: CallbackQuery):
-    try:
-        data = query.data
-
-        rarity_modes = {
-            'rare': '🟠 Rare',
-            'spacial': '🥴 Spacial',
-            'exclusive': '💮 Exclusive',
-            'cosplay': '🍭Cosplay',
-            'divine': '🥵 Divine',
-            'limited': '🔮 Limited',
-            'celestial': '🪽 Celestial',
-            'premium': '💎 Premium',
-            'medium': '🔵 Medium',
-            'legendary': '🟡 Legendary',
-            'common': '🟢 Common',
-            'special': '🥴 Special',
-            'all': 'All'
-        }
-
-        _, rarity, user_id = data.split(':')
-        user_id = int(user_id)
-        collection_mode = rarity_modes.get(rarity)
-
-        if query.from_user.id != user_id:
-            await query.answer("You cannot change someone else's collection mode.", show_alert=True)
-            return
-
-        await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
-
-        username = query.from_user.username
-
-        profile_photos = await client.get_chat_photos(query.from_user.id)
-        if profile_photos.total_count > 0:
-            file_id = profile_photos.photos[0].file_id
-            file = await client.download_media(file_id)
-            user_dp_url = file
-        else:
-            user_dp_url = None
-
-        img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
-
-        new_caption = f"Rarity edited to: {collection_mode}"
-
-        reply_markup = IKM([])
-
-        await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
-        await query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
-        await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
-
-    except Exception as e:
-        pass
+        logging.error("Error in cmode command: %s", e)
