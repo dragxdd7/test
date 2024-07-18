@@ -5,7 +5,7 @@ import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
-from . import add, deduct, show, abank, dbank, sbank, app, user_collection, collection
+from . import add, deduct, show, abank, dbank, sbank, user_collection, app
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -29,8 +29,6 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         user_dp.thumbnail(dp_size)
         img.paste(user_dp, (text_x, text_y))
         text_x += dp_size[0] + 10
-
-    d.text((text_x, text_y), text, fill=(0, 0, 0), font=font)
 
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
@@ -118,3 +116,4 @@ async def cmode_callback(client, query: CallbackQuery):
 
 app.on_message(filters.command("cmode"))(cmode)
 app.on_callback_query(filters.regex("^cmode:"))(cmode_callback)
+
