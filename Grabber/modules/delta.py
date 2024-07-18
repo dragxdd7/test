@@ -38,7 +38,17 @@ def generate_random_math_equation_image() -> bytes:
 
     return img_byte_arr.read(), answer
 
+
+async def get_sudo_user_ids():
+    sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
+    return [user['user_id'] for user in sudo_users]
+
 async def set_message_limit(update: Update, context: CallbackContext):
+    sudo_user_ids = await get_sudo_user_ids()
+    user_id = update.effective_user.id
+    if user_id not in sudo_user_ids:
+        await update.message.reply_text("Only sudo users can set the message limit!")
+        return
     try:
         limit = int(context.args[0])
         if limit <= 0:
