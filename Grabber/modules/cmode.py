@@ -98,6 +98,7 @@ async def cmode_callback(client, query: CallbackQuery):
     try:
         data = query.data
 
+        # Mapping of rarity modes
         rarity_modes = {
             'rare': '🟠 Rare',
             'spacial': '🥴 Spacial',
@@ -114,10 +115,12 @@ async def cmode_callback(client, query: CallbackQuery):
             'all': 'All'
         }
 
+        # Extracting data from callback query
         _, rarity, user_id = data.split(':')
         user_id = int(user_id)
         collection_mode = rarity_modes.get(rarity)
 
+        # Ensure the user is authorized to change their collection mode
         if query.from_user.id != user_id:
             await query.answer("You cannot change someone else's collection mode.", show_alert=True)
             return
@@ -135,6 +138,7 @@ async def cmode_callback(client, query: CallbackQuery):
             file_id = photo.file_id
             break
 
+        # Download user's profile photo
         if file_id:
             file_path = await client.download_media(file_id)
             user_dp_path = os.path.abspath(file_path)  # Get the absolute file path
