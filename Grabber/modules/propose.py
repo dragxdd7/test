@@ -17,7 +17,7 @@ rarity_map = {
 last_propose_times = {}
 proposing_users = {}
 
-@app.on_message(filters.command("propose") & filters.private)
+@app.on_message(filters.command("propose") )
 async def propose(client, message: Message):
     user_id = message.from_user.id
 
