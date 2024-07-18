@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from . import app, sudo_filter
+from . import app, sudo_filter, dev_filter
 import os
 import re
 import subprocess
