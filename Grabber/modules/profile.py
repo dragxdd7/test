@@ -54,7 +54,7 @@ async def balance(client, message):
 
             balance_message = (
                 f"\t\t 𝐏𝐑𝐎𝐅𝐈𝐋𝐄\n\n"
-                f"ɴᴀᴍᴇ: {profile.first_name} {profile.last_name} [{gender_icon}]\n"
+                f"ɴᴀᴍᴇ: {profile.first_name or ''} {profile.last_name or ''} [{gender_icon}]\n"
                 f"ɪᴅ: `{profile.id}`\n\n"
                 f"ᴄᴏɪɴꜱ: Ŧ`{custom_format_number(balance_amount)}`\n"
                 f"ʙᴀɴᴋ: Ŧ`{custom_format_number(bank_balance)}`\n"
@@ -64,30 +64,21 @@ async def balance(client, message):
             )
 
             if profile_media:
-                await app.send_photo(
-                    message.chat.id,
+                await message.reply_photo(
                     photo=profile_media,
-                    caption=balance_message,
-                    reply_to_message_id=message.id
+                    caption=balance_message
                 )
             else:
-                await app.send_message(
-                    message.chat.id,
-                    balance_message,
-                    reply_to_message_id=message.id
+                await message.reply_text(
+                    balance_message
                 )
 
         else:
-            balance_message = "Claim bonus first using /xbonus"
-            await app.send_message(
-                message.chat.id,
-                balance_message,
-                reply_to_message_id=message.id
+            await message.reply_text(
+                "Claim bonus first using /xbonus"
             )
 
     except Exception as e:
-        await app.send_message(
-            message.chat.id,
-            f"An error occurred: {e}",
-            reply_to_message_id=message.id
+        await message.reply_text(
+            f"An error occurred: {e}"
         )
