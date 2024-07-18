@@ -8,13 +8,13 @@ from . import app, collection, user_collection
 async def harem_command(client, message):
     user_id = message.from_user.id
 
-    user = await user_collection.find_one({'id': user_id})
-    if not user or 'characters' not in user:
-        message_text = '**𝙔𝙤𝙪 𝙃𝙖𝙫𝙚𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...**'
-        await message.reply_text(message_text)
-        return
-
     try:
+        user = await user_collection.find_one({'id': user_id})
+        if not user or 'characters' not in user:
+            message_text = '**𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...**'
+            await message.reply_text(message_text)
+            return
+
         cmode = user.get('collection_mode', 'All')
 
         if cmode != 'All':
@@ -77,7 +77,7 @@ async def harem_command(client, message):
 
         await message.reply_text(harem_message, reply_markup=reply_markup)
 
-    except KeyError as e:
+    except Exception as e:
         await message.reply_text(f"An error occurred: {e}")
 
 @app.on_callback_query(filters.regex(r"harem:\d+:\d+"))
