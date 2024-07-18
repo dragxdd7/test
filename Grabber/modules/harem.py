@@ -4,8 +4,8 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from . import user_collection, app
 
-@app.on_message(filters.command("harem"))
-async def harem_command(client, message):
+
+async def harem(message, client, page):
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
@@ -26,7 +26,6 @@ async def harem_command(client, message):
     unique_characters = list({character['id']: character for character in characters}.values())
     total_pages = math.ceil(len(unique_characters) / 7)
 
-    page = 0
     harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
     harem_message += "--------------------------------------\n\n"
 
@@ -71,11 +70,12 @@ async def harem_command(client, message):
         fav_character = next((c for c in user['characters'] if c['id'] == fav_character_id), None)
 
         if fav_character and 'img_url' in fav_character:
-            await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
+            await client.send_photo(message.chat.id, photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
             return
 
-    await message.reply_text(harem_message, reply_markup=reply_markup)
+    await client.send_message(message.chat.id, harem_message, reply_markup=reply_markup)
 
+# Define the callback function for handling button presses
 @app.on_callback_query()
 async def harem_callback(client, callback_query):
     data = callback_query.data
