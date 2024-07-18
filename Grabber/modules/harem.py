@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from . import user_collection, app
 
-# Define the harem function
+@app.on_message(filters.command("harem"))
 async def harem_command(client, message):
     user_id = message.from_user.id
 
@@ -76,7 +76,6 @@ async def harem_command(client, message):
 
     await client.send_message(message.chat.id, harem_message, reply_markup=reply_markup)
 
-# Define the callback function for handling button presses
 @app.on_callback_query()
 async def harem_callback(client, callback_query):
     data = callback_query.data
