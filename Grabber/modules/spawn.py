@@ -103,7 +103,7 @@ async def message_counter(update, context):
     await delta(update, context)
     await handle_messages(update, context)
     #await check_answer(update, context)
-    chat_id = str(update.on_message.chat.id)
+    chat_id = str(update.chat.id)
     user_id = update.from_user.id  # Corrected
 
     if chat_id not in locks:
