@@ -4,7 +4,7 @@ from pyrogram.types import Message
 from telegraph import upload_file
 from . import user_collection, app
 
-@app.on_message(filters.command("setpfp") & filters.reply & filters.photo)
+@app.on_message(filters.command("setpfp"))
 async def set_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
     reply_message = message.reply_to_message
