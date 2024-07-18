@@ -39,16 +39,8 @@ async def fav(client, message):
 
     msg = await message.reply_text(f"Do you want to set {character['name']} as your favorite?", reply_markup=keyboard)
 
-    # Debugging: Print the type and attributes of msg
-    print(f"Message type: {type(msg)}")
-    print(f"Message attributes: {dir(msg)}")
-    print(f"Message content: {msg}")
-
-    # Check if 'msg' is not None and has the 'message_id' attribute
-    if msg and hasattr(msg, 'message_id'):
-        user['pending_message_id'] = msg.message_id
-    else:
-        await message.reply_text('Failed to set favorite due to an unexpected error.')
+    if msg:
+        user['pending_message_id'] = msg.id  # Use msg.id instead of msg.message_id
 
     await user_collection.update_one({'id': user_id}, {'$set': user})
 
