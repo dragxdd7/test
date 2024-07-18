@@ -87,14 +87,13 @@ async def sumu(client, query: CallbackQuery):
             await query.answer(f"Correct! You earned {reward_amount} 🔖", show_alert=True)
 
             await add(user_id, reward_amount)
-            new_caption = f"Solve the math equation!\n\n{user_name} solved it correctly and earned {reward_amount} 🔖"
+            new_caption = f"Solved by {user_name}! Congratulations! You earned {reward_amount} 🔖"
+            await query.message.edit_caption(caption=new_caption, reply_markup=None)
+
+            del math_questions[chat_id]
         else:
             await query.answer("Incorrect! Try again later.", show_alert=True)
-            new_caption = f"Solve the math equation!\n\n{user_name} attempted but was incorrect."
-
-        del math_questions[chat_id]
-
-        await query.message.edit_caption(caption=new_caption, reply_markup=None)
+            await query.answer()
 
 app.on_message(filters.text)(delta)
 app.on_callback_query()(sumu)
