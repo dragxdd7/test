@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from . import app, collection, user_collection
 
-@Client.on_message(filters.command("harem"))
+@app.on_message(filters.command("harem"))
 async def harem_command(client, message):
     user_id = message.from_user.id
 
@@ -77,7 +77,7 @@ async def harem_command(client, message):
     await message.reply_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
 
 
-@Client.on_callback_query(filters.regex(r"harem:\d+:\d+"))
+@app.on_callback_query(filters.regex(r"harem:\d+:\d+"))
 async def harem_callback(client, callback_query):
     data = callback_query.data
 
