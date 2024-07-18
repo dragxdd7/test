@@ -123,7 +123,7 @@ async def forceclose_command(_, CallbackQuery):
 
 @app.on_message(
     filters.command("sh")
-    & SUDOERS
+    & sudo_filter
 )
 async def shellrunner(client, message):
     if len(message.command) < 2:
