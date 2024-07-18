@@ -167,5 +167,5 @@ def xscrabble(update: Update, context: CallbackContext) -> None:
 scrabble_handler = CommandHandler("scrabble", scrabble)
 xscrabble_handler = CommandHandler("xscrabble", xscrabble)
 
-application.dispatcher.add_handler(scrabble_handler)
-application.dispatcher.add_handler(xscrabble_handler)
+application.add_handler(scrabble_handler)
+application.add_handler(xscrabble_handler)
