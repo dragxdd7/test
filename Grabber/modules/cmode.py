@@ -122,11 +122,14 @@ async def cmode_callback(client, query: CallbackQuery):
             await query.answer("You cannot change someone else's collection mode.", show_alert=True)
             return
 
+        # Update user's collection mode in the database
         await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
 
+        # Retrieve username
         username = query.from_user.username
 
-        profile_photos = client.get_chat_photos(query.from_user.id)
+        # Fetch user's profile photo
+        profile_photos = await client.get_chat_photos(query.from_user.id)
         file_id = None
         async for photo in profile_photos:
             file_id = photo.file_id
@@ -138,20 +141,19 @@ async def cmode_callback(client, query: CallbackQuery):
         else:
             user_dp_path = None
 
+        # Create new image with updated collection mode and user info
         img_path = create_cmode_image(username, user_id, collection_mode, user_dp_path)
-        logging.info("Image path: %s", img_path)
-
         if img_path is None:
             await query.answer("Failed to create image.", show_alert=True)
             return
 
         new_caption = f"Rarity edited to: {collection_mode}"
 
+        # Edit the message with the updated image and caption
         reply_markup = IKM([])
-
-        await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
         await query.edit_message_media(media=InputMediaPhoto(media=img_path, caption=new_caption), reply_markup=reply_markup)
+        await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
 
     except Exception as e:
         logging.error("Error in cmode_callback: %s", e)
-        await query.answer(f"Error in callback: {e}", show_alert=True)
+        await query.answer(f"Error processing your request.", show_alert=True)
