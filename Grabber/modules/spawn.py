@@ -5,12 +5,12 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 
 from Grabber import collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from Grabber.utils.bal import add, deduct, show
+from Grabber.utils.bal import add, deduct, show, app
 from .delta import delta
 from .gandu import handle_messages
 #from .scrabble import check_answer
 
-app = Client("my_bot")
+
 
 locks = {}
 message_counters = {}
