@@ -36,8 +36,11 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
             img.paste(user_dp, (text_x, text_y))
             text_x += dp_size[0] + 10
 
+        d.text((text_x, text_y), text, font=font, fill=(255, 255, 255))
+
         img_path = f'/tmp/cmode_{user_id}.png'
         img.save(img_path)
+        img.close()
         logging.info("Image created successfully: %s", img_path)
 
         return img_path
@@ -54,7 +57,6 @@ async def cmode(client, message):
         username = message.from_user.username
         logging.info("User ID: %s, Username: %s", user_id, username)
 
-        # Iterate over the async generator to get the profile photos
         profile_photos = client.get_chat_photos(message.from_user.id)
         file_id = None
         async for photo in profile_photos:
@@ -93,6 +95,7 @@ async def cmode(client, message):
 
     except Exception as e:
         logging.error("Error in cmode command: %s", e)
+        await message.reply_text(f"Error in /cmode command: {e}")
 
 @app.on_callback_query(filters.regex("^cmode:"))
 async def cmode_callback(client, query: CallbackQuery):
@@ -127,7 +130,6 @@ async def cmode_callback(client, query: CallbackQuery):
 
         username = query.from_user.username
 
-        # Iterate over the async generator to get the profile photos
         profile_photos = client.get_chat_photos(query.from_user.id)
         file_id = None
         async for photo in profile_photos:
@@ -141,6 +143,7 @@ async def cmode_callback(client, query: CallbackQuery):
             user_dp_url = None
 
         img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
+        logging.info("Image path: %s", img_path)
 
         if img_path is None:
             await query.answer("Failed to create image.", show_alert=True)
@@ -156,3 +159,4 @@ async def cmode_callback(client, query: CallbackQuery):
 
     except Exception as e:
         logging.error("Error in cmode_callback: %s", e)
+        await query.answer(f"Error in callback: {e}", show_alert=True)
