@@ -1,6 +1,6 @@
 import math
 from pyrogram import Client, filters
-from . import application, user_collection, collection, smex, app
+from . import user_collection, collection, smex, app
 
 def custom_format_number(num):
     if int(num) >= 10**6:
@@ -31,7 +31,7 @@ async def balance(client, message):
 
         user_data = await user_collection.find_one(
             {'id': user_id},
-            projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'xp': 1, 'gender': 1}
+            projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'xp': 1, 'gender': 1, 'profile_media': 1}
         )
 
         profile = message.from_user
@@ -42,6 +42,7 @@ async def balance(client, message):
             characters = user_data.get('characters', [])
             user_xp = user_data.get('xp', 0)
             gender = user_data.get('gender')
+            profile_media = user_data.get('profile_media')
 
             user_level = max(1, user_xp // 10)
             sumu = await smex(user_id)
@@ -62,11 +63,31 @@ async def balance(client, message):
                 f"ᴇxᴘ: `{user_xp}`\n"
             )
 
-            await app.send_message(message.chat.id, balance_message)
+            if profile_media:
+                await app.send_photo(
+                    message.chat.id,
+                    photo=profile_media,
+                    caption=balance_message,
+                    reply_to_message_id=message.message_id
+                )
+            else:
+                await app.send_message(
+                    message.chat.id,
+                    balance_message,
+                    reply_to_message_id=message.message_id
+                )
 
         else:
             balance_message = "Claim bonus first using /xbonus"
-            await app.send_message(message.chat.id, balance_message)
+            await app.send_message(
+                message.chat.id,
+                balance_message,
+                reply_to_message_id=message.message_id
+            )
 
     except Exception as e:
-        await app.send_message(message.chat.id, f"An error occurred: {e}")
+        await app.send_message(
+            message.chat.id,
+            f"An error occurred: {e}",
+            reply_to_message_id=message.message_id
+        )
