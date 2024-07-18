@@ -1,6 +1,7 @@
 from Grabber import db, application
 from pyrogram import Client, filters
 from pyrogram.types import Message
+from . import app
 
 sudb = db.sudo
 devb = db.dev
