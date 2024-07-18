@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 from pymongo import MongoClient
 import random
 import asyncio
-from . import user_collection, clan_collection, app as application, Grabberu
+from . import user_collection, clan_collection,app as application, Grabberu
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -27,9 +27,9 @@ def format_timedelta(delta):
     hours, minutes = divmod(minutes, 60)
     days = delta.days
     if days > 0:
-        return f"{days}d {hours}h {minutes}m"
+        return f"{days}d {hours}m {minutes}s"
     elif hours > 0:
-        return f"{hours}h {minutes}m"
+        return f"{hours}h {minutes}s"
     elif minutes > 0:
         return f"{minutes}m {seconds}s"
     else:
@@ -45,47 +45,41 @@ async def battle_command(client, message):
         return
 
     user_b_id = message.reply_to_message.from_user.id
-    user_b_name = message.reply_to_message.from_user.first_name
-
-    user_a_name = message.from_user.first_name
-
-    await initiate_battle(user_a_id, user_a_name, user_b_id, user_b_name)
-
-async def initiate_battle(user_a_id, user_a_name, user_b_id, user_b_name):
     user_b_data = await user_collection.find_one_and_update(
         {'id': user_b_id},
-        {'$setOnInsert': {'id': user_b_id, 'first_name': user_b_name, 'gold': 0, 'weapons': []}},
+        {'$setOnInsert': {'id': user_b_id, 'first_name': message.reply_to_message.from_user.first_name, 'gold': 0, 'weapons': []}},
         upsert=True,
         return_document=True
     )
 
     if not user_b_data:
-        # Handle error if opponent information couldn't be created
+        await message.reply_text("Opponent information not found and could not be created.")
         return
 
     # Check if both users are in the same clan
-    user_a_data = await user_collection.find_one({'id': user_a_id})
-    user_a_clan_id = user_a_data.get('clan_id') if user_a_data else None
+    user_a_clan_id = user_a_data.get('clan_id')
     user_b_clan_id = user_b_data.get('clan_id')
 
     if user_a_clan_id and user_b_clan_id and user_a_clan_id == user_b_clan_id:
-        # Handle same clan battle restriction
+        await message.reply_text("You cannot battle someone from the same clan.")
         return
 
-    await send_battle_challenge(user_a_name, user_b_name, user_a_id, user_b_id)
+    user_a_name = user_a_data.get('first_name', 'User A')
+    user_b_name = user_b_data.get('first_name', 'User B')
 
-async def send_battle_challenge(user_a_name, user_b_name, user_a_id, user_b_id):
+    # Log attacker's weapons
+    attacker_weapons = user_a_data.get('weapons', [])
+
+    # Log defender's weapons
+    defender_weapons = user_b_data.get('weapons', [])
+
     keyboard = [
         [InlineKeyboardButton("Fight", callback_data=f"battle_accept:{user_a_id}:{user_b_id}"),
          InlineKeyboardButton("Run", callback_data=f"battle_decline:{user_a_id}:{user_b_id}")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await application.send_message(
-        chat_id=user_b_id,
-        text=f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?",
-        reply_markup=reply_markup
-    )
+    await message.reply_to_message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
 async def handle_battle_accept(client, query: CallbackQuery):
@@ -194,7 +188,16 @@ async def handle_battle_attack(client, query: CallbackQuery):
     if a_health == 0 or b_health == 0:
         winner_id = user_a_id if a_health > 0 else user_b_id
         loser_id = user_b_id if winner_id == user_a_id else user_a_id
-        await end_battle(winner_id, loser_id, attacker_name, defender_name)
+        await end_battle(winner_id, loser_id)
+        winner_data = await user_collection.find_one({'id': winner_id})
+        loser_data = await user_collection.find_one({'id': loser_id})
+        winner_name = winner_data.get('first_name', 'Winner')
+        loser_name = loser_data.get('first_name', 'Loser')
+        await query.message.edit_text(
+            f"{attacker_name} attacked with {weapon_name}!\n"
+            f"{defender_name} has {defender_health}/100 health left.\n"
+            f"{winner_name} wins the battle!"
+        )
         return
 
     next_turn_name = defender_name if next_turn_id == user_b_id else attacker_name
@@ -218,7 +221,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
 
-async def end_battle(winner_id, loser_id, winner_name, loser_name):
+async def end_battle(winner_id, loser_id):
     loser_data = await user_collection.find_one_and_update(
         {'id': loser_id},
         {'$set': {'gold': 0}},
@@ -243,6 +246,11 @@ async def end_battle(winner_id, loser_id, winner_name, loser_name):
             {'id': loser_id},
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
+
+        winner_data = await user_collection.find_one({'id': winner_id})
+        winner_name = winner_data.get('first_name', 'Winner') if winner_data else 'Winner'
+
+        loser_name = loser_data.get('first_name', 'Loser')
 
         await application.send_message(
             chat_id=winner_id,
