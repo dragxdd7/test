@@ -49,8 +49,8 @@ async def set_message_limit(client, message):
     except (IndexError, ValueError):
         await message.reply_text("Please provide a valid message limit (integer).")
 
-async def delta(client, message):
-    chat_id = message.chat.id
+async def delta(client, query: CallbackQuery):
+    chat_id = query.message.chat.id  # Access chat_id through query.message.chat.id
 
     if chat_id in group_message_counts:
         group_message_counts[chat_id]['count'] += 1
