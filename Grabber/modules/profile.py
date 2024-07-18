@@ -1,4 +1,3 @@
-import math
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
 from . import app, user_collection, collection
@@ -53,11 +52,10 @@ async def balance(client, message):
             )
 
             # Fetch profile photos using user_info object
-            if user_info.photo:
-                if user_info.photo.file_id:
-                    await client.send_photo(message.chat.id, photo=user_info.photo.file_id, caption=balance_message)
-                else:
-                    await client.send_message(message.chat.id, balance_message)
+            profile_photos = await client.get_profile_photos(user_id)
+            if profile_photos.total_count > 0:
+                photo_file_id = profile_photos.photos[0][-1].file_id
+                await client.send_photo(message.chat.id, photo=photo_file_id, caption=balance_message)
             else:
                 await client.send_message(message.chat.id, balance_message)
 
