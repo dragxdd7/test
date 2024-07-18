@@ -1,70 +1,58 @@
-import asyncio
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
-from Grabber import collection, user_collection, application
-from . import app, dev_filter
+from telegram import Update, InlineQueryResultPhoto as IRP, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from Grabber import user_collection, collection, application
 
-async def get_user_info(user_id):
-    user = await user_collection.find_one({'id': user_id})
-    if user:
-        username = user.get('username', '@none')
-        character_count = len(user.get('characters', []))
-        return username, character_count
-    else:
-        return None, 0
-
-async def info_command(client, message):
-    if not message.reply_to_message:
-        await message.reply_text("You need to reply to a user's message to get information!")
+async def details(update: Update, context: CallbackContext) -> None:
+    try:
+        args = context.args
+        character_id = args[0]
+    except (IndexError, ValueError):
+        await update.message.reply_text("Please provide a valid character ID.")
         return
 
-    target_user_id = message.reply_to_message.from_user.id
-    target_user_name = message.reply_to_message.from_user.username
-    username, character_count = await get_user_info(target_user_id)
+    character = await collection.find_one({'id': character_id})
 
-    message_text = (
-        f"User Info:\n\n"
-        f"ID: {target_user_id}\n"
-        f"Username: {target_user_name}\n"
-        f"Total Characters: {character_count}"
-    )
+    if character:
+        global_count = await user_collection.count_documents({'characters.id': character['id']})
 
-    keyboard = IKM(
-        [
-            [IKB("Clear Collection", callback_data=f"clear_{target_user_id}")]
-        ]
-    )
-
-    user_profile_photos = await client.get_profile_photos(target_user_id)
-
-    if user_profile_photos.total_count > 0:
-        file_id = user_profile_photos.photos[0].file_id
-        await message.reply_photo(
-            photo=file_id,
-            caption=message_text,
-            reply_markup=keyboard,
-            parse_mode="html"
+        rarity = character.get('rarity', None)
+        caption = (
+            f"<b>ᴄʜᴀʀᴀᴄᴛᴇʀ ᴅᴇᴛᴀɪʟs</b>\n"
+            f"🌟 <b>ɴᴀᴍᴇ</b>: {character['name']}\n"
+            f"📺 <b>ᴀɴɪᴍᴇ</b>: {character['anime']}\n"
+            f"🌟 <b>ʀᴀʀɪᴛʏ</b>: {rarity}\n"
+            f"🆔 <b>ɪᴅ</b>: {character['id']}\n\n"
+            f"📊 <b>ᴏᴡɴᴇᴅ ʙʏ</b>: {global_count} ᴜsᴇʀs"
         )
+
+        keyboard = [
+            [IKB("ʜᴏᴡ ᴍᴀɴʏ ɪ ʜᴀᴠᴇ ❓", callback_data=f"check_{character_id}")]
+        ]
+        reply_markup = IKM(keyboard)
+
+        await update.message.reply_photo(
+            photo=character['img_url'],
+            caption=caption,
+            parse_mode='HTML',
+            reply_markup=reply_markup
+        )
+
     else:
-        await message.reply_text(message_text, reply_markup=keyboard)
+        await update.message.reply_text("Character not found.")
 
-async def clear_collection(user_id):
-    await user_collection.update_one({'id': user_id}, {'$set': {'characters': []}})
-    return f"Harem for user {user_id} has been destroyed."
+async def check(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    data = query.data.split('_')
+    character_id = data[1]
 
-async def ccc(client, callback_query):
-    user_id = callback_query.from_user.id
+    user_data = await user_collection.find_one({'id': user_id})
 
-    data = callback_query.data
-    if data.startswith("clear_"):
-        user_id_to_clear = int(data.split("_")[1])
-        result_message = await clear_collection(user_id_to_clear)
-        await callback_query.answer(text=result_message)
+    if user_data:
+        characters = user_data.get('characters', [])
+        quantity = sum(1 for char in characters if char['id'] == character_id)
+        await query.answer(f"You have {quantity} of this character.", show_alert=True)
+    else:
+        await query.answer("You have 0 of this character.", show_alert=True)
 
-@app.on_message(filters.command("info") & filters.reply & dev_filter)
-async def info_handler(client, message):
-    await info_command(client, message)
-
-@app.on_callback_query(filters.regex(r'^clear_') & dev_filter)
-async def clear_collection_handler(client, callback_query):
-    await ccc(client, callback_query)
+application.add_handler(CommandHandler('p', details))
