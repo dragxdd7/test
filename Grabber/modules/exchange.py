@@ -18,7 +18,7 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         return
     
     start_time = tz.localize(datetime.datetime.combine(now.date(), datetime.time(5, 30)))
-    end_time = tz.localize(datetime.datetime.combine(now.date(), datetime.time(0, 30))) + datetime.timedelta(days=1
+    end_time = tz.localize(datetime.datetime.combine(now.date(), datetime.time(0, 30))) + datetime.timedelta(days=1)
     
     if not (start_time <= now <= end_time):
         await message.reply_text("The /exchange command is only available between 5:30 am and 12:30 midnight on Saturdays.")
