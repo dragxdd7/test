@@ -34,7 +34,7 @@ def generate_random_math_equation_image():
     img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
 
-    return img_byte_arr, answer  # Return BytesIO object directly, not read()
+    return img_byte_arr, answer 
 
 @app.on_message(filters.command("stime") & sudo_filter)
 async def set_message_limit(client, message):
