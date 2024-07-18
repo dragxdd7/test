@@ -55,8 +55,8 @@ async def balance(client, message):
                 f"ᴇxᴘ: `{user_xp}`\n"
             )
 
-            # Fetch profile photos using Pyrogram's approach
-            profile_photos = await client.get_profile_photos(user_id)
+            # Fetch profile photos using user_info object
+            profile_photos = await client.get_profile_photos(user_info.id)
             if profile_photos.total_count > 0:
                 photo_file_id = profile_photos.photos[0].file_id
                 await client.send_photo(message.chat.id, photo=photo_file_id, caption=balance_message)
