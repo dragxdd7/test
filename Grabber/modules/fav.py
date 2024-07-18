@@ -1,13 +1,11 @@
-from . import app, collection, user_collection
+import asyncio
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, CallbackQuery
 
-@app.on_message(filters.command("fav"))
-async def fav_command(client, message):
-    await fav(client, message)
+from . import user_collection, app
 
-
-async def fav(client, message):
+@app.on_message(filters.command("fav") & filters.private)
+async def fav(client: Client, message: Message):
     user_id = message.from_user.id
 
     if len(message.command) < 2:
@@ -26,48 +24,34 @@ async def fav(client, message):
         await message.reply_text('𝙏𝙝𝙞𝙨 slave 𝙞𝙨 𝙉𝙤𝙩 𝙄𝙣 𝙮𝙤𝙪𝙧 list')
         return
 
-    user['pending_favorite'] = character_id
-
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("Confirm", callback_data=f"fav_confirm_{character_id}"),
-                InlineKeyboardButton("Cancel", callback_data="fav_cancel"),
+                InlineKeyboardButton("Confirm", callback_data=f'confirm_{character_id}'),
+                InlineKeyboardButton("Cancel", callback_data=f'cancel_{character_id}')
             ]
         ]
     )
 
-    msg = await message.reply_text(f"Do you want to set {character['name']} as your favorite?", reply_markup=keyboard)
+    await message.reply_text(f'Do you want to make {character["name"]} your favorite slave?', reply_markup=keyboard)
 
-    if msg:
-        user['pending_message_id'] = msg.id  # Use msg.id instead of msg.message_id
-
-    await user_collection.update_one({'id': user_id}, {'$set': user})
-
-
-@app.on_callback_query(filters.regex(r'^fav_confirm_(\d+)$'))
-async def fav_confirm_callback(client, callback_query):
+@app.on_callback_query(filters.regex(r'^(confirm_|cancel_)'))
+async def button(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
-    character_id = int(callback_query.data.split('_')[-1])
+    data = callback_query.data
 
-    user = await user_collection.find_one({'id': user_id})
-
-    if user and 'pending_favorite' in user and user['pending_favorite'] == character_id:
-        await user_collection.update_one({'id': user_id}, {'$set': {'favorites': [character_id]}})
-        await user_collection.update_one({'id': user_id}, {'$unset': {'pending_favorite': '', 'pending_message_id': ''}})
-        await callback_query.message.edit_text(f'🥳 Slave {character_id} is now your favorite!')
-        await callback_query.answer('Favorite set successfully.', show_alert=True)
-    else:
-        await callback_query.answer('Could not set favorite. Please try again.', show_alert=True)
-
-
-@app.on_callback_query(filters.regex(r'^fav_cancel$'))
-async def fav_cancel_callback(client, callback_query):
-    user_id = callback_query.from_user.id
-
-    user = await user_collection.find_one({'id': user_id})
-
-    if user and 'pending_message_id' in user:
-        await user_collection.update_one({'id': user_id}, {'$unset': {'pending_favorite': '', 'pending_message_id': ''}})
-        await callback_query.message.delete()
-        await callback_query.answer('You have cancelled setting a favorite.', show_alert=True)
+    if data.startswith('confirm_'):
+        character_id = data.split('_')[1]
+        user = await user_collection.find_one({'id': user_id})
+        if user:
+            character = next((c for c in user['characters'] if c['id'] == character_id), None)
+            if character:
+                user['favorites'] = [character_id]
+                await user_collection.update_one({'id': user_id}, {'$set': {'favorites': user['favorites']}})
+                await callback_query.message.edit_text(f'🥳 Slave {character["name"]} is your favorite now...')
+            else:
+                await callback_query.message.edit_text('This slave is not in your list')
+        else:
+            await callback_query.message.edit_text('You have not got any slave yet...')
+    elif data.startswith('cancel_'):
+        await callback_query.message.edit_text('Operation canceled.')
