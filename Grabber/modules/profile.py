@@ -37,12 +37,9 @@ async def balance(client, message):
             gender_icon = '👦🏻' if gender == 'male' else '👧🏻' if gender == 'female' else '👶🏻'
 
             # Construct user's name
-            if user_info.first_name and user_info.last_name:
-                user_name = f"{user_info.first_name} {user_info.last_name}"
-            elif user_info.first_name:
-                user_name = user_info.first_name
-            else:
-                user_name = "Unknown"
+            user_name = user_info.first_name if user_info.first_name else "Unknown"
+            if user_info.last_name:
+                user_name += f" {user_info.last_name}"
 
             balance_message = (
                 f"\t\t 𝐏𝐑𝐎𝐅𝐈𝐋𝐄\n\n"
@@ -57,10 +54,8 @@ async def balance(client, message):
 
             # Fetch profile photos using user_info object
             if user_info.photo:
-                if user_info.photo.big_file_id:
-                    await client.send_photo(message.chat.id, photo=user_info.photo.big_file_id, caption=balance_message)
-                elif user_info.photo.small_file_id:
-                    await client.send_photo(message.chat.id, photo=user_info.photo.small_file_id, caption=balance_message)
+                if user_info.photo.file_id:
+                    await client.send_photo(message.chat.id, photo=user_info.photo.file_id, caption=balance_message)
                 else:
                     await client.send_message(message.chat.id, balance_message)
             else:
