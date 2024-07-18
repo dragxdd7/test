@@ -2,16 +2,16 @@ import math
 from itertools import groupby
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-from . import user_collection, app
+from . import app, collection, user_collection
 
-@app.on_message(filters.command("harem"))
+@Client.on_message(filters.command("harem"))
 async def harem_command(client, message):
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
-    if not user or 'characters' not in user:  # Check if 'characters' key exists
+    if not user:
         message_text = '𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...'
-        await client.send_message(message.chat.id, message_text)
+        await message.reply_text(message_text)
         return
 
     cmode = user.get('collection_mode', 'All')
@@ -26,8 +26,8 @@ async def harem_command(client, message):
     unique_characters = list({character['id']: character for character in characters}.values())
     total_pages = math.ceil(len(unique_characters) / 7)
 
-    page = 0
-    harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
+    page = 0  # Default to the first page
+    harem_message = f"<b>Collection - Page {page + 1}/{total_pages}</b>\n"
     harem_message += "--------------------------------------\n\n"
 
     current_characters = unique_characters[page * 7:(page + 1) * 7]
@@ -35,7 +35,7 @@ async def harem_command(client, message):
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            f"♦️ **{character['name']} (x{count})**\n"
+            f"♦️ <b>{character['name']} (x{count})</b>\n"
             f"   Anime: {character['anime']}\n"
             f"   ID: {character['id']}\n"
             f"   {character['rarity']}\n\n"
@@ -43,7 +43,7 @@ async def harem_command(client, message):
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
-    harem_message += f"**Total Characters: {total_count}**"
+    harem_message += f"<b>Total Characters: {total_count}</b>"
 
     keyboard = [[InlineKeyboardButton(f"ɪɴʟɪɴᴇ ({total_count})", switch_inline_query_current_chat=f"collection.{user_id}")]]
     if total_pages > 1:
@@ -71,12 +71,13 @@ async def harem_command(client, message):
         fav_character = next((c for c in user['characters'] if c['id'] == fav_character_id), None)
 
         if fav_character and 'img_url' in fav_character:
-            await client.send_photo(message.chat.id, photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
+            await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, parse_mode='HTML', reply_markup=reply_markup)
             return
 
-    await client.send_message(message.chat.id, harem_message, reply_markup=reply_markup)
+    await message.reply_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
 
-@app.on_callback_query()
+
+@Client.on_callback_query(filters.regex(r"harem:\d+:\d+"))
 async def harem_callback(client, callback_query):
     data = callback_query.data
 
