@@ -95,5 +95,5 @@ async def sumu(client, query: CallbackQuery):
             await query.answer("Incorrect! Try again later.", show_alert=True)
             await query.answer()
 
-app.on_message(filters.text)(delta)
+
 app.on_callback_query()(sumu)
