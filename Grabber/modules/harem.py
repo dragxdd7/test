@@ -9,7 +9,7 @@ async def harem_command(client, message):
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
-    if not user:
+    if not user or 'characters' not in user:  # Check if 'characters' key exists
         message_text = '𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...'
         await client.send_message(message.chat.id, message_text)
         return
