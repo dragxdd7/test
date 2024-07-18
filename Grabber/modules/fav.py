@@ -65,7 +65,7 @@ async def fav_cancel_callback(_, callback_query):
         await callback_query.answer('You have cancelled setting a favorite.', show_alert=True)
 
 
-@app.on_message(filters.command("fav") & filters.private)
+@app.on_message(filters.command("fav"))
 async def fav_command(client, message):
     await fav(client, message)
 
