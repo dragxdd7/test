@@ -4,7 +4,7 @@ from Grabber import application, user_collection
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 import asyncio
-from . import add, deduct, show, app 
+from . import add, deduct, show, app
 
 last_payment_times = {}
 last_loan_times = {}
@@ -32,7 +32,11 @@ async def mpay(client, message):
     try:
         amount = int(message.text.split()[1])
         if amount <= 0:
-            raise ValueError("Amount must be greater than zero.")        
+            raise ValueError("Amount must be greater than zero.")
+    except (IndexError, ValueError):
+        await message.reply_text("Invalid amount. Please provide a valid positive amount.")
+        return
+
     sender_balance = await show(sender_id)
     if not sender_balance or sender_balance < amount:
         await message.reply_text("Insufficient balance to make the payment.")
@@ -56,4 +60,3 @@ async def mpay(client, message):
         message.chat.id,
         f"Payment Successful! You Paid Ŧ{amount} Tokens to {message.reply_to_message.from_user.username}."
     )
-
