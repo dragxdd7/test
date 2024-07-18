@@ -4,7 +4,8 @@ from PIL import Image, ImageDraw, ImageFont
 import random
 import io
 import time
-from . import add, deduct, show, sudb, application 
+from . import add, deduct, show, sudb, application
+from words import words 
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
