@@ -68,13 +68,13 @@ async def balance(client, message):
                     message.chat.id,
                     photo=profile_media,
                     caption=balance_message,
-                    reply_to_message_id=message.message_id
+                    reply_to_message_id=message.id
                 )
             else:
                 await app.send_message(
                     message.chat.id,
                     balance_message,
-                    reply_to_message_id=message.message_id
+                    reply_to_message_id=message.id
                 )
 
         else:
@@ -82,12 +82,12 @@ async def balance(client, message):
             await app.send_message(
                 message.chat.id,
                 balance_message,
-                reply_to_message_id=message.message_id
+                reply_to_message_id=message.id
             )
 
     except Exception as e:
         await app.send_message(
             message.chat.id,
             f"An error occurred: {e}",
-            reply_to_message_id=message.message_id
+            reply_to_message_id=message.id
         )
