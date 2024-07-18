@@ -14,7 +14,7 @@ async def cbq(update: Update, context: CallbackContext):
         await bc(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
-    elif data.startswith('correct')
+    elif data.startswith('correct'):
         await sumu(update, context)
     
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
