@@ -1,15 +1,11 @@
 import random
 import io
-import logging
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app
-
-# Logging configuration
-logging.basicConfig(filename='bot.log', level=logging.ERROR, format='%(asctime)s %(levelname)s: %(message)s')
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -41,9 +37,9 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         return img_path
 
     except Exception as e:
-        logging.error(f"Error in create_cmode_image: {e}")
         return None
 
+@app.on_message(filters.command("cmode"))
 async def cmode(client, message):
     try:
         user_id = message.from_user.id
@@ -76,10 +72,9 @@ async def cmode(client, message):
         await client.send_photo(chat_id=message.chat.id, photo=img_path, caption="Choose your collection mode:", reply_markup=reply_markup)
 
     except Exception as e:
-        logging.error(f"Error in cmode command: {e}")
+        pass
 
-app.on_message(filters.command("cmode"))(cmode)
-
+@app.on_callback_query(filters.regex("^cmode:"))
 async def cmode_callback(client, query: CallbackQuery):
     try:
         data = query.data
@@ -131,7 +126,4 @@ async def cmode_callback(client, query: CallbackQuery):
         await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
 
     except Exception as e:
-        logging.error(f"Error in cmode callback: {e}")
-
-app.on_callback_query(filters.regex("^cmode:"))(cmode_callback)
-
+        pass
