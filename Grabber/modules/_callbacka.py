@@ -2,7 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from Grabber import application
 from .cmode import cmode_callback
-from Grabber.utils.button import button_click 
+from Grabber.utils.button import button_click as bc
 from .delta import sumu
 
 async def cbq(update: Update, context: CallbackContext):
@@ -10,7 +10,6 @@ async def cbq(update: Update, context: CallbackContext):
     data = query.data
 
     if data == 'name': 
-        from .spawn import bc
         await bc(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
