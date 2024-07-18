@@ -46,7 +46,7 @@ async def fav(client, message):
 
 
 @app.on_callback_query(filters.regex(r'^fav_confirm_(\d+)$'))
-async def fav_confirm_callback(_, callback_query):
+async def fav_confirm_callback(client, callback_query):
     user_id = callback_query.from_user.id
     character_id = int(callback_query.data.split('_')[-1])
 
@@ -56,12 +56,13 @@ async def fav_confirm_callback(_, callback_query):
         await user_collection.update_one({'id': user_id}, {'$set': {'favorites': [character_id]}})
         await user_collection.update_one({'id': user_id}, {'$unset': {'pending_favorite': '', 'pending_message_id': ''}})
         await callback_query.message.edit_text(f'🥳 Slave {character_id} is now your favorite!')
-
-    await callback_query.answer()
+        await callback_query.answer('Favorite set successfully.', show_alert=True)
+    else:
+        await callback_query.answer('Could not set favorite. Please try again.', show_alert=True)
 
 
 @app.on_callback_query(filters.regex(r'^fav_cancel$'))
-async def fav_cancel_callback(_, callback_query):
+async def fav_cancel_callback(client, callback_query):
     user_id = callback_query.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
