@@ -2,16 +2,23 @@ import re
 import time
 from html import escape
 from cachetools import TTLCache
-from pymongo import DESCENDING
+from pymongo import MongoClient, DESCENDING
 import asyncio
+import logging
 
-from pyrogram import Client, filters
-from pyrogram.types import InlineQueryResultPhoto, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from telegram import Update, InlineQueryResultPhoto
+from telegram.ext import InlineQueryHandler, CallbackContext, CommandHandler
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from . import user_collection, collection, db, app
+from . import user_collection, collection, application, db
 
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Define a lock for concurrency control
 lock = asyncio.Lock()
-
+# Create necessary indexes
 db.characters.create_index([('id', DESCENDING)])
 db.characters.create_index([('anime', DESCENDING)])
 db.characters.create_index([('img_url', DESCENDING)])
@@ -20,33 +27,41 @@ db.user_collection.create_index([('characters.id', DESCENDING)])
 db.user_collection.create_index([('characters.name', DESCENDING)])
 db.user_collection.create_index([('characters.img_url', DESCENDING)])
 
+# Initialize caches
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
+# Function to clear the caches
 def clear_all_caches():
     all_characters_cache.clear()
     user_collection_cache.clear()
 
+# Call the function to clear the caches
 clear_all_caches()
 
-async def inlinequery(client, update):
+async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.query
-        offset = int(update.offset) if update.offset else 0
+        query = update.inline_query.query
+        offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
 
+        logger.info("Processing query: %s", query)
+
+        # Determine search context
         if query.startswith('collection.'):
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
             if user_id.isdigit():
                 if user_id in user_collection_cache:
                     user = user_collection_cache[user_id]
+                    logger.info("User data fetched from cache")
                 else:
                     user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
                     user_collection_cache[user_id] = user
+                    logger.info("User data fetched from DB")
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
@@ -64,15 +79,19 @@ async def inlinequery(client, update):
             if query:
                 regex = re.compile(query, re.IGNORECASE)
                 all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
+                logger.info("Filtered characters fetched from DB")
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
+                    logger.info("All characters fetched from cache")
                 else:
                     all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
                     all_characters_cache['all_characters'] = all_characters
+                    logger.info("All characters fetched from DB")
 
         characters = list(all_characters)[start_index:end_index]
 
+        # Bulk operation to fetch counts
         character_ids = [character['id'] for character in characters]
         anime_names = list(set(character['anime'] for character in characters))
 
@@ -98,6 +117,7 @@ async def inlinequery(client, update):
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
 
+            
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
                 user_anime_characters = sum(1 for c in user.get('characters', []) if c['anime'] == character['anime'])
@@ -135,18 +155,18 @@ async def inlinequery(client, update):
                 )
             )
 
-        await update.answer(results, next_offset=next_offset, cache_time=5)
+        await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
+        logger.info("Query processed in %s seconds", time.time() - start_time)
 
-async def check_button(client, callback_query):
-    user_id = callback_query.from_user.id
-    character_id = callback_query.data.split('_')[1]
+application.add_handler(InlineQueryHandler(inlinequery, block=False))
+
+async def check(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    character_id = query.data.split('_')[1]
 
     user_data = await user_collection.find_one({'id': user_id}, {'characters': 1})
     characters = user_data.get('characters', [])
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
-    await callback_query.answer(f"You have {quantity} of this character.", show_alert=True)
-
-
-app.add_handler(app.on_inline_query(inlinequery))
-app.add_handler(app.on_callback_query(check_button))
+    await query.answer(f"You have {quantity} of this character.", show_alert=True)
