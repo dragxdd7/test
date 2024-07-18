@@ -1,17 +1,38 @@
-from pyrogram import Client, filters
-from pyrogram.types import Message
+from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from telegram.ext import CommandHandler, CallbackContext, MessageHandler, Filters
 from PIL import Image, ImageDraw, ImageFont
 import random
 import io
-from words import words
 import time
-from . import add, deduct, show,  sudo_filter ,app
+from . import add, deduct, show, sudb, application 
 
 BG_IMAGE_PATH = "Images/blue.jpg"
-DEFAULT_MESSAGE_LIMIT = 45
+DEFAULT_MESSAGE_LIMIT = 30
 group_message_counts = {}
 alpha_dict = {}
 guess_start_time = {}
+
+async def get_sudo_user_ids():
+    sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
+    return [user['user_id'] for user in sudo_users]
+
+async def set_message_limit(update: Update, context: CallbackContext):
+    sudo_user_ids = await get_sudo_user_ids()
+    user_id = update.effective_user.id
+    if user_id not in sudo_user_ids:
+        await update.message.reply_text("Only sudo users can set the message limit!")
+        return
+
+    try:
+        limit = int(context.args[0])
+        if limit <= 0:
+            await update.message.reply_text("Message limit must be a positive integer!")
+            return
+
+        group_message_counts[update.effective_chat.id] = {'count': 0, 'limit': limit}
+        await update.message.reply_text(f"Message limit set to {limit}. Now spawning images every {limit} messages!")
+    except (IndexError, ValueError):
+        await update.message.reply_text("Please provide a valid message limit (integer).")
 
 def generate_random_image(word: str) -> bytes:
     img = Image.open(BG_IMAGE_PATH)
@@ -28,52 +49,50 @@ def generate_random_image(word: str) -> bytes:
 
     return img_byte_arr.read()
 
-@app.on_message(filters.command("wtime") & sudo_filter)
-async def set_message_limit(client, message: Message):
-    try:
-        limit = int(message.command[1])
-        if limit <= 0:
-            await message.reply_text("Message limit must be a positive integer!")
-            return
+async def handle_guess(update: Update, context: CallbackContext):
+    if not update.effective_message.text:
+        return
+    message_text = update.effective_message.text.strip().lower()
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
+    user_name = update.effective_user.first_name
 
-        group_message_counts[message.chat.id] = {'count': 0, 'limit': limit}
-        await message.reply_text(f"Message limit set to {limit}. Now spawning images every {limit} messages!")
-    except (IndexError, ValueError):
-        await message.reply_text("Please provide a valid message limit (integer).")
+    if chat_id in alpha_dict:
+        correct_word = alpha_dict[chat_id]
 
+        if message_text == correct_word:
+            reward_amount = random.randint(20000, 40000)
+            alpha_dict.pop(chat_id)
 
-async def handle_messages(client, message: Message):
-    if message.chat.id in group_message_counts:
-        group_message_counts[message.chat.id]['count'] += 1
+            end_time = time.time()
+            time_taken = int(end_time - guess_start_time.pop(chat_id))
+
+            await update.message.reply_text(f"{user_name}, you got {reward_amount} 🔖 for completing the word!\n\nTime taken: {time_taken}s")
+            await add(user_id, reward_amount)
+
+async def handle_messages(update: Update, context: CallbackContext):
+    await handle_guess(update, context)
+    chat_id = update.effective_chat.id
+
+    if chat_id in group_message_counts:
+        group_message_counts[chat_id]['count'] += 1
     else:
-        group_message_counts[message.chat.id] = {'count': 1, 'limit': DEFAULT_MESSAGE_LIMIT}
+        group_message_counts[chat_id] = {'count': 1, 'limit': DEFAULT_MESSAGE_LIMIT}
 
-    if group_message_counts[message.chat.id]['limit'] and group_message_counts[message.chat.id]['count'] >= group_message_counts[message.chat.id]['limit']:
-        group_message_counts[message.chat.id]['count'] = 0
+    if group_message_counts[chat_id]['limit'] and group_message_counts[chat_id]['count'] >= group_message_counts[chat_id]['limit']:
+        group_message_counts[chat_id]['count'] = 0
 
-        random_word = random.choice(words)
+        random_word = random.choice(words)  # Assuming `words` is defined somewhere
         image_bytes = generate_random_image(random_word)
 
-        alpha_dict[message.chat.id] = random_word
-        guess_start_time[message.chat.id] = time.time()  # Start timing
+        alpha_dict[chat_id] = random_word
+        guess_start_time[chat_id] = time.time()  # Start timing
 
-        await client.send_photo(chat_id=message.chat.id, photo=image_bytes, caption=f"Guess the word in the image to win!")
+        keyboard = [
+            [IKB("Join", url="https://t.me/dragon_society")]
+        ]
+        reply_markup = IKM(keyboard)
 
+        await context.bot.send_photo(chat_id=chat_id, photo=image_bytes, caption=f"Guess the word in the image to win!", reply_markup=reply_markup)
 
-async def handle_guess(client, message: Message):
-    if message.chat.id not in alpha_dict:
-        return
-
-    message_text = message.text.strip().lower()
-    correct_word = alpha_dict[message.chat.id]
-
-    if message_text == correct_word:
-        reward_amount = random.randint(20000, 40000)
-        alpha_dict.pop(message.chat.id)
-
-        # Calculate the time taken
-        end_time = time.time()
-        time_taken = int(end_time - guess_start_time.pop(message.chat.id))
-
-        await message.reply_text(f"You got {reward_amount} coins for completing the word!\n\nTime taken: {time_taken}s")
-        await add(user_id=message.from_user.id, amount=reward_amount)
+application.add_handler(CommandHandler('wtime', set_message_limit))
