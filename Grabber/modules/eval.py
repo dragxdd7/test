@@ -1,4 +1,4 @@
-from pyrogram import Client, filters, idle
+from pyrogram import Client, filters
 from . import app, sudo_filter
 import os
 import re
