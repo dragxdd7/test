@@ -1,18 +1,20 @@
 import random
 import io
+import logging
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
-import os
-import logging
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
 
-def create_cmode_image(username, user_id, current_rarity, user_dp_path=None):
+def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     try:
         img = Image.open(BG_IMAGE_PATH)
         d = ImageDraw.Draw(img)
@@ -26,19 +28,16 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_path=None):
         text_y = 10
         dp_size = (200, 200)
 
-        if user_dp_path:
-            user_dp = Image.open(user_dp_path)
+        if user_dp_url:
+            response = requests.get(user_dp_url)
+            user_dp = Image.open(BytesIO(response.content))
             user_dp.thumbnail(dp_size)
             img.paste(user_dp, (text_x, text_y))
             text_x += dp_size[0] + 10
 
-        d.text((text_x, text_y), text, font=font, fill=(255, 255, 255))
-
         img_path = f'/tmp/cmode_{user_id}.png'
         img.save(img_path)
-        img.close()
         logging.info("Image created successfully: %s", img_path)
-
         return img_path
 
     except Exception as e:
@@ -53,26 +52,26 @@ async def cmode(client, message):
         username = message.from_user.username
         logging.info("User ID: %s, Username: %s", user_id, username)
 
-        profile_photos = client.get_chat_photos(message.from_user.id)
-        file_id = None
+        # Fetch user's profile photos
+        profile_photos = await client.get_chat_photos(message.from_user.id)
         async for photo in profile_photos:
             file_id = photo.file_id
             break
+        else:
+            file_id = None
 
         if file_id:
-            file_path = await client.download_media(file_id)
-            user_dp_path = os.path.abspath(file_path)  # Get the absolute file path
+            file = await client.download_media(file_id)
+            user_dp_url = file
         else:
-            user_dp_path = None
+            user_dp_url = None
 
         user_data = await user_collection.find_one({'id': user_id})
         current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
 
-        img_path = create_cmode_image(username, user_id, current_rarity, user_dp_path)
-        logging.info("Image path: %s", img_path)
-
+        img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
         if img_path is None:
-            await message.reply_text("Failed to create image.")
+            logging.error("Failed to create image.")
             return
 
         cmode_buttons = [
@@ -91,7 +90,6 @@ async def cmode(client, message):
 
     except Exception as e:
         logging.error("Error in cmode command: %s", e)
-        await message.reply_text(f"Error in /cmode command: {e}")
 
 @app.on_callback_query(filters.regex("^cmode:"))
 async def cmode_callback(client, query: CallbackQuery):
@@ -135,6 +133,7 @@ async def cmode_callback(client, query: CallbackQuery):
         img_path = create_cmode_image(username, user_id, collection_mode)
         if img_path is None:
             await query.answer("Failed to create image.", show_alert=True)
+            logging.error("Failed to create image.")
             return
 
         new_caption = f"Rarity edited to: {collection_mode}"
@@ -147,3 +146,4 @@ async def cmode_callback(client, query: CallbackQuery):
     except Exception as e:
         logging.error("Error in cmode_callback: %s", e)
         await query.answer(f"Error processing your request.", show_alert=True)
+
