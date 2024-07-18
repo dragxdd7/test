@@ -4,7 +4,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, 
 
 from . import user_collection, app
 
-@app.on_message(filters.command("fav") & filters.private)
+@app.on_message(filters.command("fav"))
 async def fav(client: Client, message: Message):
     user_id = message.from_user.id
 
