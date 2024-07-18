@@ -10,7 +10,7 @@ async def harem_command(client, message):
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        message_text = '𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...'
+        message_text = '**𝙔𝙤𝙪 𝙃𝙖𝙫𝙚𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...**'
         await message.reply_text(message_text)
         return
 
@@ -27,7 +27,7 @@ async def harem_command(client, message):
     total_pages = math.ceil(len(unique_characters) / 7)
 
     page = 0  # Default to the first page
-    harem_message = f"<b>Collection - Page {page + 1}/{total_pages}</b>\n"
+    harem_message = f"**Collection - Page {page + 1}/{total_pages}**\n"
     harem_message += "--------------------------------------\n\n"
 
     current_characters = unique_characters[page * 7:(page + 1) * 7]
@@ -35,7 +35,7 @@ async def harem_command(client, message):
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            f"♦️ <b>{character['name']} (x{count})</b>\n"
+            f"♦️ **{character['name']} (x{count})**\n"
             f"   Anime: {character['anime']}\n"
             f"   ID: {character['id']}\n"
             f"   {character['rarity']}\n\n"
@@ -43,7 +43,7 @@ async def harem_command(client, message):
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
-    harem_message += f"<b>Total Characters: {total_count}</b>"
+    harem_message += f"**Total Characters: {total_count}**"
 
     keyboard = [[InlineKeyboardButton(f"ɪɴʟɪɴᴇ ({total_count})", switch_inline_query_current_chat=f"collection.{user_id}")]]
     if total_pages > 1:
@@ -71,10 +71,10 @@ async def harem_command(client, message):
         fav_character = next((c for c in user['characters'] if c['id'] == fav_character_id), None)
 
         if fav_character and 'img_url' in fav_character:
-            await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, parse_mode='HTML', reply_markup=reply_markup)
+            await message.reply_photo(photo=fav_character['img_url'], caption=harem_message, reply_markup=reply_markup)
             return
 
-    await message.reply_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
+    await message.reply_text(harem_message, reply_markup=reply_markup)
 
 
 @app.on_callback_query(filters.regex(r"harem:\d+:\d+"))
@@ -87,14 +87,14 @@ async def harem_callback(client, callback_query):
             await callback_query.answer()
             await callback_query.message.delete()
         else:
-            await callback_query.answer("This is not your Harem", show_alert=True)
+            await callback_query.answer("**This is not your Harem**", show_alert=True)
         return
 
     _, page, user_id = data.split(':')
     page = int(page)
     user_id = int(user_id)
     if callback_query.from_user.id != user_id:
-        await callback_query.answer("This is not your Harem", show_alert=True)
+        await callback_query.answer("**This is not your Harem**", show_alert=True)
         return
 
     await harem_command(client, callback_query.message)
