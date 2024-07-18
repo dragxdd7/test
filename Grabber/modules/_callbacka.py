@@ -3,6 +3,7 @@ from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from Grabber import application
 from .cmode import cmode_callback
 from Grabber.utils.button import button_click 
+from .delta import sumu
 
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -13,5 +14,7 @@ async def cbq(update: Update, context: CallbackContext):
         await bc(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
+    elif data.startswith('correct')
+        await sumu(update, context)
     
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
