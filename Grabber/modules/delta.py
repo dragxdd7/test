@@ -3,7 +3,7 @@ import io
 from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
-from . import add, deduct, show, abank, dbank, sbank, app, user_collection, collection
+from . import add, deduct, show, abank, dbank, sbank, app, user_collection, collection, sudo_filter
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
@@ -36,6 +36,7 @@ def generate_random_math_equation_image():
 
     return img_byte_arr.read(), answer
 
+@app.on_message(filters.command("stime") & sudo_filter)
 async def set_message_limit(client, message):
     try:
         limit = int(message.command[1])
