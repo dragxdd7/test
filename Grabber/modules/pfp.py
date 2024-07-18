@@ -10,7 +10,7 @@ async def set_profile_media(client: Client, message: Message):
     reply_message = message.reply_to_message
 
     if not reply_message.photo:
-        await message.reply_text("Please reply to a photo to set it as your profile media.")
+        await message.reply_text("**Please reply to a photo to set it as your profile media.**")
         return
 
     photo = reply_message.photo
@@ -21,7 +21,7 @@ async def set_profile_media(client: Client, message: Message):
         telegraph_link = f"https://telegra.ph{telegraph_url}"
         
         await user_collection.update_one({'id': user_id}, {'$set': {'profile_media': telegraph_link}})
-        await message.reply_text("Profile media has been set!")
+        await message.reply_text("**Profile media has been set!**")
     except Exception as e:
         await message.reply_text(f"Failed to upload image to Telegraph: {e}")
     finally:
@@ -37,4 +37,4 @@ async def delete_profile_media(client: Client, message: Message):
         return
 
     await user_collection.update_one({'id': user_id}, {'$unset': {'profile_media': ""}})
-    await message.reply_text("Profile media has been deleted.")
+    await message.reply_text("**Profile media has been deleted.**")
