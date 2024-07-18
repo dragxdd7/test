@@ -131,22 +131,8 @@ async def cmode_callback(client, query: CallbackQuery):
         # Retrieve username
         username = query.from_user.username
 
-        # Fetch user's profile photo
-        profile_photos = await client.get_chat_photos(query.from_user.id)
-        file_id = None
-        async for photo in profile_photos:
-            file_id = photo.file_id
-            break
-
-        # Download user's profile photo
-        if file_id:
-            file_path = await client.download_media(file_id)
-            user_dp_path = os.path.abspath(file_path)  # Get the absolute file path
-        else:
-            user_dp_path = None
-
         # Create new image with updated collection mode and user info
-        img_path = create_cmode_image(username, user_id, collection_mode, user_dp_path)
+        img_path = create_cmode_image(username, user_id, collection_mode)
         if img_path is None:
             await query.answer("Failed to create image.", show_alert=True)
             return
