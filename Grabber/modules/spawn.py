@@ -22,8 +22,8 @@ message_counts = {}
 
 @app.on_message(filters.command("pick"))
 async def guess(update, context):
-    chat_id = update.chat.id
-    user_id = update.from_user.id
+    chat_id = update.message.chat.id  # Corrected
+    user_id = update.from_user.id  # Corrected
 
     if chat_id not in last_characters:
         return
@@ -103,8 +103,8 @@ async def message_counter(update, context):
     await delta(update, context)
     await handle_messages(update, context)
     #await check_answer(update, context)
-    chat_id = str(update.chat.id)
-    user_id = update.from_user.id
+    chat_id = str(update.message.chat.id)  # Corrected
+    user_id = update.from_user.id  # Corrected
 
     if chat_id not in locks:
         locks[chat_id] = asyncio.Lock()
@@ -140,7 +140,7 @@ async def message_counter(update, context):
             message_counts[chat_id] = 0
 
 async def send_image(update, context):
-    chat_id = update.chat.id
+    chat_id = update.message.chat.id  # Corrected
 
     all_characters = await collection.find({}).to_list(length=None)
 
