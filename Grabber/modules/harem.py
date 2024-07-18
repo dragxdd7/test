@@ -22,6 +22,10 @@ async def harem_command(client, message):
         else:
             characters = user['characters']
 
+        if not characters:
+            await message.reply_text("No characters found.")
+            return
+
         characters = sorted(characters, key=lambda x: (x['anime'], x['id']))
         character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: x['id'])}
         unique_characters = list({character['id']: character for character in characters}.values())
