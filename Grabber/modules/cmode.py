@@ -6,7 +6,8 @@ from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app
-import logging 
+import logging
+
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
 
@@ -48,12 +49,11 @@ async def cmode(client, message):
         logging.info("User ID: %s, Username: %s", user_id, username)
 
         # Iterate over the async generator to get the profile photos
-        profile_photos = await client.get_chat_photos(message.from_user.id)
+        profile_photos = client.get_chat_photos(message.from_user.id)
+        file_id = None
         async for photo in profile_photos:
             file_id = photo.file_id
             break
-        else:
-            file_id = None
 
         if file_id:
             file = await client.download_media(file_id)
@@ -118,12 +118,11 @@ async def cmode_callback(client, query: CallbackQuery):
         username = query.from_user.username
 
         # Iterate over the async generator to get the profile photos
-        profile_photos = await client.get_chat_photos(query.from_user.id)
+        profile_photos = client.get_chat_photos(query.from_user.id)
+        file_id = None
         async for photo in profile_photos:
             file_id = photo.file_id
             break
-        else:
-            file_id = None
 
         if file_id:
             file = await client.download_media(file_id)
