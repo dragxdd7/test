@@ -4,6 +4,7 @@ from Grabber import application
 from .cmode import cmode_callback
 from Grabber.utils.button import button_click as bc
 from .delta import sumu
+from .harem import harem_callback as hc
 
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -15,5 +16,8 @@ async def cbq(update: Update, context: CallbackContext):
         await cmode_callback(update, context)
     elif data.startswith('correct'):
         await sumu(update, context)
+    elif data.startswith('harem'):
+        await hc(update, context)
+
     
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
