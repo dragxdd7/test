@@ -1,8 +1,8 @@
 import asyncio
-from telegram.ext import CommandHandler, CallbackContext, MessageHandler
+from telegram.ext import CommandHandler, CallbackContext
 from telegram import Update
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from pytz import timezone
 from . import collection, user_collection, application
 
@@ -37,22 +37,22 @@ def scramble_word(word):
 
     return f"{first_letter}{middle_letters}{last_letter}"
 
-def scrabble(update: Update, context: CallbackContext) -> None:
+async def scrabble(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 
     if chat_id != -1002225496870:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="This command can only be used at @dragons_support.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="This command can only be used at @dragons_support.")
         return
 
     if user_id in cooldown_users:
         remaining_time = COOLDOWN_TIME - (datetime.now() - cooldown_users[user_id]).total_seconds()
         remaining_time = max(remaining_time, 0)  # Ensure remaining_time is not negative
-        update.message.reply_text(f"Please wait {int(remaining_time)} seconds before starting a new game.")
+        await update.message.reply_text(f"Please wait {int(remaining_time)} seconds before starting a new game.")
         return
 
     if user_id in active_scrabbles:
-        update.message.reply_text("You already have an active scrabble. Please wait for it to finish.")
+        await update.message.reply_text("You already have an active scrabble. Please wait for it to finish.")
         return
 
     character = get_random_character()
@@ -67,7 +67,7 @@ def scrabble(update: Update, context: CallbackContext) -> None:
         'attempts': 0
     }
 
-    update.message.reply_text(
+    await update.message.reply_text(
         f"🔠 Welcome to Word Scramble! 🔠\n\n"
         f"Can you unscramble this word? Try it out:\n\n"
         f"{scrambled_word}\n\n"
@@ -75,7 +75,7 @@ def scrabble(update: Update, context: CallbackContext) -> None:
         f"⏳ *Use /xscrabble to terminate the game.*"
     )
 
-def check_answer(update: Update, context: CallbackContext) -> None:
+async def check_answer(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
 
     if user_id not in active_scrabbles:
@@ -105,16 +105,16 @@ def check_answer(update: Update, context: CallbackContext) -> None:
         user_collection.replace_one({'id': user_id}, user_data, upsert=True)
 
         if user_data['wins'] <= WIN_LIMIT:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=scrabble_data['character']['img_url'],
                 caption=f"{scrabble_data['character']['name']} added to your collection! 🎉"
             )
             user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
             if user_data['wins'] == WIN_LIMIT:
-                update.message.reply_text("You won 5 games today. Now you will get gold instead of characters.")
+                await update.message.reply_text("You won 5 games today. Now you will get gold instead of characters.")
         else:
             gold = random.randint(30, 60)
-            update.message.reply_text(f"You've won {gold} gold!")
+            await update.message.reply_text(f"You've won {gold} gold!")
             user_collection.update_one({'id': user_id}, {'$inc': {'gold': gold}})
 
         del active_scrabbles[user_id]
@@ -123,47 +123,38 @@ def check_answer(update: Update, context: CallbackContext) -> None:
         asyncio.create_task(remove_cooldown(user_id))
 
     elif scrabble_data['attempts'] >= MAX_ATTEMPTS:
-        update.message.reply_text(
+        await update.message.reply_text(
             f"Out of attempts ❌ Correct answer was: {scrabble_data['word']}"
         )
         del active_scrabbles[user_id]
     else:
         hint = provide_hint(scrabble_data['word'], scrabble_data['attempts'])
-        update.message.reply_text(
+        await update.message.reply_text(
             f"Hint ❌ Incorrect Answer! ❌\n\n"
             f"Hint: {hint}\n\n"
             f"Try again."
         )
-
-def provide_hint(word, attempts):
-    if attempts == 1:
-        return f"{word[0]}{'_' * (len(word) - 1)}"
-    elif attempts == 2:
-        return f"{word[0]}{'_' * (len(word) - 2)}{word[-1]}"
-    elif attempts == 3:
-        return f"{word[0]}{'_' * (len(word) - 3)}{word[-2:][::-1]}"
-    else:
-        return word
 
 async def remove_cooldown(user_id):
     await asyncio.sleep(COOLDOWN_TIME)
     if user_id in cooldown_users:
         del cooldown_users[user_id]
 
-def xscrabble(update: Update, context: CallbackContext) -> None:
+async def xscrabble(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 
     if chat_id != -1002225496870:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="This command can only be used at @dragons_support.")
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="This command can only be used at @dragons_support.")
         return
 
     if user_id in active_scrabbles:
         del active_scrabbles[user_id]
-        update.message.reply_text("Your current game has been terminated.")
+        await update.message.reply_text("Your current game has been terminated.")
     else:
-        update.message.reply_text("You don't have an active game to terminate.")
+        await update.message.reply_text("You don't have an active game to terminate.")
 
+# Handlers
 scrabble_handler = CommandHandler("scrabble", scrabble)
 xscrabble_handler = CommandHandler("xscrabble", xscrabble)
 
