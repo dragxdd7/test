@@ -3,13 +3,10 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import app, sudo_filter, dev_filter
 
-
 sudb = db.sudo
 devb = db.dev
 
 PROTECTED_IDS = {6893383681, 7011990425}
-
-app = Client("my_bot")
 
 async def add_sudo(update: Message):
     m = update
