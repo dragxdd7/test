@@ -100,44 +100,49 @@ async def guess(update, context):
         await update.reply_text('Incorrect Name... ❌️')
 
 async def message_counter(update, context):
-    await delta(update, context)
-    await handle_messages(update, context)
-    #await check_answer(update, context)
-    chat_id = str(update.chat.id)
-    user_id = update.from_user.id  # Corrected
+    try:
+        await delta(update, context)
+        await handle_messages(update, context)
+        #await check_answer(update, context)
+        
+        if isinstance(update, Message):
+            chat_id = str(update.message.chat.id)
+            user_id = update.from_user.id
 
-    if chat_id not in locks:
-        locks[chat_id] = asyncio.Lock()
-    lock = locks[chat_id]
+            if chat_id not in locks:
+                locks[chat_id] = asyncio.Lock()
+            lock = locks[chat_id]
 
-    async with lock:
-        chat_frequency = await user_totals_collection.find_one({'chat_id': chat_id})
-        if chat_frequency:
-            message_frequency = chat_frequency.get('message_frequency', 100)
-        else:
-            message_frequency = 100
+            async with lock:
+                chat_frequency = await user_totals_collection.find_one({'chat_id': chat_id})
+                message_frequency = chat_frequency.get('message_frequency', 100) if chat_frequency else 100
 
-        if chat_id in last_user and last_user[chat_id]['user_id'] == user_id:
-            last_user[chat_id]['count'] += 1
-            if last_user[chat_id]['count'] >= 10:
-                if user_id in warned_users and time.time() - warned_users[user_id] < 600:
-                    return
+                if chat_id in last_user and last_user[chat_id]['user_id'] == user_id:
+                    last_user[chat_id]['count'] += 1
+                    if last_user[chat_id]['count'] >= 10:
+                        if user_id in warned_users and time.time() - warned_users[user_id] < 600:
+                            return
+                        else:
+                            await update.reply_text(
+                                f"⚠️ Don't Spam {update.from_user.first_name}...\nYour Messages Will be Ignored for 10 Minutes...")
+                            warned_users[user_id] = time.time()
+                            return
                 else:
-                    await update.reply_text(
-                        f"⚠️ Don't Spam {update.from_user.first_name}...\nYour Messages Will be Ignored for 10 Minutes...")
-                    warned_users[user_id] = time.time()
-                    return
-        else:
-            last_user[chat_id] = {'user_id': user_id, 'count': 1}
+                    last_user[chat_id] = {'user_id': user_id, 'count': 1}
 
-        if chat_id in message_counts:
-            message_counts[chat_id] += 1
-        else:
-            message_counts[chat_id] = 1
+                if chat_id in message_counts:
+                    message_counts[chat_id] += 1
+                else:
+                    message_counts[chat_id] = 1
 
-        if message_counts[chat_id] % message_frequency == 0:
-            await send_image(update, context)  # Send image when the frequency is met
-            message_counts[chat_id] = 0
+                if message_counts[chat_id] % message_frequency == 0:
+                    await send_image(update, context)  # Send image when the frequency is met
+                    message_counts[chat_id] = 0
+        else:
+            print(f"Unsupported update type: {type(update)}")
+
+    except Exception as e:
+        print(f"Error in message_counter: {e}")
 
 async def send_image(update, context):
     chat_id = update.message.chat.id  # Corrected
