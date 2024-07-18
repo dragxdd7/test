@@ -24,7 +24,7 @@ def parse_amount(amount_str):
 
     return amount
 
-@app.on_message(filters.command('xprofile') & filters.private)
+@app.on_message(filters.command('xprofile'))
 async def balance(client, message):
     try:
         user_id = message.from_user.id
@@ -45,7 +45,6 @@ async def balance(client, message):
 
             user_level = max(1, user_xp // 10)
             sumu = await smex(user_id)
-            coins_rank = sumu
             total_characters = len(characters)
             all_characters = await collection.find({}).to_list(length=None)
             total_database_characters = len(all_characters)
@@ -58,7 +57,6 @@ async def balance(client, message):
                 f"ɪᴅ: `{profile.id}`\n\n"
                 f"ᴄᴏɪɴꜱ: Ŧ`{custom_format_number(balance_amount)}`\n"
                 f"ʙᴀɴᴋ: Ŧ`{custom_format_number(bank_balance)}`\n"
-                f"ᴄᴏɪɴꜱ ʀᴀɴᴋ: `{coins_rank}`\n"
                 f"ᴄʜᴀʀᴀᴄᴛᴇʀꜱ: `{total_characters}/{total_database_characters}`\n"
                 f"ʟᴇᴠᴇʟ: `{user_level}`\n"
                 f"ᴇxᴘ: `{user_xp}`\n"
