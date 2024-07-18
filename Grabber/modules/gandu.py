@@ -59,7 +59,7 @@ async def handle_messages(client, message: Message):
 
         await client.send_photo(chat_id=message.chat.id, photo=image_bytes, caption=f"Guess the word in the image to win!")
 
-@app.on_message(filters.ALL)
+
 async def handle_guess(client, message: Message):
     if message.chat.id not in alpha_dict:
         return
