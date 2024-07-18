@@ -1,4 +1,7 @@
 import math
+import os
+import aiohttp
+import aiofiles
 from pyrogram import Client, filters
 from . import user_collection, collection, smex, app
 
@@ -23,6 +26,13 @@ def parse_amount(amount_str):
         amount = int(amount_str)
 
     return amount
+
+async def download_image(url, file_path):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status == 200:
+                async with aiofiles.open(file_path, 'wb') as f:
+                    await f.write(await response.read())
 
 @app.on_message(filters.command('xprofile'))
 async def balance(client, message):
@@ -64,10 +74,15 @@ async def balance(client, message):
             )
 
             if profile_media:
+                temp_file_path = "temp_profile_image.jpg"
+                await download_image(profile_media, temp_file_path)
+
                 await message.reply_photo(
-                    photo=profile_media,
+                    photo=temp_file_path,
                     caption=balance_message
                 )
+
+                os.remove(temp_file_path)
             else:
                 await message.reply_text(
                     balance_message
