@@ -34,10 +34,12 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 
         img_path = f'/tmp/cmode_{user_id}.png'
         img.save(img_path)
+        logging.info("Image created successfully: %s", img_path)
 
         return img_path
 
     except Exception as e:
+        logging.error("Error creating image: %s", e)
         return None
 
 @app.on_message(filters.command("cmode"))
@@ -66,6 +68,10 @@ async def cmode(client, message):
 
         img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
         logging.info("Image path: %s", img_path)
+
+        if img_path is None:
+            await message.reply_text("Failed to create image.")
+            return
 
         cmode_buttons = [
             [IKB("🟠 Rare", callback_data=f"cmode:rare:{user_id}"), IKB("🥴 Spacial", callback_data=f"cmode:spacial:{user_id}")],
@@ -131,6 +137,10 @@ async def cmode_callback(client, query: CallbackQuery):
             user_dp_url = None
 
         img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
+
+        if img_path is None:
+            await query.answer("Failed to create image.", show_alert=True)
+            return
 
         new_caption = f"Rarity edited to: {collection_mode}"
 
