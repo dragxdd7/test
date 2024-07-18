@@ -59,6 +59,8 @@ async def balance(client, message):
             if user_info.photo:
                 if user_info.photo.big_file_id:
                     await client.send_photo(message.chat.id, photo=user_info.photo.big_file_id, caption=balance_message)
+                elif user_info.photo.small_file_id:
+                    await client.send_photo(message.chat.id, photo=user_info.photo.small_file_id, caption=balance_message)
                 else:
                     await client.send_message(message.chat.id, balance_message)
             else:
