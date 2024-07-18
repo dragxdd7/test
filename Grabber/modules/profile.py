@@ -55,12 +55,14 @@ async def balance(client, message):
                 f"ᴇxᴘ: `{user_xp}`\n"
             )
 
-            photos = await client.get_profile_photos(user_id)
-            if photos.total_count > 0:
-                photo_file = photos.photos[0][-1].file_id
-                await client.send_photo(message.chat.id, photo=photo_file, caption=balance_message)
+            # Fetch profile photos using Pyrogram's approach
+            profile_photos = await client.get_profile_photos(user_id)
+            if profile_photos.total_count > 0:
+                photo_file_id = profile_photos.photos[0].file_id
+                await client.send_photo(message.chat.id, photo=photo_file_id, caption=balance_message)
             else:
                 await client.send_message(message.chat.id, balance_message)
+
         else:
             balance_message = "Claim bonus first using /xbonus"
             await client.send_message(message.chat.id, balance_message)
