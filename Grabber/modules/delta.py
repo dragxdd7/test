@@ -3,8 +3,7 @@ import io
 from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
-from . import add, deduct, show, abank, dbank, sbank, error
-from Grabber import application as app, user_collection, collection
+from . import add, deduct, show, abank, dbank, sbank, app, user_collection, collection
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
