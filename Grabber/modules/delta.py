@@ -5,7 +5,7 @@ import random
 import io
 import time
 from Grabber import application, user_collection, collection
-from . import add, deduct, show, abank, dbank, sbank , error, sudodb
+from . import add, deduct, show, abank, dbank, sbank , sudodb
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
