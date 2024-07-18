@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from telegram.ext import CommandHandler, CallbackContext, MessageHandler, Filters
+from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters as Filters
 from PIL import Image, ImageDraw, ImageFont
 import random
 import io
