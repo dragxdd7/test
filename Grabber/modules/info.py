@@ -2,7 +2,7 @@ import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update
 from Grabber import collection, user_collection, application
-from . import , app, dev_filter
+from . import app, dev_filter
 
 async def get_user_info(user_id):
     user = await user_collection.find_one({'id': user_id})
