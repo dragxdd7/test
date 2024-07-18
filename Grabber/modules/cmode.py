@@ -102,7 +102,7 @@ async def cmode_callback(client, query: CallbackQuery):
             'rare': '🟠 Rare',
             'spacial': '🥴 Spacial',
             'exclusive': '💮 Exclusive',
-            'cosplay': '🍭Cosplay',
+            'cosplay': '🍭 Cosplay',
             'divine': '🥵 Divine',
             'limited': '🔮 Limited',
             'celestial': '🪽 Celestial',
@@ -150,8 +150,7 @@ async def cmode_callback(client, query: CallbackQuery):
         reply_markup = IKM([])
 
         await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
-        await query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
-        await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
+        await query.edit_message_media(media=InputMediaPhoto(media=img_path, caption=new_caption), reply_markup=reply_markup)
 
     except Exception as e:
         logging.error("Error in cmode_callback: %s", e)
