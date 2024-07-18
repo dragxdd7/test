@@ -1,20 +1,18 @@
 import random
 import io
-import logging
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery, InputMediaPhoto
+import os
+import logging
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app
-
-# Setup logging
-logging.basicConfig(level=logging.INFO)
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
 
-def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
+def create_cmode_image(username, user_id, current_rarity, user_dp_path=None):
     try:
         img = Image.open(BG_IMAGE_PATH)
         d = ImageDraw.Draw(img)
@@ -28,16 +26,19 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         text_y = 10
         dp_size = (200, 200)
 
-        if user_dp_url:
-            response = requests.get(user_dp_url)
-            user_dp = Image.open(BytesIO(response.content))
+        if user_dp_path:
+            user_dp = Image.open(user_dp_path)
             user_dp.thumbnail(dp_size)
             img.paste(user_dp, (text_x, text_y))
             text_x += dp_size[0] + 10
 
+        d.text((text_x, text_y), text, font=font, fill=(255, 255, 255))
+
         img_path = f'/tmp/cmode_{user_id}.png'
         img.save(img_path)
+        img.close()
         logging.info("Image created successfully: %s", img_path)
+
         return img_path
 
     except Exception as e:
@@ -52,26 +53,26 @@ async def cmode(client, message):
         username = message.from_user.username
         logging.info("User ID: %s, Username: %s", user_id, username)
 
-        # Fetch user's profile photos
-        profile_photos = await client.get_chat_photos(message.from_user.id)
+        profile_photos = client.get_chat_photos(message.from_user.id)
+        file_id = None
         async for photo in profile_photos:
             file_id = photo.file_id
             break
-        else:
-            file_id = None
 
         if file_id:
-            file = await client.download_media(file_id)
-            user_dp_url = file
+            file_path = await client.download_media(file_id)
+            user_dp_path = os.path.abspath(file_path)  # Get the absolute file path
         else:
-            user_dp_url = None
+            user_dp_path = None
 
         user_data = await user_collection.find_one({'id': user_id})
         current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
 
-        img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
+        img_path = create_cmode_image(username, user_id, current_rarity, user_dp_path)
+        logging.info("Image path: %s", img_path)
+
         if img_path is None:
-            logging.error("Failed to create image.")
+            await message.reply_text("Failed to create image.")
             return
 
         cmode_buttons = [
@@ -90,18 +91,18 @@ async def cmode(client, message):
 
     except Exception as e:
         logging.error("Error in cmode command: %s", e)
+        await message.reply_text(f"Error in /cmode command: {e}")
 
 @app.on_callback_query(filters.regex("^cmode:"))
 async def cmode_callback(client, query: CallbackQuery):
     try:
         data = query.data
 
-        # Mapping of rarity modes
         rarity_modes = {
             'rare': '🟠 Rare',
             'spacial': '🥴 Spacial',
             'exclusive': '💮 Exclusive',
-            'cosplay': '🍭 Cosplay',
+            'cosplay': '🍭Cosplay',
             'divine': '🥵 Divine',
             'limited': '🔮 Limited',
             'celestial': '🪽 Celestial',
@@ -113,37 +114,45 @@ async def cmode_callback(client, query: CallbackQuery):
             'all': 'All'
         }
 
-        # Extracting data from callback query
         _, rarity, user_id = data.split(':')
         user_id = int(user_id)
         collection_mode = rarity_modes.get(rarity)
 
-        # Ensure the user is authorized to change their collection mode
         if query.from_user.id != user_id:
             await query.answer("You cannot change someone else's collection mode.", show_alert=True)
             return
 
-        # Update user's collection mode in the database
         await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
 
-        # Retrieve username
         username = query.from_user.username
 
-        # Create new image with updated collection mode and user info
-        img_path = create_cmode_image(username, user_id, collection_mode)
+        profile_photos = client.get_chat_photos(query.from_user.id)
+        file_id = None
+        async for photo in profile_photos:
+            file_id = photo.file_id
+            break
+
+        if file_id:
+            file_path = await client.download_media(file_id)
+            user_dp_path = os.path.abspath(file_path)  # Get the absolute file path
+        else:
+            user_dp_path = None
+
+        img_path = create_cmode_image(username, user_id, collection_mode, user_dp_path)
+        logging.info("Image path: %s", img_path)
+
         if img_path is None:
             await query.answer("Failed to create image.", show_alert=True)
-            logging.error("Failed to create image.")
             return
 
         new_caption = f"Rarity edited to: {collection_mode}"
 
-        # Edit the message with the updated image and caption
         reply_markup = IKM([])
-        await query.edit_message_media(media=InputMediaPhoto(media=img_path, caption=new_caption), reply_markup=reply_markup)
+
         await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
+        await query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
+        await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
 
     except Exception as e:
         logging.error("Error in cmode_callback: %s", e)
-        await query.answer(f"Error processing your request.", show_alert=True)
-
+        await query.answer(f"Error in callback: {e}", show_alert=True)
