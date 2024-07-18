@@ -3,10 +3,13 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import app, sudo_filter, dev_filter
 
+
 sudb = db.sudo
 devb = db.dev
 
 PROTECTED_IDS = {6893383681, 7011990425}
+
+app = Client("my_bot")
 
 async def add_sudo(update: Message):
     m = update
@@ -96,9 +99,9 @@ async def dev_list(update: Message):
         print(e)
         await update.reply_text('Error fetching developer list.')
 
-app.add_handler(app.message_handler(add_sudo, filters.command("addsudo") & dev_filter))
-app.add_handler(app.message_handler(remove_sudo, filters.command("rmsudo") & dev_filter))
-app.add_handler(app.message_handler(add_dev, filters.command("adddev") & dev_filter))
-app.add_handler(app.message_handler(remove_dev, filters.command("rmdev") & dev_filter))
-app.add_handler(app.message_handler(sudo_list, filters.command("sudolist") & sudo_filter))
-app.add_handler(app.message_handler(dev_list, filters.command("devlist") & sudo_filter))
+app.on_message(add_sudo, filters.command("addsudo") & dev_filter)
+app.on_message(remove_sudo, filters.command("rmsudo") & dev_filter)
+app.on_message(add_dev, filters.command("adddev") & dev_filter)
+app.on_message(remove_dev, filters.command("rmdev") & dev_filter)
+app.on_message(sudo_list, filters.command("sudolist") & sudo_filter)
+app.on_message(dev_list, filters.command("devlist") & sudo_filter)
