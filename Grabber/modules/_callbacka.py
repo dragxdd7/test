@@ -9,6 +9,7 @@ from .info import check
 from .ptb_store import store_callback_handler, sales_list_callback
 from .start import button
 from .sgift import confirm_gift, cancel_gift
+from .trade import confirm_trade, cancel_trade 
 
 
 async def cbq(update: Update, context: CallbackContext):
