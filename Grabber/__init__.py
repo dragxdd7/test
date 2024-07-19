@@ -27,7 +27,7 @@ PHOTO_URL =  ["https://graph.org/file/f10bec6ec695bba69037d.jpg","https://graph.
 SUPPORT_CHAT = "dragons_support"
 UPDATE_CHAT = "bot_support_arena"
 BOT_USERNAME = "Guess_Yourr_Waifu_bot"
-CHARA_CHANNEL_ID = "-1002109838600"
+CHARA_CHANNEL_ID = "-1002235251549"
 api_id = "20457610"
 api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
 
