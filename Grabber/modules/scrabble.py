@@ -29,10 +29,17 @@ async def get_random_character():
 def scramble_word(word):
     if len(word) <= 3:
         return word
-    first_letter = word[0]
-    middle_letters = '_' * (len(word) - 2)
-    last_letter = word[-1]
-    return f"{first_letter}{middle_letters}{last_letter}"
+    word_list = list(word)
+    random.shuffle(word_list)
+    return ''.join(word_list)
+
+def provide_hint(word, attempts):
+    if attempts == 1:
+        return f"{word[:2]}{'_' * (len(word) - 2)}"
+    elif attempts == 2:
+        return f"{word[:2]}{'_' * (len(word) - 3)}{word[-1]}"
+    else:
+        return f"{word[:2]}{'_' * (len(word) - 3)}{word[-1]}"
 
 async def scrabble(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
@@ -85,7 +92,7 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
     scrabble_data = active_scrabbles[user_id]
     scrabble_data['attempts'] += 1
 
-    user_data = user_collection.find_one({'id': user_id})
+    user_data = await user_collection.find_one({'id': user_id})
 
     if not user_data:
         user_data = {'id': user_id, 'wins': 0, 'last_win_time': datetime.min}
@@ -99,20 +106,20 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
         user_data['wins'] += 1
         user_data['last_win_time'] = now
 
-        user_collection.replace_one({'id': user_id}, user_data, upsert=True)
+        await user_collection.replace_one({'id': user_id}, user_data, upsert=True)
 
         if user_data['wins'] <= WIN_LIMIT:
             await update.message.reply_photo(
                 photo=scrabble_data['character']['img_url'],
                 caption=f"{scrabble_data['character']['name']} added to your collection! 🎉"
             )
-            user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
             if user_data['wins'] == WIN_LIMIT:
                 await update.message.reply_text("You won 5 games today. Now you will get gold instead of characters.")
         else:
             gold = random.randint(30, 60)
             await update.message.reply_text(f"You've won {gold} gold!")
-            user_collection.update_one({'id': user_id}, {'$inc': {'gold': gold}})
+            await user_collection.update_one({'id': user_id}, {'$inc': {'gold': gold}})
 
         del active_scrabbles[user_id]
 
@@ -128,6 +135,7 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
         hint = provide_hint(scrabble_data['word'], scrabble_data['attempts'])
         await update.message.reply_text(
             f"Hint ❌ Incorrect Answer! ❌\n\n"
+            f"{scrabble_data['scrambled_word']}\n\n"
             f"Hint: {hint}\n\n"
             f"Try again."
         )
