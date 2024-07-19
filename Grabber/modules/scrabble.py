@@ -55,7 +55,7 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("You already have an active scrabble. Please wait for it to finish.")
         return
 
-    character = get_random_character()
+    character = await get_random_character()
     first_word = character['name'].split()[0]
     scrambled_word = scramble_word(first_word)
 
