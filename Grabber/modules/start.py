@@ -8,7 +8,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 
 from Grabber import PHOTO_URL, SUPPORT_CHAT, UPDATE_CHAT, BOT_USERNAME, db, GROUP_ID
 
-app = Client("my_bot")
+from . import app
 
 start_time = time.time()
 
@@ -94,5 +94,3 @@ async def help_button(client, query: CallbackQuery):
 async def back_button(client, query: CallbackQuery):
     await start(client, query.message)
 
-
-app.run()
