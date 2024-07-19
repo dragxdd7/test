@@ -20,7 +20,7 @@ def is_new_day(last_win_time):
     return now_ist.date() != last_win_ist.date()
 
 def get_random_character():
-    all_characters = list(collection.find({}))
+    all_characters = await collection.find({}).to_list(length=None)
     while True:
         character = random.choice(all_characters)
         # Check if the character's name is suitable for scrambling (not a 2 or 3-letter word)
