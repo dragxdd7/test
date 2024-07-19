@@ -15,8 +15,6 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
-battles = {}  # Dictionary to handle multiple battles
-
 def custom_format_number(num):
     if int(num) >= 10**6:
         exponent = int(math.log10(num)) - 5
@@ -43,6 +41,10 @@ async def get_user_data(user_id):
         user_data = {'id': user_id, 'first_name': 'Unknown', 'gold': 0, 'weapons': []}
     return user_data
 
+# Dictionary to store ongoing battles and names
+battles = {}
+battle_names = {}
+
 @Grabberu.on_message(filters.command("battle") & filters.reply)
 async def battle_command(client, message):
     user_a_id = message.from_user.id
@@ -65,6 +67,9 @@ async def battle_command(client, message):
 
     user_a_name = message.from_user.first_name
     user_b_name = message.reply_to_message.from_user.first_name
+
+    # Store names in battle_names dictionary
+    battle_names[(user_a_id, user_b_id)] = (user_a_name, user_b_name)
 
     # Log attacker's weapons
     attacker_weapons = user_a_data.get('weapons', [])
@@ -90,15 +95,13 @@ async def handle_battle_accept(client, query: CallbackQuery):
         await query.answer("Only the challenged user can respond.", show_alert=True)
         return
 
-    user_a_data = await get_user_data(user_a_id)
-    user_b_data = await get_user_data(user_b_id)
-
-    user_a_name = message.from_user.first_name
-    user_b_name = query.from_user.first_name
+    # Retrieve names from battle_names dictionary
+    user_a_name, user_b_name = battle_names.get((user_a_id, user_b_id), ('User A', 'User B'))
 
     a_health = 100
     b_health = 100
 
+    user_a_data = await get_user_data(user_a_id)
     user_a_weapons = user_a_data.get('weapons', [])
 
     # Split weapons into two rows
@@ -117,7 +120,7 @@ async def handle_battle_accept(client, query: CallbackQuery):
 
     reply_markup = InlineKeyboardMarkup(a_weapon_buttons + b_weapon_buttons)
 
-    battle_message = await query.message.edit_text(
+    await query.message.edit_text(
         f"{user_b_name} accepted the challenge!\n"
         f"{user_a_name}'s health: {a_health}/100\n"
         f"{user_b_name}'s health: {b_health}/100\n"
@@ -125,7 +128,7 @@ async def handle_battle_accept(client, query: CallbackQuery):
         reply_markup=reply_markup
     )
 
-    # Store battle information
+    # Initialize the battle state in the battles dictionary
     battles[(user_a_id, user_b_id)] = {
         'a_health': a_health,
         'b_health': b_health,
@@ -219,12 +222,10 @@ async def handle_battle_attack(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
 
-    # Update the battle state
-    battles[(user_a_id, user_b_id)] = {
-        'a_health': a_health,
-        'b_health': b_health,
-        'current_turn_id': next_turn_id
-    }
+    # Update the battle state in the battles dictionary
+    battles[(user_a_id, user_b_id)]['a_health'] = a_health
+    battles[(user_a_id, user_b_id)]['b_health'] = b_health
+    battles[(user_a_id, user_b_id)]['current_turn_id'] = next_turn_id
 
 async def end_battle(winner_id, loser_id):
     loser_data = await user_collection.find_one_and_update(
@@ -253,7 +254,6 @@ async def end_battle(winner_id, loser_id):
         )
 
         winner_data = await get_user_data(winner_id)
-        loser_data = await get_user_data(loser_id)
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
 
@@ -267,5 +267,6 @@ async def end_battle(winner_id, loser_id):
             text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
         )
 
-    # Remove the battle from the active battles dictionary
+    # Clean up the battle state
     battles.pop((winner_id, loser_id), None)
+    battles.pop((loser_id, winner_id), None)
