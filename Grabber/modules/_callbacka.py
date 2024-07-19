@@ -7,7 +7,7 @@ from .delta import sumu
 from .harem import harem_callback as hc
 from .info import check
 from .ptb_store import store_callback_handler, sales_list_callback
-from .start import button, stats_button
+from .start import button
 
 
 async def cbq(update: Update, context: CallbackContext):
