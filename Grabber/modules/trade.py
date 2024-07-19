@@ -1,12 +1,11 @@
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-
-from . import user_collection, app , collection 
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, CallbackContext
+from Grabber import user_collection, application
 
 pending_trades = {}
 
-@app.on_message(filters.command("strade"))
-async def trade(client, message):
+async def trade(update: Update, context: CallbackContext) -> None:
+    message = update.message
     sender_id = message.from_user.id
 
     if not message.reply_to_message:
@@ -19,11 +18,11 @@ async def trade(client, message):
         await message.reply_text("You can't trade a character with yourself!")
         return
 
-    if len(message.command) != 3:
+    if len(context.args) != 2:
         await message.reply_text("You need to provide two character IDs!")
         return
 
-    sender_character_id, receiver_character_id = message.command[1], message.command[2]
+    sender_character_id, receiver_character_id = context.args[0], context.args[1]
 
     sender = await user_collection.find_one({'id': sender_id})
     receiver = await user_collection.find_one({'id': receiver_id})
@@ -49,10 +48,10 @@ async def trade(client, message):
         ]
     )
 
-    await message.reply_text(f"{mention}, do you accept this trade?", reply_markup=keyboard)
+    await message.reply_text(f"{mention}, do you accept this trade?", reply_markup=keyboard, parse_mode='Markdown')
 
-@app.on_callback_query(filters.regex(r"confirm_trade\|\d+\|\d+"))
-async def confirm_trade(client, query):
+async def confirm_trade(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
     data = query.data.split("|")
 
     if len(data) != 3:
@@ -81,9 +80,11 @@ async def confirm_trade(client, query):
         await query.answer("One or both characters involved in the trade were not found!", show_alert=True)
         return
 
+    # Remove only the specific instance of the characters
     sender['characters'].remove(sender_character)
     receiver['characters'].remove(receiver_character)
 
+    # Add the traded characters to the respective users
     receiver['characters'].append(sender_character)
     sender['characters'].append(receiver_character)
 
@@ -93,10 +94,10 @@ async def confirm_trade(client, query):
     del pending_trades[(sender_id, receiver_id)]
 
     mention = f"[{query.from_user.first_name}](tg://user?id={receiver_id})"
-    await query.message.edit_text(f"🥳 Successfully traded characters with {mention}!")
+    await query.message.edit_text(f"🥳 Successfully traded characters with {mention}!", parse_mode='Markdown')
 
-@app.on_callback_query(filters.regex(r"cancel_trade\|\d+\|\d+"))
-async def cancel_trade(client, query):
+async def cancel_trade(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
     data = query.data.split("|")
 
     if len(data) != 3:
@@ -118,3 +119,4 @@ async def cancel_trade(client, query):
 
     await query.message.edit_text("❌ Trade cancelled.")
 
+application.add_handler(CommandHandler("trade", trade))
