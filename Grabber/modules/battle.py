@@ -214,8 +214,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
     )
 
     await query.message.edit_text(
-        f"{defender_name} attacked with {weapon_name}!\n"
-        f"{health_lines if attacker_id == current_turn_id else ''}"
+        f"{health_lines if attacker_id == current_turn_id else ''}\n\n"
         f"{next_turn_name}, choose your weapon:",
         reply_markup=reply_markup
     )
