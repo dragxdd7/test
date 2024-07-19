@@ -15,6 +15,8 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
+battles = {}  # Dictionary to handle multiple battles
+
 def custom_format_number(num):
     if int(num) >= 10**6:
         exponent = int(math.log10(num)) - 5
@@ -61,8 +63,8 @@ async def battle_command(client, message):
         await message.reply_text("You cannot battle someone from the same clan.")
         return
 
-    user_a_name = user_a_data.get('first_name', 'User A')
-    user_b_name = user_b_data.get('first_name', 'User B')
+    user_a_name = message.from_user.first_name
+    user_b_name = message.reply_to_message.from_user.first_name
 
     # Log attacker's weapons
     attacker_weapons = user_a_data.get('weapons', [])
@@ -91,8 +93,8 @@ async def handle_battle_accept(client, query: CallbackQuery):
     user_a_data = await get_user_data(user_a_id)
     user_b_data = await get_user_data(user_b_id)
 
-    user_a_name = user_a_data.get('first_name', 'User A')
-    user_b_name = user_b_data.get('first_name', 'User B')
+    user_a_name = message.from_user.first_name
+    user_b_name = query.from_user.first_name
 
     a_health = 100
     b_health = 100
@@ -122,6 +124,13 @@ async def handle_battle_accept(client, query: CallbackQuery):
         f"{user_a_name}, choose your weapon:",
         reply_markup=reply_markup
     )
+
+    # Store battle information
+    battles[(user_a_id, user_b_id)] = {
+        'a_health': a_health,
+        'b_health': b_health,
+        'current_turn_id': user_a_id
+    }
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
 async def handle_battle_decline(client, query: CallbackQuery):
@@ -210,6 +219,13 @@ async def handle_battle_attack(client, query: CallbackQuery):
         reply_markup=InlineKeyboardMarkup(weapon_buttons)
     )
 
+    # Update the battle state
+    battles[(user_a_id, user_b_id)] = {
+        'a_health': a_health,
+        'b_health': b_health,
+        'current_turn_id': next_turn_id
+    }
+
 async def end_battle(winner_id, loser_id):
     loser_data = await user_collection.find_one_and_update(
         {'id': loser_id},
@@ -237,6 +253,7 @@ async def end_battle(winner_id, loser_id):
         )
 
         winner_data = await get_user_data(winner_id)
+        loser_data = await get_user_data(loser_id)
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
 
@@ -249,3 +266,6 @@ async def end_battle(winner_id, loser_id):
             chat_id=loser_id,
             text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
         )
+
+    # Remove the battle from the active battles dictionary
+    battles.pop((winner_id, loser_id), None)
