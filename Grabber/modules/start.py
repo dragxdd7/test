@@ -1,6 +1,4 @@
 import random
-import platform
-import psutil
 import time
 from datetime import timedelta
 from pyrogram import Client, filters
@@ -14,7 +12,7 @@ start_time = time.time()
 
 collection = db['total_pm_users']
 
-@app.on_message(filters.command("start") & filters.private)
+@app.on_message(filters.command("start"))
 async def start(client, message):
     user_id = message.from_user.id
     first_name = message.from_user.first_name
@@ -33,7 +31,7 @@ async def start(client, message):
 
     if message.chat.type == "private":
         caption = f"""
-        ʜᴏᴡ ᴀʀᴇ ʏᴏᴜ? I'm Pick Your waifu b. I am a Waifu Collect based Game Bot! Want to get help? Click on the use button! Want to request/report bugs? Click on the Support button!
+        **How are you?** I'm Pick Your waifu b. I am a Waifu Collect based Game Bot! Want to get help? Click on the use button! Want to request/report bugs? Click on the Support button!
         
         Finally, track updates and get useful information by clicking on the Updates button!
         """
@@ -45,7 +43,7 @@ async def start(client, message):
             [InlineKeyboardButton("✚ᴀᴅᴅ ᴍᴇ", url=f'http://t.me/{BOT_USERNAME}?startgroup=new')],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=caption, reply_markup=reply_markup, parse_mode='markdown')
+        await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=caption, reply_markup=reply_markup)
 
     else:
         keyboard = [
@@ -59,7 +57,7 @@ async def start(client, message):
 @app.on_callback_query(filters.regex('^help$'))
 async def help_button(client, query: CallbackQuery):
     help_text = """
-    ***Help Section :***
+    **Help Section :**
     
     /pick - to guess character (only works in group)
     /fav - add your fav
@@ -87,10 +85,9 @@ async def help_button(client, query: CallbackQuery):
 
     await query.answer()
 
-    await query.message.edit_caption(caption=help_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back')]]), parse_mode='markdown')
+    await query.message.edit_caption(caption=help_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data='back')]]))
 
 
 @app.on_callback_query(filters.regex('^back$'))
 async def back_button(client, query: CallbackQuery):
     await start(client, query.message)
-
