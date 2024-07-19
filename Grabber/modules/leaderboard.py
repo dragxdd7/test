@@ -86,7 +86,7 @@ async def leaderboard(client: Client, message: Message) -> None:
 
     await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=leaderboard_message)
 
-@app.on_message(filters.command("broadcast") & dev_filter))
+@app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(client: Client, message: Message) -> None:
     try:
         if message.reply_to_message is None:
@@ -144,7 +144,7 @@ async def stats(client: Client, message: Message) -> None:
     except Exception as e:
         print(e)
 
-@app.on_message(filters.command("sendusersdoc") & dev_filter))
+@app.on_message(filters.command("sendusersdoc") & dev_filter)
 async def send_users_document(client: Client, message: Message) -> None:
     try:
         cursor = user_collection.find({})
@@ -167,7 +167,7 @@ async def send_users_document(client: Client, message: Message) -> None:
     except Exception as e:
         print(e)
 
-@app.on_message(filters.command("sendgroupsdoc") & dev_filter))
+@app.on_message(filters.command("sendgroupsdoc") & dev_filter)
 async def send_groups_document(client: Client, message: Message) -> None:
     try:
         cursor = top_global_groups_collection.find({})
