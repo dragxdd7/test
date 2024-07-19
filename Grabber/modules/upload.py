@@ -31,7 +31,7 @@ rarity_map = {
     10: "🍭 Cosplay"
 }
 
-@app.on_message(filters.command('upload') & sudo_filter)
+@app.on_message(filters.command('sexkjshs') & sudo_filter)
 async def upload(client: Client, message: Message):
     args = message.text.split(maxsplit=4)[1:]
     if len(args) != 4:
