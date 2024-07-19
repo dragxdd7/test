@@ -23,18 +23,15 @@ async def get_random_character():
     all_characters = await collection.find({}).to_list(length=None)
     while True:
         character = random.choice(all_characters)
-        # Check if the character's name is suitable for scrambling (not a 2 or 3-letter word)
         if len(character['name'].split()[0]) > 3:
             return character
 
 def scramble_word(word):
     if len(word) <= 3:
         return word
-
     first_letter = word[0]
     middle_letters = '_' * (len(word) - 2)
     last_letter = word[-1]
-
     return f"{first_letter}{middle_letters}{last_letter}"
 
 async def scrabble(update: Update, context: CallbackContext) -> None:
@@ -47,7 +44,7 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
 
     if user_id in cooldown_users:
         remaining_time = COOLDOWN_TIME - (datetime.now() - cooldown_users[user_id]).total_seconds()
-        remaining_time = max(remaining_time, 0)  # Ensure remaining_time is not negative
+        remaining_time = max(remaining_time, 0)
         await update.message.reply_text(f"Please wait {int(remaining_time)} seconds before starting a new game.")
         return
 
@@ -154,7 +151,6 @@ async def xscrabble(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text("You don't have an active game to terminate.")
 
-# Handlers
 scrabble_handler = CommandHandler("scrabble", scrabble)
 xscrabble_handler = CommandHandler("xscrabble", xscrabble)
 
