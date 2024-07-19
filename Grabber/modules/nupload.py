@@ -70,7 +70,7 @@ async def upload(client: Client, message: Message):
         'id': id
     }
 
-    msg = await client.send_photo(
+    sent_message = await client.send_photo(
         chat_id=CHARA_CHANNEL_ID,
         photo=img_url,
         caption=(
@@ -83,6 +83,6 @@ async def upload(client: Client, message: Message):
         )
     )
 
-    character['message_id'] = msg.message_id
+    character['message_id'] = sent_message.id
     await collection.insert_one(character)
     await message.reply_text('WAIFU ADDED....')
