@@ -220,33 +220,27 @@ async def handle_battle_attack(client, query: CallbackQuery):
     )
 
 async def end_battle(winner_id, loser_id):
-    loser_data = await user_collection.find_one_and_update(
-        {'id': loser_id},
-        {'$set': {'gold': 0}},
-        return_document=True
-    )
-
+    loser_data = await user_collection.find_one({'id': loser_id})
     if loser_data:
-        loser_gold = loser_data.get('gold', 0)  # Ensure loser_gold is set correctly
+        loser_gold = loser_data.get('gold', 0)
 
         await user_collection.find_one_and_update(
             {'id': winner_id},
             {'$inc': {'gold': loser_gold}},
             return_document=True
         )
-
         await user_collection.update_one(
             {'id': winner_id},
             {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
-
+        
         await user_collection.update_one(
             {'id': loser_id},
-            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+            {'$set': {'gold': 0, 'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
         )
 
         winner_data = await get_user_data(winner_id)
-        loser_data = await get_user_data(loser_id)  # Ensure loser_data is fetched correctly
+        loser_data = await get_user_data(loser_id)
 
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
