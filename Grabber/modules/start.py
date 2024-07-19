@@ -14,7 +14,7 @@ collection = db['total_pm_users']
 
 start_time = time.time()
 
-@block_dec
+
 async def start(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     first_name = update.effective_user.first_name
