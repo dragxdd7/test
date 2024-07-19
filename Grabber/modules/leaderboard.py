@@ -9,8 +9,6 @@ from Grabber import (application, PHOTO_URL, OWNER_ID,
                     user_collection, top_global_groups_collection, 
                     group_user_totals_collection)
 
-from . import error, disable
-
 photo = random.choice(PHOTO_URL)
 from . import app , dev_filter
 
