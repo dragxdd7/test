@@ -201,7 +201,6 @@ async def handle_battle_attack(client, query: CallbackQuery):
         for weapon in weapons_data if weapon['name'] in [w['name'] for w in defender_weapons]
     ]
 
-    # Split weapon buttons into two rows
     num_buttons = len(weapon_buttons)
     half_index = num_buttons // 2
     weapon_buttons_row1 = weapon_buttons[:half_index]
@@ -215,8 +214,7 @@ async def handle_battle_attack(client, query: CallbackQuery):
     )
 
     await query.message.edit_text(
-        f"{attacker_name} attacked with {weapon_name}!\n"
-        f"{defender_name} has {defender_health}/100 health left.\n"
+        f"{defender_name} attacked with {weapon_name}!\n"
         f"{health_lines if attacker_id == current_turn_id else ''}"
         f"{next_turn_name}, choose your weapon:",
         reply_markup=reply_markup
