@@ -6,7 +6,7 @@ from urllib.parse import quote, unquote
 
 pending_gifts = {}
 
-@app.on_message(filters.command("gift") & filters.private)
+@app.on_message(filters.command("gift"))
 async def gift(client, message):
     sender_id = message.from_user.id
 
