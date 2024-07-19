@@ -1,3 +1,4 @@
+import uuid
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from Grabber import user_collection, application
@@ -33,39 +34,45 @@ async def gift(update: Update, context: CallbackContext) -> None:
         await message.reply_text(f"You do not have a character with ID {character_id}!")
         return
 
-    pending_gifts[(sender_id, receiver_id)] = character
-
-    receiver_name = receiver_first_name if receiver_first_name and receiver_first_name.lower() not in ["the recipient", "unknown"] else "the recipient"
+    gift_id = str(uuid.uuid4())
+    pending_gifts[gift_id] = {
+        'sender_id': sender_id,
+        'receiver_id': receiver_id,
+        'character': character,
+        'receiver_name': receiver_first_name if receiver_first_name and receiver_first_name.lower() not in ["the recipient", "unknown"] else "the recipient"
+    }
 
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{sender_id}|{receiver_id}|{receiver_name or 'unknown'}"),
-                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{sender_id}|{receiver_id}")
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{gift_id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{gift_id}")
             ]
         ]
     )
 
     try:
-        await message.reply_text(f"Do you confirm gifting {character['name']} to {receiver_name}?", reply_markup=keyboard)
+        await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
     except KeyError:
-        await message.reply_text(f"Do you confirm gifting this character to {receiver_name}?", reply_markup=keyboard)
+        await message.reply_text(f"Do you confirm gifting this character to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
 
 
 async def confirm_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    data = query.data.split("|")
-    sender_id = int(data[1])
-    receiver_id = int(data[2])
-    receiver_first_name = data[3] if len(data) > 3 else "the recipient"
+    gift_id = query.data.split("|")[1]
+
+    gift_info = pending_gifts.pop(gift_id, None)
+    if not gift_info:
+        await query.answer("This gift is not pending!", show_alert=True)
+        return
+
+    sender_id = gift_info['sender_id']
+    receiver_id = gift_info['receiver_id']
+    character = gift_info['character']
+    receiver_first_name = gift_info['receiver_name']
 
     if query.from_user.id != sender_id:
         await query.answer("This action is not for you!", show_alert=True)
-        return
-
-    character = pending_gifts.pop((sender_id, receiver_id), None)
-    if not character:
-        await query.answer("This gift is not pending!", show_alert=True)
         return
 
     sender = await user_collection.find_one({'id': sender_id})
@@ -104,12 +111,17 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
 
 async def cancel_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
+    gift_id = query.data.split("|")[1]
 
-    if query.from_user.id != int(query.data.split("|")[1]):
+    if gift_id not in pending_gifts:
+        await query.answer("This gift is not pending or has already been processed!", show_alert=True)
+        return
+
+    if query.from_user.id != pending_gifts[gift_id]['sender_id']:
         await query.answer("This action is not for you!", show_alert=True)
         return
 
-    pending_gifts.pop((int(query.data.split("|")[1]), int(query.data.split("|")[2])), None)
+    pending_gifts.pop(gift_id, None)
 
     await query.message.edit_text("❌ Gift Cancelled.")
 
