@@ -40,7 +40,7 @@ async def gift(update: Update, context: CallbackContext) -> None:
     keyboard = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{sender_id}|{receiver_id}|{receiver_name}"),
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{sender_id}|{receiver_id}|{receiver_name or 'unknown'}"),
                 InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{sender_id}|{receiver_id}")
             ]
         ]
