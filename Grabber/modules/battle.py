@@ -209,8 +209,8 @@ async def handle_battle_attack(client, query: CallbackQuery):
     reply_markup = InlineKeyboardMarkup(weapon_buttons_row1 + weapon_buttons_row2)
 
     health_lines = (
-        f"Your health: {a_health}/100\n"
-        f"Opponent's health: {b_health}/100\n"
+        f"{winner_name}: {a_health}/100\n"
+        f"{loser_name}: {b_health}/100\n"
     )
 
     await query.message.edit_text(
