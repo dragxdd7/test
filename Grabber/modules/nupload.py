@@ -1,10 +1,10 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from pymongo import ReturnDocument, UpdateOne
+from pymongo import ReturnDocument
 from telegraph import Telegraph
 import random
 from . import sudo_filter, app
-from Grabber import collection, db, CHARA_CHANNEL_ID, user_collection
+from Grabber import collection, db, CHARA_CHANNEL_ID
 
 telegraph = Telegraph()
 telegraph.create_account(short_name='telegraph')
@@ -74,15 +74,13 @@ async def upload(client: Client, message: Message):
         chat_id=CHARA_CHANNEL_ID,
         photo=img_url,
         caption=(
-            f'<b>Waifu Name:</b> {character_name}\n'
-            f'<b>Anime Name:</b> {anime}\n'
-            f'<b>Quality:</b> {rarity}\n'
-            f'<b>Price:</b> {price}\n'
-            f'<b>ID:</b> {id}\n'
-            f'Added by <a href="tg://user?id={message.from_user.id}">'
-            f'{message.from_user.first_name}</a>'
-        ),
-        parse_mode='HTML'
+            f'Waifu Name: {character_name}\n'
+            f'Anime Name: {anime}\n'
+            f'Quality: {rarity}\n'
+            f'Price: {price}\n'
+            f'ID: {id}\n'
+            f'Added by {message.from_user.first_name}'
+        )
     )
 
     character['message_id'] = msg.message_id
