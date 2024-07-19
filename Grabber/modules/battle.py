@@ -230,7 +230,7 @@ async def end_battle(winner_id, loser_id):
     )
 
     if loser_data:
-        loser_gold = loser_data.get('gold', 0)
+        loser_gold = loser_data.get('gold', 0)  # Ensure loser_gold is set correctly
 
         await user_collection.find_one_and_update(
             {'id': winner_id},
@@ -249,6 +249,8 @@ async def end_battle(winner_id, loser_id):
         )
 
         winner_data = await get_user_data(winner_id)
+        loser_data = await get_user_data(loser_id)  # Ensure loser_data is fetched correctly
+
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
 
