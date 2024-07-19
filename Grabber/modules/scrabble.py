@@ -41,7 +41,7 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     chat_id = update.effective_chat.id
 
-    if chat_id != -1002225496870:
+    if chat_id != -1002010613171:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="This command can only be used at @dragons_support.")
         return
 
