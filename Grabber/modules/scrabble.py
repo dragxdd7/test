@@ -19,7 +19,7 @@ def is_new_day(last_win_time):
     last_win_ist = last_win_time.astimezone(ist)
     return now_ist.date() != last_win_ist.date()
 
-def get_random_character():
+async def get_random_character():
     all_characters = await collection.find({}).to_list(length=None)
     while True:
         character = random.choice(all_characters)
