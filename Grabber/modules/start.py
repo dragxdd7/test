@@ -14,7 +14,6 @@ collection = db['total_pm_users']
 
 start_time = time.time()
 
-
 async def start(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     first_name = update.effective_user.first_name
@@ -95,6 +94,7 @@ async def button(update: Update, context: CallbackContext) -> None:
         await context.bot.edit_message_caption(chat_id=update.effective_chat.id, message_id=query.message.message_id, caption=help_text, reply_markup=reply_markup, parse_mode='markdown')
 
     elif query.data == 'back':
+        await query.message.delete()
         await start(update, context)
 
 start_handler = CommandHandler('start', start)
