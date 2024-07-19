@@ -8,6 +8,7 @@ from .harem import harem_callback as hc
 from .info import check
 from .ptb_store import store_callback_handler, sales_list_callback
 from .start import button
+from .sgift import confirm_gift, cancel_gift
 
 
 async def cbq(update: Update, context: CallbackContext):
@@ -30,5 +31,13 @@ async def cbq(update: Update, context: CallbackContext):
         await store_callback_handler(update, context)
     elif data.startswith(('help', 'back')):
         await button(update, context)
+    elif data.startswith('cancel_gift'):
+        await cancel_gift(update, context)
+    elif data.startswith('confirm_trade'):
+        await confirm_trade(update, context)
+    elif data.startswith('cancel_trade'):
+        await cancel_trade(update, context)
+    elif data.startswith('confirm_gift'):
+        await confirm_gift(update, context)
         
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
