@@ -199,4 +199,53 @@ async def handle_battle_attack(client, query: CallbackQuery):
 
     health_lines = (
         f"Your health: {a_health}/100\n"
-        f"Opponent's health: {b_health}/100
+        f"Opponent's health: {b_health}/100\n"
+    )
+
+    await query.message.edit_text(
+        f"{attacker_name} attacked with {weapon_name}!\n"
+        f"{defender_name} has {defender_health}/100 health left.\n"
+        f"{health_lines if attacker_id == current_turn_id else ''}"
+        f"{next_turn_name}, choose your weapon:",
+        reply_markup=InlineKeyboardMarkup(weapon_buttons)
+    )
+
+async def end_battle(winner_id, loser_id):
+    loser_data = await user_collection.find_one_and_update(
+        {'id': loser_id},
+        {'$set': {'gold': 0}},
+        return_document=True
+    )
+
+    if loser_data:
+        loser_gold = loser_data.get('gold', 0)
+
+        await user_collection.find_one_and_update(
+            {'id': winner_id},
+            {'$inc': {'gold': loser_gold}},
+            return_document=True
+        )
+
+        await user_collection.update_one(
+            {'id': winner_id},
+            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+        )
+
+        await user_collection.update_one(
+            {'id': loser_id},
+            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+        )
+
+        winner_data = await get_user_data(winner_id)
+        winner_name = winner_data.get('first_name', 'Winner')
+        loser_name = loser_data.get('first_name', 'Loser')
+
+        await application.send_message(
+            chat_id=winner_id,
+            text=f"Congratulations! You won the battle against {loser_name}. You earned {loser_gold} gold."
+        )
+
+        await application.send_message(
+            chat_id=loser_id,
+            text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
+        )
