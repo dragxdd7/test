@@ -49,7 +49,7 @@ async def trade(client, message):
         ]
     )
 
-    await message.reply_text(f"{mention}, do you accept this trade?", reply_markup=keyboard, parse_mode='Markdown')
+    await message.reply_text(f"{mention}, do you accept this trade?", reply_markup=keyboard)
 
 @app.on_callback_query(filters.regex(r"confirm_trade\|\d+\|\d+"))
 async def confirm_trade(client, query):
@@ -93,7 +93,7 @@ async def confirm_trade(client, query):
     del pending_trades[(sender_id, receiver_id)]
 
     mention = f"[{query.from_user.first_name}](tg://user?id={receiver_id})"
-    await query.message.edit_text(f"🥳 Successfully traded characters with {mention}!", parse_mode='Markdown')
+    await query.message.edit_text(f"🥳 Successfully traded characters with {mention}!")
 
 @app.on_callback_query(filters.regex(r"cancel_trade\|\d+\|\d+"))
 async def cancel_trade(client, query):
