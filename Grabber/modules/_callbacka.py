@@ -7,6 +7,7 @@ from .delta import sumu
 from .harem import harem_callback as hc
 from .info import check
 from .ptb_store import store_callback_handler, sales_list_callback
+from .start import button, stats_button
 
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -26,6 +27,10 @@ async def cbq(update: Update, context: CallbackContext):
         await sales_list_callback(update, context)
     elif data.startswith(('buy', 'pg', 'charcnf/', 'charback/')):
         await store_callback_handler(update, context)
+    elif data.startswith('stats'):
+        await stats_button(update, context)
+    elif data.startswith(('help', 'back')):
+        await button(update, context)
 
     
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
