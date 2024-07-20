@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, ChatPermissions
+from pyrogram.types import Message
 from pymongo import ReturnDocument
 from telegraph import Telegraph
 import random
@@ -34,24 +34,8 @@ rarity_map = {
     10: "🍭 Cosplay"
 }
 
-async def check_permissions(client: Client, chat_id: int):
-    member = await client.get_chat_member(chat_id, 'me')
-    if member.status not in ('administrator', 'owner'):
-        raise PermissionError("Bot needs to be an administrator in the character channel.")
-    
-    permissions = member.privileges
-    required_permissions = ['can_send_messages', 'can_send_media_messages', 'can_manage_chat']
-    if not all(getattr(permissions, perm, False) for perm in required_permissions):
-        raise PermissionError("Bot lacks necessary permissions in the character channel.")
-
 @app.on_message(filters.command('upload') & sudo_filter)
 async def upload(client: Client, message: Message):
-    try:
-        await check_permissions(client, CHARA_CHANNEL_ID)
-    except PermissionError as e:
-        await message.reply_text(str(e))
-        return
-
     if not message.reply_to_message or not message.reply_to_message.photo or not message.reply_to_message.caption:
         await message.reply_text("Please reply to an image with the caption in the format: 'Name - Name Here\nAnime - Anime Here\nRarity - Number'")
         return
@@ -102,3 +86,4 @@ async def upload(client: Client, message: Message):
     character['message_id'] = sent_message.id
     await collection.insert_one(character)
     await message.reply_text('WAIFU ADDED....')
+
