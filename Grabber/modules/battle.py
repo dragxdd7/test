@@ -250,8 +250,25 @@ async def end_battle(winner_id, loser_id):
             {'$inc': {'gold': -300}, '$set': {'battle_cooldown': battle_cooldown_time}}
         )
 
+        # Fetch updated user data
         winner_data = await get_user_data(winner_id)
         loser_data = await get_user_data(loser_id)
+
+        # Update clan experience points (CXP)
+        winner_clan_id = winner_data.get('clan_id')
+        loser_clan_id = loser_data.get('clan_id')
+
+        if winner_clan_id:
+            await clan_collection.update_one(
+                {'clan_id': winner_clan_id},
+                {'$inc': {'cxp': 3}}
+            )
+
+        if loser_clan_id:
+            await clan_collection.update_one(
+                {'clan_id': loser_clan_id},
+                {'$inc': {'cxp': 1}}
+            )
 
         winner_name = winner_data.get('first_name', 'Winner')
         loser_name = loser_data.get('first_name', 'Loser')
