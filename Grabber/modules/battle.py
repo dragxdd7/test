@@ -65,6 +65,18 @@ async def battle_command(client, message):
         await message.reply_text("You cannot battle someone from the same clan.")
         return
 
+    # Check if both users have at least 300 gold
+    user_a_gold = user_a_data.get('gold', 0)
+    user_b_gold = user_b_data.get('gold', 0)
+
+    if user_a_gold < 300:
+        await message.reply_text(f"{message.from_user.first_name}, you need at least 300 gold to start a battle.")
+        return
+
+    if user_b_gold < 300:
+        await message.reply_to_message.reply_text(f"{message.reply_to_message.from_user.first_name}, you need at least 300 gold to accept a battle.")
+        return
+
     user_a_name = message.from_user.first_name
     user_b_name = message.reply_to_message.from_user.first_name
 
@@ -223,20 +235,19 @@ async def end_battle(winner_id, loser_id):
     loser_data = await user_collection.find_one({'id': loser_id})
     if loser_data:
         loser_gold = loser_data.get('gold', 0)
+        battle_cooldown_time = datetime.now() + timedelta(minutes=5)
 
+        # Update winner's gold and set battle cooldown
         await user_collection.find_one_and_update(
             {'id': winner_id},
-            {'$inc': {'gold': loser_gold}},
+            {'$inc': {'gold': 300}, '$set': {'battle_cooldown': battle_cooldown_time}},
             return_document=True
         )
-        await user_collection.update_one(
-            {'id': winner_id},
-            {'$set': {'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
-        )
-        
+
+        # Update loser's gold and set battle cooldown
         await user_collection.update_one(
             {'id': loser_id},
-            {'$set': {'gold': 0, 'battle_cooldown': datetime.now() + timedelta(minutes=5)}}
+            {'$inc': {'gold': -300}, '$set': {'battle_cooldown': battle_cooldown_time}}
         )
 
         winner_data = await get_user_data(winner_id)
@@ -247,10 +258,10 @@ async def end_battle(winner_id, loser_id):
 
         await application.send_message(
             chat_id=winner_id,
-            text=f"Congratulations! You won the battle against {loser_name}. You earned {loser_gold} gold."
+            text=f"Congratulations! You won the battle against {loser_name}. You earned 300 gold."
         )
 
         await application.send_message(
             chat_id=loser_id,
-            text=f"Unfortunately, you lost the battle against {winner_name}. You lost all your gold."
+            text=f"Unfortunately, you lost the battle against {winner_name}. You lost 300 gold."
         )
