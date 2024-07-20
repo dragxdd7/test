@@ -65,18 +65,6 @@ async def battle_command(client, message):
         await message.reply_text("You cannot battle someone from the same clan.")
         return
 
-    # Check if both users have at least 300 gold
-    user_a_gold = user_a_data.get('gold', 0)
-    user_b_gold = user_b_data.get('gold', 0)
-
-    if user_a_gold < 300:
-        await message.reply_text(f"{message.from_user.first_name}, you need at least 300 gold to start a battle.")
-        return
-
-    if user_b_gold < 300:
-        await message.reply_to_message.reply_text(f"{message.reply_to_message.from_user.first_name}, you need at least 300 gold to accept a battle.")
-        return
-
     user_a_name = message.from_user.first_name
     user_b_name = message.reply_to_message.from_user.first_name
 
