@@ -108,4 +108,4 @@ async def sumu(update: Update, context: CallbackContext):
 
         await query.message.edit_caption(caption=new_caption, reply_markup=None)
 
-application.add_handler(CommandHandler('stime', set_message_limit))
+application.add_handler(CommandHandler('stime', set_message_limit, block=False))
