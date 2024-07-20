@@ -19,7 +19,7 @@ logging.getLogger("pyrate_limiter").setLevel(logging.ERROR)
 LOGGER = logging.getLogger(__name__)
 
 OWNER_ID = "7185106962"
-GROUP_ID = "-1002225641830"
+GROUP_ID = "-1002235251549"
 TOKEN = "6942284208:AAGwdcnl1BMuEn7XlfI6dsk2kCWM1UWgJsY"
 #TOKEN = "6484632876:AAEoT5HShuVJUHT51d0KlGvO5Ev1GJT1MXg" #BETA 
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
