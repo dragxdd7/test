@@ -1,4 +1,4 @@
-import asyncio
+"""import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
@@ -73,3 +73,4 @@ async def rarity(client, message):
         response += f"{rarity['_id']}: {rarity['count']}\n"
 
     await message.reply_text(response, quote=True)
+"""
