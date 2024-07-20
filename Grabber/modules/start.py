@@ -97,5 +97,5 @@ async def button(update: Update, context: CallbackContext) -> None:
         await query.message.delete()
         await start(update, context)
 
-start_handler = CommandHandler('start', start)
-application.add_handler(start_handler)
+
+application.add_handler(CommandHandler('start', start, block=False))
