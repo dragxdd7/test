@@ -55,4 +55,4 @@ async def check(update: Update, context: CallbackContext) -> None:
     else:
         await query.answer("You have 0 of this character.", show_alert=True)
 
-application.add_handler(CommandHandler('p', details))
+application.add_handler(CommandHandler('p', details, block=False))
