@@ -113,6 +113,8 @@ async def handle_battle_accept(client, query: CallbackQuery):
         [InlineKeyboardButton(weapon['name'], callback_data=f"battle_attack:{weapon['name']}:{user_a_id}:{user_b_id}:{user_a_id}:{a_health}:{b_health}")]
         for weapon in user_a_weapons[half_index:]
     ]
+    print(a_weapon_buttons)
+    print(b_weapon_buttons)
 
     reply_markup = InlineKeyboardMarkup(a_weapon_buttons + b_weapon_buttons)
 
