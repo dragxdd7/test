@@ -96,4 +96,4 @@ async def handle_messages(update: Update, context: CallbackContext):
 
         await context.bot.send_photo(chat_id=chat_id, photo=image_bytes, caption=f"Guess the word in the image to win!", reply_markup=reply_markup)
 
-application.add_handler(CommandHandler('wtime', set_message_limit))
+application.add_handler(CommandHandler('wtime', set_message_limit, block=False))
