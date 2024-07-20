@@ -1,234 +1,115 @@
-from pyrogram import Client, filters
-from . import app, sudo_filter, dev_filter
+import io
 import os
-import re
-import subprocess
-import sys
+import textwrap
 import traceback
-from inspect import getfullargspec
-from io import StringIO
-from time import time
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+from contextlib import redirect_stdout
 
-IKM = InlineKeyboardMarkup
-IKB = InlineKeyboardButton
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.enums import ParseMode
+from . import app, sudo_filter
+namespaces = {}
 
+def namespace_of(chat_id, message, bot):
+    if chat_id not in namespaces:
+        namespaces[chat_id] = {
+            "__builtins__": globals()["__builtins__"],
+            "bot": bot,
+            "message": message,
+            "from_user": message.from_user,
+            "chat": message.chat,
+        }
+    return namespaces[chat_id]
 
-async def aexec(code, client, message):
-    exec(
-        "async def __aexec(client, message): "
-        + "".join(f"\n {a}" for a in code.split("\n"))
-    )
-    return await locals()["__aexec"](client, message)
+def log_input(message):
+    user = message.from_user.id
+    chat = message.chat.id
+    print(f"IN: {message.text} (user={user}, chat={chat})")
 
-
-async def edit_or_reply(msg: Message, **kwargs):
-    func = msg.edit_text if msg.from_user.is_self else msg.reply
-    spec = getfullargspec(func.__wrapped__).args
-    await func(**{k: v for k, v in kwargs.items() if k in spec})
-
-
-@app.on_message(filters.command("eval") & dev_filter)
-async def executor(client, message):
-    if len(message.command) < 2:
-        return await edit_or_reply(
-            message, text="__Give me some command to execute.__"
+async def send(msg, bot, message):
+    if len(str(msg)) > 2000:
+        with io.BytesIO(str.encode(msg)) as out_file:
+            out_file.name = "output.txt"
+            await bot.send_document(
+                chat_id=message.chat.id,
+                document=out_file,
+                reply_to_message_id=message.id
+            )
+    else:
+        print(f"OUT: '{msg}'")
+        await bot.send_message(
+            chat_id=message.chat.id,
+            text=f"```\n{msg}\n```",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton("Close", callback_data="close")]]
+            ),
+            reply_to_message_id=message.id
         )
-    
+
+@app.on_message(filters.command(["e", "ev", "eva", "eval"]) & sudo_filter)
+async def evaluate(client, message):
+    await send(await do(eval, client, message), client, message)
+
+@app.on_message(filters.command(["x", "ex", "exe", "exec", "py"]) & sudo_filter)
+async def execute(client, message):
+    await send(await do(exec, client, message), client, message)
+
+def cleanup_code(code):
+    if code.startswith("```") and code.endswith("```"):
+        return "\n".join(code.split("\n")[1:-1])
+    return code.strip("` \n")
+
+async def do(func, client, message):
+    log_input(message)
+    content = message.text.split(" ", 1)[-1]
+    body = cleanup_code(content)
+    env = namespace_of(message.chat.id, message, client)
+
+    os.chdir(os.getcwd())
+    with open("temp.txt", "w") as temp:
+        temp.write(body)
+
+    stdout = io.StringIO()
+    to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
+
     try:
-        cmd = message.text.split(" ", maxsplit=1)[1]
-    except IndexError:
-        return await message.delete()
-    
-    t1 = time()
-    old_stderr = sys.stderr
-    old_stdout = sys.stdout
-    redirected_output = sys.stdout = StringIO()
-    redirected_error = sys.stderr = StringIO()
-    stdout, stderr, exc = None, None, None
-    
+        exec(to_compile, env)
+    except Exception as e:
+        return f"{e.__class__.__name__}: {e}"
+
+    func = env["func"]
+
     try:
-        result = await aexec(cmd, client, message)
-        stdout = redirected_output.getvalue()
-        stderr = redirected_error.getvalue()
-    except Exception:
-        exc = traceback.format_exc()
-    
-    sys.stdout = old_stdout
-    sys.stderr = old_stderr
-    
-    evaluation = ""
-    if exc:
-        evaluation = exc
-    elif stderr:
-        evaluation = stderr
-    elif stdout:
-        evaluation = stdout
+        with redirect_stdout(stdout):
+            func_return = await func()
+    except Exception as e:
+        value = stdout.getvalue()
+        return f"{value}{traceback.format_exc()}"
     else:
-        evaluation = "Success"
-    
-    final_output = f"**OUTPUT**:\n```{evaluation.strip()}```"
-    
-    if len(final_output) > 4096:
-        filename = "output.txt"
-        with open(filename, "w+", encoding="utf8") as out_file:
-            out_file.write(str(evaluation.strip()))
-        
-        t2 = time()
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="⏳",
-                        callback_data=f"runtime {t2-t1} Seconds",
-                    )
-                ]
-            ]
-        )
-        
-        await message.reply_document(
-            document=filename,
-            caption=f"**INPUT:**\n`{cmd[0:980]}`\n\n**OUTPUT:**\n`Attached Document`",
-            quote=False,
-            reply_markup=keyboard,
-        )
-        
-        await message.delete()
-        os.remove(filename)
-    
-    else:
-        t2 = time()
-        keyboard = InlineKeyboardMarkup(
-            [
-                [
-                    InlineKeyboardButton(
-                        text="⏳",
-                        callback_data=f"runtime {round(t2-t1, 3)} Seconds",
-                    ),
-                    InlineKeyboardButton(
-                        text="🗑",
-                        callback_data=f"forceclose abc|{message.from_user.id}",
-                    ),
-                ]
-            ]
-        )
-        
-        await edit_or_reply(
-            message, text=final_output, reply_markup=keyboard
-        )
+        value = stdout.getvalue()
+        result = None
+        if func_return is None:
+            if value:
+                result = f"{value}"
+            else:
+                try:
+                    result = f"{repr(eval(body, env))}"
+                except:
+                    pass
+        else:
+            result = f"{value}{func_return}"
+        if result:
+            return result
 
+@app.on_message(filters.command("clearlocals") & sudo_filter)
+async def clear(client, message):
+    log_input(message)
+    global namespaces
+    if message.chat.id in namespaces:
+        del namespaces[message.chat.id]
+    await send("Cleared locals.", client, message)
 
-@app.on_callback_query(filters.regex(r"runtime"))
-async def runtime_func_cq(_, cq):
-    runtime = cq.data.split(None, 1)[1]
-    await cq.answer(runtime, show_alert=True)
-
-
-@app.on_callback_query(filters.regex("forceclose"))
-async def forceclose_command(_, CallbackQuery):
-    callback_data = CallbackQuery.data.strip()
-    callback_request = callback_data.split(None, 1)[1]
-    query, user_id = callback_request.split("|")
-    
-    if CallbackQuery.from_user.id != int(user_id):
-        try:
-            return await CallbackQuery.answer(
-                "You're not allowed to close this.", show_alert=True
-            )
-        except:
-            return
-    
-    await CallbackQuery.message.delete()
-    
-    try:
-        await CallbackQuery.answer()
-    except:
-        return
-
-
-@app.on_message(filters.command("sh") & dev_filter)
-async def shellrunner(client, message):
-    if len(message.command) < 2:
-        return await edit_or_reply(
-            message, text="**Usage:**\n/sh git pull"
-        )
-    
-    text = message.text.split(None, 1)[1]
-    
-    if "\n" in text:
-        code = text.split("\n")
-        output = ""
-        
-        for x in code:
-            shell = re.split(
-                """ (?=(?:[^'"]|'[^']*'|"[^"]*")*$)""", x
-            )
-            
-            try:
-                process = subprocess.Popen(
-                    shell,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            
-            except Exception as err:
-                print(err)
-                await edit_or_reply(
-                    message, text=f"**ERROR:**\n```{err}```"
-                )
-            
-            output += f"**{code}**\n"
-            output += process.stdout.read()[:-1].decode("utf-8")
-            output += "\n"
-    
-    else:
-        shell = re.split(""" (?=(?:[^'"]|'[^']*'|"[^"]*")*$)""", text)
-        
-        for a in range(len(shell)):
-            shell[a] = shell[a].replace('"', "")
-        
-        try:
-            process = subprocess.Popen(
-                shell,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-        
-        except Exception as err:
-            print(err)
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            errors = traceback.format_exception(
-                etype=exc_type,
-                value=exc_obj,
-                tb=exc_tb,
-            )
-            
-            return await edit_or_reply(
-                message, text=f"**ERROR:**\n```{''.join(errors)}```"
-            )
-        
-        output = process.stdout.read()[:-1].decode("utf-8")
-    
-    if str(output) == "\n":
-        output = None
-    
-    if output:
-        if len(output) > 4096:
-            with open("output.txt", "w+") as file:
-                file.write(output)
-            
-            await client.send_document(
-                message.chat.id,
-                "output.txt",
-                reply_to_message_id=message.message_id,
-                caption="`Output`",
-            )
-            
-            return os.remove("output.txt")
-        
-        await edit_or_reply(
-            message, text=f"**OUTPUT:**\n```{output}```"
-        )
-    
-    else:
-        await edit_or_reply(message, text="**OUTPUT: **\n`No output`")
+@app.on_callback_query(filters.regex("close"))
+async def close_message(client, callback_query):
+    await callback_query.message.delete()
