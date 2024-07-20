@@ -159,8 +159,7 @@ async def xscrabble(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text("You don't have an active game to terminate.")
 
-scrabble_handler = CommandHandler("scrabble", scrabble)
-xscrabble_handler = CommandHandler("xscrabble", xscrabble)
 
-application.add_handler(scrabble_handler)
-application.add_handler(xscrabble_handler)
+application.add_handler(CommandHandler('scrabble', scrabble, block=False))
+
+application.add_handler(CommandHandler('xscrabble', xscrabble, block=False))
