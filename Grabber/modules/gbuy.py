@@ -57,7 +57,18 @@ async def gbuy(client, message):
 @app.on_callback_query(filters.regex(r"^(bg|cg):"))
 async def hgq(client, query: CallbackQuery):
     user_id = query.from_user.id
-    message_id = query.message.message_id
+
+    # Debugging output to understand the structure of query.message
+    if query.message is None:
+        await query.answer("Error: query.message is None.")
+        return
+
+    try:
+        message_id = query.message.message_id
+    except AttributeError:
+        await query.answer("Error: query.message has no attribute 'message_id'.")
+        return
+
     data = query.data.split(":")
     action = data[0]
     character_id = data[1]
