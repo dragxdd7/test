@@ -30,19 +30,21 @@ async def gamble(client, message):
         await message.reply_text(f"Please gamble at least 7% of your balance, which is Ŧ{min_bet}.")
         return
 
+    if amount > balance:
+        await message.reply_text(f"You do not have enough balance to gamble Ŧ{amount}. Your current balance is Ŧ{balance}.")
+        return
+
     # Winning chance is 30 out of 100
     if random.randint(1, 100) <= 30:  # 30% chance to win
         coin_side = choice
+        new_balance = amount  # Amount to add
+        message_text = f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand."
     else:
         coin_side = 'l' if choice == 'r' else 'r'
-
-    if coin_side == choice:
-        message_text = f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand."
-        await message.reply_photo(photo="https://telegra.ph/file/889fb66c41a9ead354c59.jpg", caption=message_text)
-        new_balance = balance + amount
-        await add(user_id, amount)
-    else:
+        new_balance = -amount  # Amount to deduct
         message_text = f"🥲 You chose {choice} and lost Ŧ{amount}.\nCoin was in {coin_side} hand."
-        await message.reply_photo(photo="https://telegra.ph/file/99a98f60b22759857056a.jpg", caption=message_text)
-        new_balance = balance - amount
-        await deduct(user_id, amount)
+
+    await add(user_id, new_balance)
+
+    photo_url = "https://telegra.ph/file/889fb66c41a9ead354c59.jpg" if coin_side == choice else "https://telegra.ph/file/99a98f60b22759857056a.jpg"
+    await message.reply_photo(photo=photo_url, caption=message_text)
