@@ -9,6 +9,7 @@ from . import add, deduct, show, app, sudo_filter
 last_usage_time = {}
 daily_code_usage = {}
 generated_codes = {}
+user_redemptions = {}  # Track which codes have been redeemed by which users
 
 async def generate_random_code(prefix=""):
     return prefix + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
@@ -72,11 +73,21 @@ async def redeem(client, message: Message):
             await message.reply_text("You can only redeem the codes you generated.")
             return
 
+        # Check if the user has already redeemed this code
+        if code in user_redemptions.get(user_id, []):
+            await message.reply_text("You have already redeemed this code.")
+            return
+
         if details['quantity'] > 0:
             amount = details['amount']
             await add(user_id, amount)
 
             details['quantity'] -= 1
+
+            # Track the redemption
+            if user_id not in user_redemptions:
+                user_redemptions[user_id] = []
+            user_redemptions[user_id].append(code)
 
             if details['quantity'] == 0:
                 del generated_codes[code]
