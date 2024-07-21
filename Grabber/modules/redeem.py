@@ -7,7 +7,8 @@ from Grabber import application, user_collection
 from . import add, deduct, show, app, sudo_filter
 
 last_usage_time = {}
-daily_code_usage = {}  # Track daily code usage
+daily_code_usage = {}
+generated_codes = {}
 
 async def generate_random_code(prefix=""):
     return prefix + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
@@ -15,8 +16,6 @@ async def generate_random_code(prefix=""):
 @app.on_message(filters.command("daily_code"))
 async def daily_code(client, message: Message):
     user_id = message.from_user.id
-
-    # Check if the user has used the daily code today
     today = datetime.datetime.now().date()
     if user_id in daily_code_usage:
         last_usage_date = daily_code_usage[user_id]
@@ -28,7 +27,7 @@ async def daily_code(client, message: Message):
     amount = random.randint(10, 50000)
     quantity = 1
 
-    daily_code_usage[user_id] = today  # Update last usage date to today
+    daily_code_usage[user_id] = today
     generated_codes[code] = {'amount': amount, 'quantity': quantity, 'user_id': user_id}
 
     response_text = (
@@ -43,7 +42,7 @@ async def daily_code(client, message: Message):
 async def gen(client, message: Message):
     args = message.command[1:]
     try:
-        amount = int(args[0])  # Ensure amount is an integer
+        amount = int(args[0])
         quantity = int(args[1])
     except (IndexError, ValueError):
         await message.reply_text("Invalid usage. Usage: /gen <amount> <quantity>")
