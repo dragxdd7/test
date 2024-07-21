@@ -14,7 +14,7 @@ async def reset_win_counts():
 async def schedule_daily_task():
     ist = timezone('Asia/Kolkata')
     now = datetime.now(ist)
-    next_run = datetime.combine(now.date(), time(6, 33), tzinfo=ist)
+    next_run = datetime.combine(now.date(), time(6, 30), tzinfo=ist)
     
     if now > next_run:
         next_run += timedelta(days=1)
@@ -25,4 +25,4 @@ async def schedule_daily_task():
         await reset_win_counts()
         next_run += timedelta(days=1)
 
-asyncio.create_task(await schedule_daily_task())
+asyncio.run(schedule_daily_task())
