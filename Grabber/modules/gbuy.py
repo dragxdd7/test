@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
 from datetime import datetime, time, timedelta
 import pytz
-from . import user_collection, app, collection 
+from . import user_collection, app, collection
 
 ags = {}
 
@@ -52,30 +52,18 @@ async def gbuy(client, message):
 
     if user_id not in ags:
         ags[user_id] = {}
-    ags[user_id][msg.message_id] = character_id
+    ags[user_id][character_id] = msg.message_id
 
 @app.on_callback_query(filters.regex(r"^(bg|cg):"))
 async def hgq(client, query: CallbackQuery):
     user_id = query.from_user.id
-
-    # Debugging output to understand the structure of query.message
-    if query.message is None:
-        await query.answer("Error: query.message is None.")
-        return
-
-    try:
-        message_id = query.message.message_id
-    except AttributeError:
-        await query.answer("Error: query.message has no attribute 'message_id'.")
-        return
-
     data = query.data.split(":")
     action = data[0]
     character_id = data[1]
     sui = int(data[3])
     price = int(data[2]) if action == "bg" else None
 
-    if user_id not in ags or message_id not in ags[user_id] or ags[user_id][message_id] != character_id:
+    if character_id not in ags.get(user_id, {}):
         await query.answer("This session is not valid or has expired.")
         return
 
@@ -96,7 +84,7 @@ async def hgq(client, query: CallbackQuery):
             {'$inc': {'gold': -price}, '$push': {'characters': character}}
         )
         await query.message.edit_caption(caption=f"Purchase successful! You bought {character['name']}.")
-        del ags[user_id][message_id]
+        del ags[user_id][character_id]
         if not ags[user_id]:
             del ags[user_id]
 
@@ -105,7 +93,7 @@ async def hgq(client, query: CallbackQuery):
             await query.answer("This is not for you, baka!")
             return
         await query.message.edit_caption(caption="Purchase cancelled.")
-        del ags[user_id][message_id]
+        del ags[user_id][character_id]
         if not ags[user_id]:
             del ags[user_id]
 
