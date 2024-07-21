@@ -7,7 +7,7 @@ from Grabber import application, user_collection
 from . import add, deduct, show, app, sudo_filter
 
 last_usage_time = {}
-generated_codes = {}
+daily_code_usage = {}  # Track daily code usage
 
 async def generate_random_code(prefix=""):
     return prefix + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
@@ -16,19 +16,19 @@ async def generate_random_code(prefix=""):
 async def daily_code(client, message: Message):
     user_id = message.from_user.id
 
-    if user_id in last_usage_time:
-        last_time = last_usage_time[user_id]
-        current_time = datetime.datetime.now()
-        time_diff = current_time - last_time
-        if time_diff.total_seconds() < 300:
-            await message.reply_text("You can only use this command every 5 minutes.")
+    # Check if the user has used the daily code today
+    today = datetime.datetime.now().date()
+    if user_id in daily_code_usage:
+        last_usage_date = daily_code_usage[user_id]
+        if last_usage_date == today:
+            await message.reply_text("You have already used your daily code today.")
             return
 
     code = await generate_random_code()
-    amount = random.randint(10, 500000)
+    amount = random.randint(10, 50000)
     quantity = 1
 
-    last_usage_time[user_id] = datetime.datetime.now()
+    daily_code_usage[user_id] = today  # Update last usage date to today
     generated_codes[code] = {'amount': amount, 'quantity': quantity, 'user_id': user_id}
 
     response_text = (
