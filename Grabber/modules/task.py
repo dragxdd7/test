@@ -25,4 +25,4 @@ async def schedule_daily_task():
         await reset_win_counts()
         next_run += timedelta(days=1)
 
-asyncio.create_task(schedule_daily_task())
+asyncio.create_task(await schedule_daily_task())
