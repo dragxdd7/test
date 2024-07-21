@@ -16,7 +16,12 @@ async def sales_list_callback(update: Update, context: CallbackContext):
         end_user = int(data.split('_')[1])
         if end_user == update.effective_user.id:
             await query.answer()
-            await query.message.delete()
+            try:
+                await query.message.delete()
+            except telegram.error.BadRequest as e:
+                if str(e) == "Message to delete not found":
+                    # Message was already deleted, ignore this error
+                    pass
         else:
             await query.answer('This is not for you baka.', show_alert=True)
         return
