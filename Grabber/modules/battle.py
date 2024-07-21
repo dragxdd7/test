@@ -68,8 +68,6 @@ async def hgq(client, query: CallbackQuery):
         await query.answer("This action is not for you.")
         return
 
-    message_id = query.message.message_id if query.message else None
-
     if action == "bg":
         if user_id != current_turn_id:
             await query.answer("This is not for you, baka!")
