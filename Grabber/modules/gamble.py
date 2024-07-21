@@ -30,7 +30,12 @@ async def gamble(client, message):
         await message.reply_text(f"Please gamble at least 7% of your balance, which is Ŧ{min_bet}.")
         return
 
-    coin_side = random.choice(['l', 'r'])
+    # Winning chance is 30 out of 100
+    if random.randint(1, 100) <= 30:  # 30% chance to win
+        coin_side = choice
+    else:
+        coin_side = 'l' if choice == 'r' else 'r'
+
     if coin_side == choice:
         message_text = f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand."
         await message.reply_photo(photo="https://telegra.ph/file/889fb66c41a9ead354c59.jpg", caption=message_text)
