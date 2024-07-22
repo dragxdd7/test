@@ -49,19 +49,16 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         start_index = offset
         end_index = offset + results_per_page
 
-        logger.info("Processing query: %s", query)
-
-        # Determine search context
         if query.startswith('collection.'):
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
             if user_id.isdigit():
                 if user_id in user_collection_cache:
                     user = user_collection_cache[user_id]
-                    logger.info("User data fetched from cache")
+                    
                 else:
                     user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
                     user_collection_cache[user_id] = user
-                    logger.info("User data fetched from DB")
+                    
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
@@ -83,11 +80,11 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
-                    logger.info("All characters fetched from cache")
+                    
                 else:
                     all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
                     all_characters_cache['all_characters'] = all_characters
-                    logger.info("All characters fetched from DB")
+                    
 
         characters = list(all_characters)[start_index:end_index]
 
