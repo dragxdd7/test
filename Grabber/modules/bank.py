@@ -2,10 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 import math
-from . import add, deduct, show, abank, dbank, sbank, user_collection, Grabberu
-
-last_payment_times = {}
-last_loan_times = {}
+from . import add, deduct, show, abank, dbank, sbank, user_collection
 
 async def handle_error(client: Client, message: Message, error: Exception):
     await message.reply_text(f"An error occurred: {str(error)}")
@@ -73,11 +70,24 @@ async def loan(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
-    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'loan_amount': 1})
+    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'loan_amount': 1, 'loan_due_date': 1})
 
     if user_data:
         if 'loan_amount' in user_data and user_data['loan_amount'] > 0:
-            await message.reply_text("You still have an existing loan. Please repay it before taking a new one.")
+            current_time = datetime.now()
+            loan_due_date = user_data.get('loan_due_date')
+            
+            if current_time > loan_due_date:
+                overdue_hours = (current_time - loan_due_date).total_seconds() / 3600
+                penalty = math.ceil(overdue_hours) * (user_data['loan_amount'] * 0.05)
+            else:
+                penalty = 0
+            
+            total_deducted = user_data['balance'] + penalty
+            await user_collection.update_one({'id': user_id}, {'$set': {'balance': 0, 'loan_amount': 0}})
+            log_message = f"User {message.from_user.first_name} ({user_id}) tried to exploit the loan system. Deducted balance and penalty: {total_deducted} tokens."
+            await client.send_message(-1002220682772, log_message)
+            await message.reply_text("You tried to exploit the loan system. Your balance has been reset to 0 as a penalty.")
             return
 
         current_time = datetime.now()
@@ -92,7 +102,7 @@ async def loan(client: Client, message: Message):
 
         await message.reply_text(f"You successfully took a loan of Ŧ{loan_amount}. You must repay it within 10 days to avoid a penalty.")
         log_message = f"Loan: +{loan_amount} tokens | User ID: {user_id} | Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')}"
-        await client.send_message(926282726, log_message)  
+        await client.send_message(926282726, log_message)
     else:
         await message.reply_text("User data not found.")
 
@@ -132,18 +142,18 @@ async def repay(client: Client, message: Message):
     else:
         await message.reply_text("User data not found.")
 
-@Grabberu.on_message(filters.command("loan"))
+@app.on_message(filters.command("loan"))
 async def loan_handler(client: Client, message: Message):
     await loan(client, message)
 
-@Grabberu.on_message(filters.command("save"))
+@app.on_message(filters.command("save"))
 async def save_handler(client: Client, message: Message):
     await save(client, message)
 
-@Grabberu.on_message(filters.command("repay"))
+@app.on_message(filters.command("repay"))
 async def repay_handler(client: Client, message: Message):
     await repay(client, message)
 
-@Grabberu.on_message(filters.command("withdraw"))
+@app.on_message(filters.command("withdraw"))
 async def withdraw_handler(client: Client, message: Message):
     await withdraw(client, message)
