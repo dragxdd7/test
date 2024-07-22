@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 import math
-from . import add, deduct, show, abank, dbank, sbank, user_collection
+from . import add, deduct, show, abank, dbank, sbank, user_collection, app
 
 async def handle_error(client: Client, message: Message, error: Exception):
     await message.reply_text(f"An error occurred: {str(error)}")
