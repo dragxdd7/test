@@ -109,10 +109,14 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
         await user_collection.replace_one({'id': user_id}, user_data, upsert=True)
 
         if user_data['wins'] <= WIN_LIMIT:
-            await update.message.reply_photo(
-                photo=scrabble_data['character']['img_url'],
-                caption=f"{scrabble_data['character']['name']} added to your collection! 🎉"
-            )
+            try:
+                await update.message.reply_photo(
+                    photo=scrabble_data['character']['img_url'],
+                    caption=f"{scrabble_data['character']['name']} added to your collection! 🎉"
+                )
+            except telegram.error.BadRequest:
+                await update.message.reply_text(f"{scrabble_data['character']['name']} added to your collection! 🎉")
+            
             await user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
             if user_data['wins'] == WIN_LIMIT:
                 await update.message.reply_text("You won 5 games today. Now you will get gold instead of characters.")
@@ -161,5 +165,4 @@ async def xscrabble(update: Update, context: CallbackContext) -> None:
 
 
 application.add_handler(CommandHandler('scrabble', scrabble, block=False))
-
 application.add_handler(CommandHandler('xscrabble', xscrabble, block=False))
