@@ -76,7 +76,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             if query:
                 regex = re.compile(query, re.IGNORECASE)
                 all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
-                logger.info("Filtered characters fetched from DB")
+                
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
