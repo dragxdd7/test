@@ -70,7 +70,7 @@ async def loan(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
-    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'loan_amount': 1, 'loan_due_date': 1})
+    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'loan_due_date': 1})
 
     if user_data:
         if 'loan_amount' in user_data and user_data['loan_amount'] > 0:
@@ -84,10 +84,10 @@ async def loan(client: Client, message: Message):
                 penalty = 0
             
             total_deducted = int(user_data['balance']) + penalty
-            await user_collection.update_one({'id': user_id}, {'$set': {'balance': 0, 'loan_amount': 0}})
+            await user_collection.update_one({'id': user_id}, {'$set': {'balance': 0, 'saved_amount': 0, 'loan_amount': 0}})
             log_message = f"User {message.from_user.first_name} ({user_id}) tried to exploit the loan system. Deducted balance and penalty: {total_deducted} tokens."
             await client.send_message(-1002220682772, log_message)
-            await message.reply_text("You tried to exploit the loan system. Your balance has been reset to 0 as a penalty.")
+            await message.reply_text("You tried to exploit the loan system. Your balance and saved amount have been reset to 0 as a penalty.")
             return
 
         current_time = datetime.now()
