@@ -4,6 +4,7 @@ from datetime import datetime as dt
 import random
 from Grabber import application, db, collection, user_collection
 from . import add, deduct, show 
+import telegram 
 
 sdb = db.new_store
 user_db = db.bought
