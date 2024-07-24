@@ -89,15 +89,15 @@ async def leaderboard(client: Client, message: Message) -> None:
 @app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(client: Client, message: Message) -> None:
     try:
-        if message.reply_to_message is None:
+        if not message.reply_to_message:
             await message.reply_text('Please reply to a message to broadcast.')
             return
 
         mode = 'all'
-        if message.command:
-            if message.command[0] == '-users':
+        if len(message.command) > 1:
+            if message.command[1] == '-users':
                 mode = 'users'
-            elif message.command[0] == '-groups':
+            elif message.command[1] == '-groups':
                 mode = 'groups'
 
         all_users = await user_collection.find({}).to_list(length=None)
@@ -114,7 +114,8 @@ async def broadcast(client: Client, message: Message) -> None:
                 try:
                     await client.forward_messages(chat_id=user_id, from_chat_id=message.chat.id, message_ids=message.reply_to_message.message_id)
                     total_sent += 1
-                except Exception:
+                except Exception as e:
+                    print(f"Failed to send to user {user_id}: {e}")
                     total_failed += 1
 
         if mode in ['all', 'groups']:
@@ -122,14 +123,15 @@ async def broadcast(client: Client, message: Message) -> None:
                 try:
                     await client.forward_messages(chat_id=group_id, from_chat_id=message.chat.id, message_ids=message.reply_to_message.message_id)
                     total_sent += 1
-                except Exception:
+                except Exception as e:
+                    print(f"Failed to send to group {group_id}: {e}")
                     total_failed += 1
 
         await message.reply_text(
             text=f'Broadcast report:\n\nTotal messages sent successfully: {total_sent}\nTotal messages failed to send: {total_failed}'
         )
     except Exception as e:
-        print(e)
+        print(f"An error occurred: {e}")
 
 @app.on_message(filters.command("stats") & dev_filter)
 async def stats(client: Client, message: Message) -> None:
@@ -137,55 +139,8 @@ async def stats(client: Client, message: Message) -> None:
         user_count = await user_collection.count_documents({})
         group_count = await group_user_totals_collection.distinct('group_id')
 
-        user_count += 45000  # Example addition
-        group_count_count = len(group_count) + 30000  # Example addition
+        group_count_count = len(group_count)
 
         await message.reply_text(f'Total Users: {user_count}\nTotal groups: {group_count_count}')
-    except Exception as e:
-        print(e)
-
-@app.on_message(filters.command("sendusersdoc") & dev_filter)
-async def send_users_document(client: Client, message: Message) -> None:
-    try:
-        cursor = user_collection.find({})
-        users = []
-        async for document in cursor:
-            users.append(document)
-
-        user_list = ""
-        for user in users:
-            user_list += f"{user['first_name']}\n"
-
-        with open('users.txt', 'w') as f:
-            f.write(user_list)
-
-        with open('users.txt', 'rb') as f:
-            await client.send_document(chat_id=message.chat.id, document=f)
-
-        os.remove('users.txt')
-
-    except Exception as e:
-        print(e)
-
-@app.on_message(filters.command("sendgroupsdoc") & dev_filter)
-async def send_groups_document(client: Client, message: Message) -> None:
-    try:
-        cursor = top_global_groups_collection.find({})
-        groups = []
-        async for document in cursor:
-            groups.append(document)
-
-        group_list = ""
-        for group in groups:
-            group_list += f"{group['group_name']}\n\n"
-
-        with open('groups.txt', 'w') as f:
-            f.write(group_list)
-
-        with open('groups.txt', 'rb') as f:
-            await client.send_document(chat_id=message.chat.id, document=f)
-
-        os.remove('groups.txt')
-
     except Exception as e:
         print(e)
