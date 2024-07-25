@@ -12,7 +12,7 @@ from Grabber import (application, PHOTO_URL, OWNER_ID,
 photo = random.choice(PHOTO_URL)
 from . import app , dev_filter
 
-@app.on_message(filters.command("global_leaderboard"))
+@app.on_message(filters.command("gctop"))
 async def global_leaderboard(client: Client, message: Message) -> None:
     cursor = top_global_groups_collection.aggregate([
         {"$project": {"group_name": 1, "count": 1}},
@@ -86,52 +86,7 @@ async def leaderboard(client: Client, message: Message) -> None:
 
     await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=leaderboard_message)
 
-@app.on_message(filters.command("broadcast") & dev_filter)
-async def broadcast(client: Client, message: Message) -> None:
-    try:
-        if not message.reply_to_message:
-            await message.reply_text('Please reply to a message to broadcast.')
-            return
 
-        mode = 'all'
-        if len(message.command) > 1:
-            if message.command[1] == '-users':
-                mode = 'users'
-            elif message.command[1] == '-groups':
-                mode = 'groups'
-
-        all_users = await user_collection.find({}).to_list(length=None)
-        all_groups = await group_user_totals_collection.find({}).to_list(length=None)
-
-        unique_user_ids = set(user['id'] for user in all_users)
-        unique_group_ids = set(group['group_id'] for group in all_groups)
-
-        total_sent = 0
-        total_failed = 0
-
-        if mode in ['all', 'users']:
-            for user_id in unique_user_ids:
-                try:
-                    await client.forward_messages(chat_id=user_id, from_chat_id=message.chat.id, message_ids=message.reply_to_message.message_id)
-                    total_sent += 1
-                except Exception as e:
-                    print(f"Failed to send to user {user_id}: {e}")
-                    total_failed += 1
-
-        if mode in ['all', 'groups']:
-            for group_id in unique_group_ids:
-                try:
-                    await client.forward_messages(chat_id=group_id, from_chat_id=message.chat.id, message_ids=message.reply_to_message.message_id)
-                    total_sent += 1
-                except Exception as e:
-                    print(f"Failed to send to group {group_id}: {e}")
-                    total_failed += 1
-
-        await message.reply_text(
-            text=f'Broadcast report:\n\nTotal messages sent successfully: {total_sent}\nTotal messages failed to send: {total_failed}'
-        )
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 @app.on_message(filters.command("stats") & dev_filter)
 async def stats(client: Client, message: Message) -> None:
