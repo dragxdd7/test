@@ -29,6 +29,9 @@ def log_input(message):
     print(f"IN: {message.text} (user={user}, chat={chat})")
 
 async def send(code, output, bot, message, time_taken=None):
+    if output is None:
+        output = "No output returned."
+
     reply_markup = InlineKeyboardMarkup(
         [
             [
@@ -37,6 +40,7 @@ async def send(code, output, bot, message, time_taken=None):
             ]
         ]
     )
+    
     if len(output) > 2000:
         with io.BytesIO(str.encode(output)) as out_file:
             out_file.name = "output.txt"
