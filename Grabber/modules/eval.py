@@ -2,6 +2,7 @@ import io
 import os
 import textwrap
 import traceback
+import subprocess
 from contextlib import redirect_stdout
 from time import time
 from pyrogram import Client, filters
@@ -27,7 +28,7 @@ def log_input(message):
     chat = message.chat.id
     print(f"IN: {message.text} (user={user}, chat={chat})")
 
-async def send(msg, bot, message, time_taken=None):
+async def send(code, output, bot, message, time_taken=None):
     reply_markup = InlineKeyboardMarkup(
         [
             [
@@ -36,8 +37,8 @@ async def send(msg, bot, message, time_taken=None):
             ]
         ]
     )
-    if len(str(msg)) > 2000:
-        with io.BytesIO(str.encode(msg)) as out_file:
+    if len(output) > 2000:
+        with io.BytesIO(str.encode(output)) as out_file:
             out_file.name = "output.txt"
             await bot.send_document(
                 chat_id=message.chat.id,
@@ -46,11 +47,13 @@ async def send(msg, bot, message, time_taken=None):
                 reply_markup=reply_markup,
             )
     else:
-        output_message = f"**OUTPUT**\n\n```\n{msg}\n```"
-        print(f"OUT: '{msg}'")
+        message_text = (
+            f"**CODE**\n\n```\n{code}\n```\n\n**OUTPUT**\n\n```\n{output}\n```"
+        )
+        print(f"OUT: '{output}'")
         await bot.send_message(
             chat_id=message.chat.id,
-            text=output_message,
+            text=message_text,
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup,
             reply_to_message_id=message.id
@@ -61,14 +64,14 @@ async def evaluate(client, message):
     start_time = time()
     result = await do(eval, client, message)
     time_taken = time() - start_time
-    await send(result, client, message, time_taken)
+    await send(message.text.split(" ", 1)[-1], result, client, message, time_taken)
 
 @app.on_message(filters.command(["x", "ex", "exe", "exec", "py"]) & dev_filter)
 async def execute(client, message):
     start_time = time()
     result = await do(exec, client, message)
     time_taken = time() - start_time
-    await send(result, client, message, time_taken)
+    await send(message.text.split(" ", 1)[-1], result, client, message, time_taken)
 
 def cleanup_code(code):
     if code.startswith("```") and code.endswith("```"):
@@ -80,6 +83,14 @@ async def do(func, client, message):
     content = message.text.split(" ", 1)[-1]
     body = cleanup_code(content)
     env = namespace_of(message.chat.id, message, client)
+
+    # Check if the command is pip install
+    if body.startswith("pip install"):
+        try:
+            result = subprocess.run(body.split(), capture_output=True, text=True)
+            return result.stdout if result.returncode == 0 else result.stderr
+        except Exception as e:
+            return f"Error: {str(e)}"
 
     os.chdir(os.getcwd())
     with open("temp.txt", "w") as temp:
@@ -123,7 +134,7 @@ async def clear(client, message):
     global namespaces
     if message.chat.id in namespaces:
         del namespaces[message.chat.id]
-    await send("Cleared locals.", client, message)
+    await send("Cleared locals.", "", client, message)
 
 @app.on_callback_query(filters.regex(r"time_(\d+(\.\d+)?)"))
 async def show_time(client, callback_query):
