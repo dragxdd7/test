@@ -3,11 +3,12 @@ import os
 import textwrap
 import traceback
 from contextlib import redirect_stdout
-
+from time import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ParseMode
-from . import app, sudo_filter
+from . import app, dev_filter
+
 namespaces = {}
 
 def namespace_of(chat_id, message, bot):
@@ -26,34 +27,48 @@ def log_input(message):
     chat = message.chat.id
     print(f"IN: {message.text} (user={user}, chat={chat})")
 
-async def send(msg, bot, message):
+async def send(msg, bot, message, time_taken=None):
+    reply_markup = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("⏳ Time", callback_data=f"time_{time_taken}"),
+                InlineKeyboardButton("🗑 Close", callback_data="close"),
+            ]
+        ]
+    )
     if len(str(msg)) > 2000:
         with io.BytesIO(str.encode(msg)) as out_file:
             out_file.name = "output.txt"
             await bot.send_document(
                 chat_id=message.chat.id,
                 document=out_file,
-                reply_to_message_id=message.id
+                reply_to_message_id=message.id,
+                reply_markup=reply_markup,
             )
     else:
+        output_message = f"**OUTPUT**\n\n```\n{msg}\n```"
         print(f"OUT: '{msg}'")
         await bot.send_message(
             chat_id=message.chat.id,
-            text=f"```\n{msg}\n```",
+            text=output_message,
             parse_mode=ParseMode.MARKDOWN,
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Close", callback_data="close")]]
-            ),
+            reply_markup=reply_markup,
             reply_to_message_id=message.id
         )
 
-@app.on_message(filters.command(["e", "ev", "eva", "eval"]) & sudo_filter)
+@app.on_message(filters.command(["e", "ev", "eva", "eval"]) & dev_filter)
 async def evaluate(client, message):
-    await send(await do(eval, client, message), client, message)
+    start_time = time()
+    result = await do(eval, client, message)
+    time_taken = time() - start_time
+    await send(result, client, message, time_taken)
 
-@app.on_message(filters.command(["x", "ex", "exe", "exec", "py"]) & sudo_filter)
+@app.on_message(filters.command(["x", "ex", "exe", "exec", "py"]) & dev_filter)
 async def execute(client, message):
-    await send(await do(exec, client, message), client, message)
+    start_time = time()
+    result = await do(exec, client, message)
+    time_taken = time() - start_time
+    await send(result, client, message, time_taken)
 
 def cleanup_code(code):
     if code.startswith("```") and code.endswith("```"):
@@ -102,13 +117,18 @@ async def do(func, client, message):
         if result:
             return result
 
-@app.on_message(filters.command("clearlocals") & sudo_filter)
+@app.on_message(filters.command("clearlocals") & dev_filter)
 async def clear(client, message):
     log_input(message)
     global namespaces
     if message.chat.id in namespaces:
         del namespaces[message.chat.id]
     await send("Cleared locals.", client, message)
+
+@app.on_callback_query(filters.regex(r"time_(\d+(\.\d+)?)"))
+async def show_time(client, callback_query):
+    time_taken = callback_query.data.split("_")[1]
+    await callback_query.answer(f"Time taken: {time_taken} seconds", show_alert=True)
 
 @app.on_callback_query(filters.regex("close"))
 async def close_message(client, callback_query):
