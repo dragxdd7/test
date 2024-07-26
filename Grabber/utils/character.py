@@ -2,9 +2,13 @@ from pymongo import ReturnDocument
 
 async def ac(user_id: int, character_id: int):
     try:
+        character = await collection.find_one({'id': character_id})
+        if not character:
+            return f"Character with ID {character_id} not found."
+
         result = await user_collection.find_one_and_update(
             {'id': user_id},
-            {'$push': {'characters': {'id': character_id}}},
+            {'$push': {'characters': character}},
             upsert=True,
             return_document=ReturnDocument.AFTER
         )
