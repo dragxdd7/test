@@ -31,7 +31,7 @@ async def ctop(client: Client, message: Message) -> None:
 
     cursor = group_user_totals_collection.aggregate([
         {"$match": {"group_id": chat_id}},
-        {"$project": {"username": 1, "first_name": 1, "character_count": "$count"}},
+        {"$project": {"first_name": 1, "character_count": "$count"}},
         {"$sort": {"character_count": -1}},
         {"$limit": 10}
     ])
@@ -40,13 +40,12 @@ async def ctop(client: Client, message: Message) -> None:
     leaderboard_message = "<b>TOP 10 USERS WHO GUESSED CHARACTERS MOST TIMES IN THIS GROUP</b>\n\n"
 
     for i, user in enumerate(leaderboard_data, start=1):
-        username = user.get('username', 'Unknown')
         first_name = html.escape(user.get('first_name', 'Unknown'))
 
-        if len(first_name) > 10:
+        if len(first_name) > 15:
             first_name = first_name[:15] + '...'
         character_count = user['character_count']
-        leaderboard_message += f'<b>{i}. {first_name} (Username: {username}) ➾ {character_count}</b>\n'
+        leaderboard_message += f'<b>{i}. {first_name} ➾ {character_count}</b>\n'
 
     await message.reply_text(leaderboard_message)
 
