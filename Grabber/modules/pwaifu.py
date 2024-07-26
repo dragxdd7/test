@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
-from . import ac, rc, app, user_collection, collection 
+from . import ac, rc, app, user_collection, collection
 
 last_claim_time = {}
 
@@ -13,9 +13,6 @@ async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '�
         ]
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
-        
-        print(f"Pipeline: {pipeline}")
-        print(f"Retrieved characters: {characters}")
 
         return characters
     except Exception as e:
@@ -36,8 +33,12 @@ async def pwaifu(client: Client, message):
     if user_id in last_claim_time:
         last_claim_date = last_claim_time[user_id]
         if last_claim_date.date() == now.date():
-            next_claim_time = (last_claim_date + timedelta(days=1)).strftime("%H:%M:%S")
-            await message.reply_text(f"Please wait until {next_claim_time} to claim your next waifu.", quote=True)
+            next_claim_time = last_claim_date + timedelta(days=1)
+            remaining_time = next_claim_time - now
+            hours, remainder = divmod(remaining_time.seconds, 3600)
+            minutes, _ = divmod(remainder, 60)
+            formatted_time = f"{hours:02}:{minutes:02}"
+            await message.reply_text(f"Please wait for `after {formatted_time}` to claim your next waifu.", quote=True)
             return
 
     last_claim_time[user_id] = now
@@ -49,8 +50,7 @@ async def pwaifu(client: Client, message):
 
     try:
         for character in unique_characters:
-            add_result = await ac(user_id, character['id'])
-            print(f"Added character: {add_result}")
+            await ac(user_id, character['id'])
 
         img_urls = [character['img_url'] for character in unique_characters]
         captions = [
