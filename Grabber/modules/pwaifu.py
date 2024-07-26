@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
-from . import ac, rc, app
+from . import ac, rc, app, user_collection, collection 
 
 last_claim_time = {}
 
