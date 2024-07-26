@@ -5,14 +5,18 @@ from . import ac, rc, app
 
 last_claim_time = {}
 
-async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
+async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
     try:
         pipeline = [
-            {'$match': {'rarity': {'$in': target_rarities}, 'id': {'$nin': [char['id'] for char in (await user_collection.find_one({'id': receiver_id}, {'characters': 1}))['characters']]}}},
+            {'$match': {'rarity': {'$in': target_rarities}}},
             {'$sample': {'size': 1}}
         ]
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
+        
+        print(f"Pipeline: {pipeline}")
+        print(f"Retrieved characters: {characters}")
+
         return characters
     except Exception as e:
         print(f"Error in get_unique_characters: {e}")
@@ -38,7 +42,7 @@ async def pwaifu(client: Client, message):
 
     last_claim_time[user_id] = now
 
-    unique_characters = await get_unique_characters(user_id)
+    unique_characters = await get_unique_characters()
     if not unique_characters:
         await message.reply_text("No new waifus available to claim.", quote=True)
         return
@@ -46,7 +50,7 @@ async def pwaifu(client: Client, message):
     try:
         for character in unique_characters:
             add_result = await ac(user_id, character['id'])
-            print(add_result)
+            print(f"Added character: {add_result}")
 
         img_urls = [character['img_url'] for character in unique_characters]
         captions = [
