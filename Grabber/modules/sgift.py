@@ -1,6 +1,6 @@
 import uuid
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
+from telegram.ext import CallbackContext, CommandHandler
 from Grabber import user_collection, application
 
 pending_gifts = {}
@@ -27,6 +27,10 @@ async def gift(update: Update, context: CallbackContext) -> None:
     character_id = context.args[0]
 
     sender = await user_collection.find_one({'id': sender_id})
+
+    if not sender:
+        await message.reply_text("You do not have any characters.")
+        return
 
     character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
 
@@ -76,8 +80,11 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         return
 
     sender = await user_collection.find_one({'id': sender_id})
-    sender_characters = sender.get('characters', [])
+    if not sender:
+        await query.answer("You no longer have this character!", show_alert=True)
+        return
 
+    sender_characters = sender.get('characters', [])
     sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character['id']), None)
 
     if sender_character_index is None:
@@ -85,7 +92,6 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         return
 
     sender_characters.pop(sender_character_index)
-
     await user_collection.update_one({'id': sender_id}, {'$set': {'characters': sender_characters}})
 
     receiver = await user_collection.find_one({'id': receiver_id})
@@ -122,7 +128,6 @@ async def cancel_gift(update: Update, context: CallbackContext) -> None:
         return
 
     pending_gifts.pop(gift_id, None)
-
     await query.message.edit_text("❌ Gift Cancelled.")
 
 
