@@ -4,21 +4,14 @@ from html import escape
 from cachetools import TTLCache
 from pymongo import MongoClient, DESCENDING
 import asyncio
-import logging
 
-from telegram import Update, InlineQueryResultPhoto
+from telegram import Update
 from telegram.ext import InlineQueryHandler, CallbackContext, CommandHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
 
 from . import user_collection, collection, application, db
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Define a lock for concurrency control
 lock = asyncio.Lock()
-# Create necessary indexes
 db.characters.create_index([('id', DESCENDING)])
 db.characters.create_index([('anime', DESCENDING)])
 db.characters.create_index([('img_url', DESCENDING)])
@@ -27,16 +20,13 @@ db.user_collection.create_index([('characters.id', DESCENDING)])
 db.user_collection.create_index([('characters.name', DESCENDING)])
 db.user_collection.create_index([('characters.img_url', DESCENDING)])
 
-# Initialize caches
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
-# Function to clear the caches
 def clear_all_caches():
     all_characters_cache.clear()
     user_collection_cache.clear()
 
-# Call the function to clear the caches
 clear_all_caches()
 
 async def inlinequery(update: Update, context: CallbackContext) -> None:
@@ -54,11 +44,9 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             if user_id.isdigit():
                 if user_id in user_collection_cache:
                     user = user_collection_cache[user_id]
-                    
                 else:
                     user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
                     user_collection_cache[user_id] = user
-                    
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
@@ -76,19 +64,15 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             if query:
                 regex = re.compile(query, re.IGNORECASE)
                 all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
-                
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
-                    
                 else:
                     all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
                     all_characters_cache['all_characters'] = all_characters
-                    
 
         characters = list(all_characters)[start_index:end_index]
 
-        # Bulk operation to fetch counts
         character_ids = [character['id'] for character in characters]
         anime_names = list(set(character['anime'] for character in characters))
 
@@ -114,7 +98,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
 
-            
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
                 user_anime_characters = sum(1 for c in user.get('characters', []) if c['anime'] == character['anime'])
@@ -136,11 +119,11 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     f"🌟 ʀᴀʀɪᴛʏ :{character.get('rarity', '')}\n\n"
                 )
 
-            keyboard = [[InlineKeyboardButton("ʜᴏᴡ ᴍᴀɴʏ ɪ ʜᴀᴠᴇ ❓", callback_data=f"check_{character['id']}")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+            keyboard = [[IKB("ʜᴏᴡ ᴍᴀɴʏ ɪ ʜᴀᴠᴇ ❓", callback_data=f"check_{character['id']}")]]
+            reply_markup = IKM(keyboard)
 
             results.append(
-                InlineQueryResultPhoto(
+                IQP(
                     thumbnail_url=character['img_url'],
                     id=f"{character['id']}_{time.time()}",
                     photo_url=character['img_url'],
@@ -153,7 +136,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )
 
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
-        logger.info("Query processed in %s seconds", time.time() - start_time)
 
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
 
