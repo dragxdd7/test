@@ -104,8 +104,10 @@ async def sudo_list(client, update: Message):
         sudo_list = await sudb.distinct('user_id')
         if not sudo_list:
             return await update.reply_text('No sudo users found.')
-        user_list = '\n'.join(str(user) for user in sudo_list)
-        await update.reply_text(f'Sudo users:\n{user_list}')
+
+        sudo_users = await client.get_users(sudo_list)
+        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} ({user.id})" for user in sudo_users)
+        await update.reply_text(f'Total sudos: {len(sudo_users)}\n\n{user_list}')
     except Exception as e:
         print(e)
         await update.reply_text('Error fetching sudo list.')
@@ -116,8 +118,10 @@ async def dev_list(client, update: Message):
         dev_users_list = await devb.distinct('user_id')
         if not dev_users_list:
             return await update.reply_text('No developers found.')
-        user_list = '\n'.join(str(user) for user in dev_users_list)
-        await update.reply_text(f'Developers:\n{user_list}')
+
+        dev_users = await client.get_users(dev_users_list)
+        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} ({user.id})" for user in dev_users)
+        await update.reply_text(f'Total developers: {len(dev_users)}\n\n{user_list}')
     except Exception as e:
         print(e)
         await update.reply_text('Error fetching developer list.')
