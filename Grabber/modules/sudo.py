@@ -106,7 +106,7 @@ async def sudo_list(client, update: Message):
             return await update.reply_text('No sudo users found.')
 
         sudo_users = await client.get_users(sudo_list)
-        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} ({user.id})" for user in sudo_users)
+        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)" for user in sudo_users)
         await update.reply_text(f'Total sudos: {len(sudo_users)}\n\n{user_list}')
     except Exception as e:
         print(e)
@@ -120,7 +120,7 @@ async def dev_list(client, update: Message):
             return await update.reply_text('No developers found.')
 
         dev_users = await client.get_users(dev_users_list)
-        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} ({user.id})" for user in dev_users)
+        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)" for user in dev_users)
         await update.reply_text(f'Total developers: {len(dev_users)}\n\n{user_list}')
     except Exception as e:
         print(e)
