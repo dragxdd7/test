@@ -105,9 +105,19 @@ async def sudo_list(client, update: Message):
         if not sudo_list:
             return await update.reply_text('No sudo users found.')
 
-        sudo_users = await client.get_users(sudo_list)
-        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)" for user in sudo_users)
-        await update.reply_text(f'Total sudos: {len(sudo_users)}\n\n{user_list}')
+        user_list = []
+        for user_id in sudo_list:
+            try:
+                user = await client.get_users(user_id)
+                user_list.append(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)")
+            except Exception as e:
+                # Skip users that cannot be fetched
+                print(f"Failed to fetch details for user ID {user_id}: {e}")
+
+        if not user_list:
+            return await update.reply_text('No valid sudo users found.')
+
+        await update.reply_text(f'Total sudos: {len(user_list)}\n\n' + '\n'.join(user_list))
     except Exception as e:
         print(e)
         await update.reply_text('Error fetching sudo list.')
@@ -119,9 +129,19 @@ async def dev_list(client, update: Message):
         if not dev_users_list:
             return await update.reply_text('No developers found.')
 
-        dev_users = await client.get_users(dev_users_list)
-        user_list = '\n'.join(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)" for user in dev_users)
-        await update.reply_text(f'Total developers: {len(dev_users)}\n\n{user_list}')
+        user_list = []
+        for user_id in dev_users_list:
+            try:
+                user = await client.get_users(user_id)
+                user_list.append(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)")
+            except Exception as e:
+                # Skip users that cannot be fetched
+                print(f"Failed to fetch details for user ID {user_id}: {e}")
+
+        if not user_list:
+            return await update.reply_text('No valid developers found.')
+
+        await update.reply_text(f'Total developers: {len(user_list)}\n\n' + '\n'.join(user_list))
     except Exception as e:
         print(e)
         await update.reply_text('Error fetching developer list.')
