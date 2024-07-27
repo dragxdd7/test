@@ -52,7 +52,7 @@ async def send(code, output, bot, message, time_taken=None):
             )
     else:
         message_text = (
-            f"**CODE**\n\n```\n{code}\n```\n\n**OUTPUT**\n\n```\n{output}\n```"
+            f"**CODE**\n```\n{code}\n```\n\n**OUTPUT**\n```\n{output}\n```"
         )
         print(f"OUT: '{output}'")
         await bot.send_message(
