@@ -23,7 +23,7 @@ async def seq(client: Client, message: Message):
     current_sequence = await get_next_sequence_number(sequence_name)
     await message.reply_text(f"Current sequence: {current_sequence}")
 
-@app.on_message(filters.command("cseq") & dev_filter)
+@app.on_message(filters.command("cseq") & sudo_filter)
 async def cseq(client: Client, message: Message):
     sequence_name = "character_id"
     try:
