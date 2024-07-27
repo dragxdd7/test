@@ -3,7 +3,7 @@ import tempfile
 from pymongo import ReturnDocument
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import collection, db, dev_filter, app
+from . import collection, db, sudo_filter, app
 
 async def get_next_sequence_number(sequence_name):
     sequence_collection = db.sequences
@@ -17,7 +17,7 @@ async def get_next_sequence_number(sequence_name):
         return 0
     return sequence_document['sequence_value']
 
-@app.on_message(filters.command("seq") & dev_filter)
+@app.on_message(filters.command("seq") & sudo_filter)
 async def seq(client: Client, message: Message):
     sequence_name = "character_id"
     current_sequence = await get_next_sequence_number(sequence_name)
@@ -34,7 +34,7 @@ async def cseq(client: Client, message: Message):
     except (IndexError, ValueError):
         await message.reply_text("Invalid sequence value. Please provide a valid integer.")
 
-@app.on_message(filters.command("cp") & dev_filter)
+@app.on_message(filters.command("cp") & sudo_filter)
 async def cp(client: Client, message: Message):
     all_characters = await collection.distinct("_id")
     all_characters = [str(char_id) for char_id in all_characters]
