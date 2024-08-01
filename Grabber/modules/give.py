@@ -99,9 +99,9 @@ async def kill_character(receiver_id, character_id):
         try:
             await user_collection.update_one(
                 {'id': receiver_id},
-                {'$pull': {'characters': {'id': character_id}}}
+                {'$pull': {'characters': {'id': character_id}}},
+                upsert=True
             )
-
             return f"Successfully removed character {character_id} from user {receiver_id}"
         except Exception as e:
             print(f"Error updating user: {e}")
@@ -111,16 +111,19 @@ async def kill_character(receiver_id, character_id):
 
 @app.on_message(filters.command(["kill"]) & sudo_filter)
 async def remove_character_command(client, message):
-    if not message.reply_to_message:
-        await message.reply_text("You need to reply to a user's message to remove a character!")
-        return
-
     try:
-        character_id = str(message.text.split()[1])
-        receiver_id = message.reply_to_message.from_user.id
+        args = message.text.split()
+        if len(args) == 3:
+            receiver_id = int(args[1])
+            character_id = str(args[2])
+        elif message.reply_to_message and len(args) == 2:
+            receiver_id = message.reply_to_message.from_user.id
+            character_id = str(args[1])
+        else:
+            await message.reply_text("Usage: /kill <user_id> <character_id> or reply to a user with /kill <character_id>")
+            return
 
         result_message = await kill_character(receiver_id, character_id)
-
         await message.reply_text(result_message)
     except (IndexError, ValueError) as e:
         await message.reply_text(str(e))
