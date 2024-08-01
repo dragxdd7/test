@@ -8,7 +8,7 @@ from pyrogram import raw
 from pyrogram import utils
 from pyrogram.errors import PeerIdInvalid
 
-log = logging.getLogger(name)
+log = logging.getLogger(__name__)
 
 MIN_CHANNEL_ID = -1002147483647
 MAX_CHANNEL_ID = -1000000000000
@@ -29,7 +29,7 @@ def get_peer_type(peer_id: int) -> str:
     raise ValueError(f"Peer id invalid: {peer_id}")
 
 class ResolvePeer:
-    def init(self, cl) -> None:
+    def __init__(self, cl) -> None:
         self.cl = cl
 
     async def resolve_peer(
@@ -41,8 +41,8 @@ class ResolvePeer:
 
         .. note::
 
-            This is a utility method intended to be used only when working with raw
-            :obj:functions <pyrogram.api.functions> (i.e: a Telegram API method you wish to use which is not
+            This is a utility method intended to be used **only** when working with raw
+            :obj:`functions <pyrogram.api.functions>` (i.e: a Telegram API method you wish to use which is not
             available yet in the Client class as an easy-to-use method).
 
         .. include:: /_includes/usable-by/users-bots.rst
@@ -113,8 +113,7 @@ class ResolvePeer:
             else:
                 await self.cl.invoke(
                     raw.functions.channels.GetChannels(
-
-id=[
+                        id=[
                             raw.types.InputChannel(
                                 channel_id=utils.get_channel_id(peer_id),
                                 access_hash=0
