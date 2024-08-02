@@ -83,14 +83,14 @@ async def handle_messages(update: Update, context: CallbackContext):
     if group_message_counts[chat_id]['limit'] and group_message_counts[chat_id]['count'] >= group_message_counts[chat_id]['limit']:
         group_message_counts[chat_id]['count'] = 0
 
-        random_word = random.choice(words)  # Assuming `words` is defined somewhere
+        random_word = random.choice(words)
         image_bytes = generate_random_image(random_word)
 
         alpha_dict[chat_id] = random_word
         guess_start_time[chat_id] = time.time()  # Start timing
 
         keyboard = [
-            [IKB("Join", url="https://t.me/dragon_society")]
+            [IKB("Join", url="https://t.me/dragons_support")]
         ]
         reply_markup = IKM(keyboard)
 
