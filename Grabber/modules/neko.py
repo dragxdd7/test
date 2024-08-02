@@ -81,13 +81,3 @@ async def category_handler(client, message):
     )
     
     await message.reply_text(text, parse_mode="Markdown")
-
-@app.on_message(filters.text)
-async def on_message_update(client, message):
-    if hasattr(message, "message_id"):
-        remove_message_from_db(message.message_id)
-
-@app.on_message(filters.edited)
-async def on_message_edit(client, message):
-    if hasattr(message, "message_id"):
-        remove_message_from_db(message.message_id)
