@@ -4,7 +4,6 @@ import nekos
 import aiohttp
 import os
 import asyncio
-from pymongo import MongoClient
 from datetime import datetime, timedelta
 from . import app, db
 
@@ -117,9 +116,10 @@ async def check_expired_messages():
             print(f"Error deleting expired message: {e}")
         remove_message_from_db(message["message_id"])
 
-@app.on_message(filters.delete)
-async def on_message_delete(client, message):
-    remove_message_from_db(message.message_id)
+@app.on_message(filters.text)
+async def on_message_update(client, message):
+    if message.message_id:
+        remove_message_from_db(message.message_id)
 
 @app.on_startup
 async def on_startup(client):
