@@ -1,8 +1,10 @@
 import math
 from itertools import groupby
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from Grabber import user_collection, application
+from telegram import InputMediaPhoto
+
 
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
@@ -17,14 +19,19 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
         return
 
     cmode = user.get('collection_mode', 'All')
-    characters = [char for char in user['characters'] if char.get('rarity') == cmode] if cmode != 'All' else user['characters']
+
+    if cmode != 'All':
+        characters = [char for char in user['characters'] if char.get('rarity') == cmode]
+    else:
+        characters = user['characters']
 
     characters = sorted(characters, key=lambda x: (x['anime'], x['id']))
     character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: x['id'])}
     unique_characters = list({character['id']: character for character in characters}.values())
     total_pages = math.ceil(len(unique_characters) / 7)
 
-    page = max(0, min(page, total_pages - 1))
+    if page < 0 or page >= total_pages:
+        page = 0
 
     harem_message = f"<b>Collection - Page {page + 1}/{total_pages}</b>\n"
     harem_message += "--------------------------------------\n\n"
@@ -82,7 +89,9 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     if update.message:
         await update.message.reply_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
     else:
-        await update.callback_query.edit_message_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
+        if update.callback_query.message.text != harem_message:
+            await update.callback_query.edit_message_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
+
 
 async def harem_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -92,12 +101,9 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
         end_user = int(data.split('_')[1])
         if end_user == update.effective_user.id:
             await query.answer()
-            await query.message.delete()  # Ensure only the intended user can delete
+            await query.message.delete()
         else:
             await query.answer("This is not your Harem", show_alert=True)
-        return
-
-    if not data.startswith("harem:"):
         return
 
     _, page, user_id = data.split(':')
@@ -106,7 +112,9 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
     if query.from_user.id != user_id:
         await query.answer("This is not your Harem", show_alert=True)
         return
-    
     await harem(update, context, page)
 
-application.add_handler(CommandHandler("harem", harem, block=False))
+application.add_handler(CommandHandler(["harem"], harem, block=False))
+
+
+ 
