@@ -78,17 +78,17 @@ async def message_counter(update: Update, context: CallbackContext) -> None:
 async def send_image(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
 
-    all_characters = await collection.find({}).to_list(length=None)
+    allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial"]
+
+    all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
 
     if not all_characters:
         return
 
     character = random.choice(all_characters)
 
-    # Update last character data
     last_characters[chat_id] = character
 
-    # Remove first correct guess if any
     if chat_id in first_correct_guesses:
         del first_correct_guesses[chat_id]
 
