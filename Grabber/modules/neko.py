@@ -4,13 +4,13 @@ import nekos
 import aiohttp
 import os
 import asyncio
+from pymongo import MongoClient
 from datetime import datetime, timedelta
-from . import app, db
+from . import db, app
 
 DOWNLOAD_PATH = "downloads/"
 MESSAGES_COLLECTION = "messages"
 messages_collection = db[MESSAGES_COLLECTION]
-
 
 if not os.path.exists(DOWNLOAD_PATH):
     os.makedirs(DOWNLOAD_PATH)
@@ -25,7 +25,6 @@ SFW_CATEGORIES = [
 NSFW_CATEGORIES = [
     "neko", "trap", "blowjob", "boobs", "cum", "femdom", "hentai", "pussy", "yuri"
 ]
-
 
 async def download_image(url, file_path):
     async with aiohttp.ClientSession() as session:
@@ -120,9 +119,3 @@ async def check_expired_messages():
 async def on_message_update(client, message):
     if message.message_id:
         remove_message_from_db(message.message_id)
-
-@app.on_startup
-async def on_startup(client):
-    await check_expired_messages()
-
-app.run()
