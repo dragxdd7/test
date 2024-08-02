@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 
 OWNER_ID = "7185106962"
 GROUP_ID = "-1002225496870"
-TOKEN = "6942284208:AAGwdcnl1BMuEn7XlfI6dsk2kCWM1UWgJsY"
+TOKEN = "6942284208:AAEsN77c9YKYMoBUO1IY8AV6tBejoZ7bHv4"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
     "https://graph.org/file/f10bec6ec695bba69037d.jpg",
