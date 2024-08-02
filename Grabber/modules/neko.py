@@ -40,7 +40,8 @@ async def send_image(update, image_url, caption):
     return message
 
 async def nsfw_warning(update):
-    keyboard = [[InlineKeyboardButton("DM Bot", url=f"https://t.me/{app.get_me().username}")]]
+    me = await app.get_me()
+    keyboard = [[InlineKeyboardButton("DM Bot", url=f"https://t.me/{me.username}")]]
     await update.reply_text(
         "⚠️ NSFW commands should be used in DMs only.\nPlease use these commands privately.",
         reply_markup=InlineKeyboardMarkup(keyboard)
