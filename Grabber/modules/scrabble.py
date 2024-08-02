@@ -10,7 +10,6 @@ active_scrabbles = {}
 MAX_ATTEMPTS = 5
 WIN_LIMIT = 5
 COOLDOWN_TIME = 30
-
 cooldown_users = {}
 
 def is_new_day(last_win_time):
@@ -20,7 +19,9 @@ def is_new_day(last_win_time):
     return now_ist.date() != last_win_ist.date()
 
 async def get_random_character():
-    all_characters = await collection.find({}).to_list(length=None)
+    all_characters = await collection.find({
+        'id': {'$gte': '01', '$lte': '1100'}
+    }).to_list(length=None)
     while True:
         character = random.choice(all_characters)
         if len(character['name'].split()[0]) > 3:
@@ -162,7 +163,6 @@ async def xscrabble(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text("Your current game has been terminated.")
     else:
         await update.message.reply_text("You don't have an active game to terminate.")
-
 
 application.add_handler(CommandHandler('scrabble', scrabble, block=False))
 application.add_handler(CommandHandler('xscrabble', xscrabble, block=False))
