@@ -76,8 +76,8 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
         f"🔠 Welcome to Word Scramble! 🔠\n\n"
         f"Can you unscramble this word? Try it out:\n\n"
         f"{scrambled_word}\n\n"
-        f"⏳ *You have {MAX_ATTEMPTS} attempts to respond.*\n"
-        f"⏳ *Use /xscrabble to terminate the game.*"
+        f"⏳ You have {MAX_ATTEMPTS} attempts to respond.\n"
+        f"⏳ Use /xscrabble to terminate the game."
     )
 
 async def check_answer(update: Update, context: CallbackContext) -> None:
