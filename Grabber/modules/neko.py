@@ -75,9 +75,9 @@ async def category_handler(client, message):
     nsfw_categories = ", ".join(NSFW_CATEGORIES)
     
     text = (
-        "📚 **Available Categories:**\n\n"
-        "🔹 **SFW Categories:**\n" + sfw_categories + "\n\n"
-        "🔸 **NSFW Categories:**\n" + nsfw_categories
+        "📚 Available Categories:\n\n"
+        "🔹 SFW Categories:\n" + sfw_categories + "\n\n"
+        "🔸 NSFW Categories:\n" + nsfw_categories
     )
     
-    await message.reply_text(text, parse_mode="Markdown")
+    await message.reply_text(text)
