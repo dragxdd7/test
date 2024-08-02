@@ -108,3 +108,5 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
         return
     
     await harem(update, context, page)
+
+application.add_handler(CommandHandler("harem", harem, block=False))
