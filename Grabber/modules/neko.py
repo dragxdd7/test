@@ -15,11 +15,10 @@ messages_collection = db[MESSAGES_COLLECTION]
 if not os.path.exists(DOWNLOAD_PATH):
     os.makedirs(DOWNLOAD_PATH)
 
-# Define available categories for SFW and NSFW
 SFW_CATEGORIES = [
     "neko", "waifu", "shinobu", "bully", "cuddle", "cry", "hug", "awoo", "kiss",
     "lick", "pat", "smug", "bonk", "yeet", "blush", "smile", "wave", "highfive",
-    "handhold", "fight", "slap", "kill", "wave", "poke", "dance"
+    "handhold", "fight", "slap", "kill", "poke", "dance"
 ]
 
 NSFW_CATEGORIES = [
@@ -49,14 +48,16 @@ async def nsfw_warning(update):
 
 @app.on_message(filters.command("nsfw"))
 async def nsfw_handler(client, message):
-    category = message.command[1] if len(message.command) > 1 else "neko"
-    
     if message.chat.type == "private":
-        try:
-            image_url = getattr(nekos.nsfw, category)()
-            caption = f"NSFW {category} image."
-            await send_image(message, image_url, caption)
-        except AttributeError:
+        category = message.command[1] if len(message.command) > 1 else "neko"
+        if category in NSFW_CATEGORIES:
+            try:
+                image_url = getattr(nekos.nsfw, category)()
+                caption = f"NSFW {category} image."
+                await send_image(message, image_url, caption)
+            except AttributeError:
+                await message.reply_text("An error occurred while fetching the NSFW image.")
+        else:
             await message.reply_text("Invalid NSFW category.")
     else:
         await nsfw_warning(message)
@@ -64,10 +65,13 @@ async def nsfw_handler(client, message):
 @app.on_message(filters.command("sfw"))
 async def sfw_handler(client, message):
     category = message.command[1] if len(message.command) > 1 else "neko"
-    try:
-        image_url = getattr(nekos.sfw, category)()
-        await send_image(message, image_url, f"SFW {category} image")
-    except AttributeError:
+    if category in SFW_CATEGORIES:
+        try:
+            image_url = getattr(nekos.sfw, category)()
+            await send_image(message, image_url, f"SFW {category} image")
+        except AttributeError:
+            await message.reply_text("An error occurred while fetching the SFW image.")
+    else:
         await message.reply_text("Invalid SFW category.")
 
 @app.on_message(filters.command("category"))
