@@ -1,10 +1,8 @@
 import math
 from itertools import groupby
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from Grabber import user_collection, application
-from telegram import InputMediaPhoto
-
 
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
@@ -67,8 +65,10 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
             skip_buttons.append(InlineKeyboardButton("▶5x", callback_data=f"harem:{page + 5}:{user_id}"))
         keyboard.append(skip_buttons)
 
-    close_button = [InlineKeyboardButton("Close", callback_data=f"saleslist:close_{user_id}")]
-    keyboard.append(close_button)
+    chat_id = update.effective_chat.id
+    if chat_id != -1002225496870:
+        close_button = [InlineKeyboardButton("Close", callback_data=f"saleslist:close_{user_id}")]
+        keyboard.append(close_button)
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -115,6 +115,3 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
     await harem(update, context, page)
 
 application.add_handler(CommandHandler(["harem"], harem, block=False))
-
-
- 
