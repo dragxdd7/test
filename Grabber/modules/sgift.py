@@ -1,6 +1,6 @@
 import uuid
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import CallbackContext, CommandHandler
+from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from Grabber import user_collection, application
 
 pending_gifts = {}
@@ -47,22 +47,16 @@ async def gift(update: Update, context: CallbackContext) -> None:
         'message_id': message.message_id  # Store the message ID
     }
 
-    if message.chat.id == -1002225496870:
-        # Process the confirmation directly without buttons
-        await handle_gift_confirmation(message.message_id, sender_id, receiver_id, character, receiver_first_name)
-    else:
-        keyboard = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
+        [
             [
-                [
-                    InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{gift_id}"),
-                    InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{gift_id}")
-                ]
+                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{gift_id}"),
+                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{gift_id}")
             ]
-        )
-        try:
-            await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
-        except KeyError:
-            await message.reply_text(f"Do you confirm gifting this character to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
+        ]
+    )
+    
+    await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
 
 async def confirm_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -116,10 +110,7 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         f"  🆔 : {character['id']}"
     )
     
-    if query.message.chat.id == -1002225496870:
-        await query.message.edit_text(success_message)
-    else:
-        await query.message.edit_text(success_message)
+    await query.message.reply_text(success_message)
 
 async def cancel_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -134,47 +125,6 @@ async def cancel_gift(update: Update, context: CallbackContext) -> None:
         return
 
     pending_gifts.pop(gift_id, None)
+    await query.message.reply_text("❌ Gift Cancelled.")
 
-    if query.message.chat.id == -1002225496870:
-        await query.message.edit_text("❌ Gift Cancelled.")
-    else:
-        await query.message.edit_text("❌ Gift Cancelled.")
-
-async def handle_gift_confirmation(message_id, sender_id, receiver_id, character, receiver_first_name):
-    sender = await user_collection.find_one({'id': sender_id})
-    if sender:
-        sender_characters = sender.get('characters', [])
-        sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character['id']), None)
-
-        if sender_character_index is not None:
-            sender_characters.pop(sender_character_index)
-            await user_collection.update_one({'id': sender_id}, {'$set': {'characters': sender_characters}})
-
-            receiver = await user_collection.find_one({'id': receiver_id})
-
-            if receiver:
-                await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': character}})
-            else:
-                await user_collection.insert_one({
-                    'id': receiver_id,
-                    'username': None,
-                    'first_name': receiver_first_name,
-                    'characters': [character],
-                })
-
-            success_message = (
-                f"Successfully gifted {character['name']} to {receiver_first_name} ☑️\n\n"
-                f"♦️ {character['name']}\n"
-                f"  [{character['anime']}]\n"
-                f"  🆔 : {character['id']}"
-            )
-            await application.bot.edit_message_text(chat_id=message_id, message_id=message_id, text=success_message)
-        else:
-            await application.bot.edit_message_text(chat_id=message_id, message_id=message_id, text="You no longer have this character.")
-    else:
-        await application.bot.edit_message_text(chat_id=message_id, message_id=message_id, text="You no longer have this character.")
-
-# Adding handlers
 application.add_handler(CommandHandler("gift", gift, block=False))
-#application.add_handler(CallbackQueryHandler(confirm_gift, pattern=r"^confirm_gift\|"))
-#application.add_handler(CallbackQueryHandler(cancel_gift, pattern=r"^cancel_gift\|"))
