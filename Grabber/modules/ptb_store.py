@@ -81,11 +81,15 @@ async def shop(update: Update, context: CallbackContext):
     ch_info = [await get_character(cid) for cid in ch_ids]
     photo, caption = await get_image_and_caption(ch_ids[0])
 
-    markup = IKM([
-        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
-        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-    ])
+    keyboard = [
+        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")]
+    ]
 
+    chat_id = update.effective_chat.id
+    if chat_id != -1002225496870:
+        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
+
+    markup = IKM(keyboard)
     await update.message.reply_photo(photo, caption=f"__PAGE 1__\n\n{caption}", reply_markup=markup)
 
 
@@ -142,12 +146,17 @@ async def handle_page(query, page, origin, user_id):
     nav_buttons = ["pg1", "pg2", "pg3", 'pg1']
     buy_buttons = ["buya", "buyb", "buyc", 'buya']
 
+    keyboard = [
+        [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")]
+    ]
+
+    chat_id = query.message.chat_id
+    if chat_id != -1002225496870:
+        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
+
     await query.edit_message_media(
         media=IMP(photo, caption=f"PAGE {page}\n\n{caption}"),
-        reply_markup=IKM([
-            [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")],
-            [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-        ])
+        reply_markup=IKM(keyboard)
     )
 
 async def handle_char_confirm(query, char, user_id):
@@ -190,12 +199,17 @@ async def handle_char_back(query, char, user_id):
     buy_buttons = {1: "a", 2: "b", 3: "c"}
 
     photo, caption = await get_image_and_caption(char)
+    keyboard = [
+        [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")]
+    ]
+
+    chat_id = query.message.chat_id
+    if chat_id != -1002225496870:
+        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
+
     await query.edit_message_caption(
         f"__PAGE {ind}__\n\n{caption}",
-        reply_markup=IKM([
-            [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")],
-            [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-        ])
+        reply_markup=IKM(keyboard)
     )
 
 application.add_handler(CommandHandler("store", shop, block=False))
