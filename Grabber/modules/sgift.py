@@ -8,6 +8,7 @@ pending_gifts = {}
 async def gift(update: Update, context: CallbackContext) -> None:
     message = update.message
     sender_id = message.from_user.id
+    chat_id = message.chat.id  # Get chat ID
 
     if not message.reply_to_message:
         await message.reply_text("You need to reply to a user's message to gift a character!")
@@ -43,20 +44,70 @@ async def gift(update: Update, context: CallbackContext) -> None:
         'sender_id': sender_id,
         'receiver_id': receiver_id,
         'character': character,
-        'receiver_name': receiver_first_name if receiver_first_name and receiver_first_name.lower() not in ["the recipient", "unknown"] else "the recipient",
-        'message_id': message.message_id  # Store the message ID
+        'receiver_name': receiver_first_name if receiver_first_name and receiver_first_name.lower() not in ["the recipient", "unknown"] else "the recipient"
     }
 
-    keyboard = InlineKeyboardMarkup(
-        [
+    if chat_id == -1002225496870:
+        # Directly confirm the gift without buttons
+        await handle_gift_confirmation(message, gift_id)
+    else:
+        # Send buttons for confirmation
+        keyboard = InlineKeyboardMarkup(
             [
-                InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{gift_id}"),
-                InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{gift_id}")
+                [
+                    InlineKeyboardButton("✅ Confirm", callback_data=f"confirm_gift|{gift_id}"),
+                    InlineKeyboardButton("❌ Cancel", callback_data=f"cancel_gift|{gift_id}")
+                ]
             ]
-        ]
+        )
+        await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
+
+async def handle_gift_confirmation(message, gift_id):
+    gift_info = pending_gifts.pop(gift_id, None)
+    if not gift_info:
+        await message.reply_text("This gift is not pending!")
+        return
+
+    sender_id = gift_info['sender_id']
+    receiver_id = gift_info['receiver_id']
+    character = gift_info['character']
+    receiver_first_name = gift_info['receiver_name']
+
+    sender = await user_collection.find_one({'id': sender_id})
+    if not sender:
+        await message.reply_text("You no longer have this character!")
+        return
+
+    sender_characters = sender.get('characters', [])
+    sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character['id']), None)
+
+    if sender_character_index is None:
+        await message.reply_text("You do not have this character anymore!")
+        return
+
+    sender_characters.pop(sender_character_index)
+    await user_collection.update_one({'id': sender_id}, {'$set': {'characters': sender_characters}})
+
+    receiver = await user_collection.find_one({'id': receiver_id})
+
+    if receiver:
+        await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': character}})
+    else:
+        await user_collection.insert_one({
+            'id': receiver_id,
+            'username': query.from_user.username,
+            'first_name': receiver_first_name,
+            'characters': [character],
+        })
+
+    success_message = (
+        f"Successfully gifted {character['name']} to {receiver_first_name} ☑️\n\n"
+        f"♦️ {character['name']}\n"
+        f"  [{character['anime']}]\n"
+        f"  🆔 : {character['id']}"
     )
     
-    await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
+    await message.reply_text(success_message)
 
 async def confirm_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -110,7 +161,7 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         f"  🆔 : {character['id']}"
     )
     
-    await query.message.reply_text(success_message)
+    await query.message.edit_text(success_message)
 
 async def cancel_gift(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -125,6 +176,7 @@ async def cancel_gift(update: Update, context: CallbackContext) -> None:
         return
 
     pending_gifts.pop(gift_id, None)
-    await query.message.reply_text("❌ Gift Cancelled.")
+    await query.message.edit_text("❌ Gift Cancelled.")
 
+# Adding handlers
 application.add_handler(CommandHandler("gift", gift, block=False))
