@@ -101,10 +101,10 @@ async def handle_gift_confirmation(message, gift_id):
         })
 
     success_message = (
-        f"Successfully gifted {character['name']} to {receiver_first_name} ☑️\n\n"
-        f"♦️ {character['name']}\n"
-        f"  [{character['anime']}]\n"
-        f"  🆔 : {character['id']}"
+        f"**🎁 Gifted Successfully**\n\n"
+        f"**Character:** {character['name']}\n"
+        f"**From:** {character['anime']}\n"
+        f"**ID:** {character['id']:03}"
     )
     
     await message.reply_text(success_message)
@@ -155,10 +155,10 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         })
 
     success_message = (
-        f"Successfully gifted {character['name']} to {receiver_first_name} ☑️\n\n"
-        f"♦️ {character['name']}\n"
-        f"  [{character['anime']}]\n"
-        f"  🆔 : {character['id']}"
+        f"**🎁 Gifted Successfully**\n\n"
+        f"**Character:** {character['name']}\n"
+        f"**From:** {character['anime']}\n"
+        f"**ID:** {character['id']:03}"
     )
     
     await query.message.edit_text(success_message)
@@ -178,5 +178,5 @@ async def cancel_gift(update: Update, context: CallbackContext) -> None:
     pending_gifts.pop(gift_id, None)
     await query.message.edit_text("❌ Gift Cancelled.")
 
-# Adding handlers
+
 application.add_handler(CommandHandler("gift", gift, block=False))
