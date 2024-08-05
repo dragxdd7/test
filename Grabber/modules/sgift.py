@@ -48,10 +48,8 @@ async def gift(update: Update, context: CallbackContext) -> None:
     }
 
     if chat_id == -1002225496870:
-        # Directly confirm the gift without buttons
         await handle_gift_confirmation(message, gift_id)
     else:
-        # Send buttons for confirmation
         keyboard = InlineKeyboardMarkup(
             [
                 [
@@ -101,10 +99,10 @@ async def handle_gift_confirmation(message, gift_id):
         })
 
     success_message = (
-        f"**🎁 Gifted Successfully**\n\n"
-        f"**Character:** {character['name']}\n"
-        f"**From:** {character['anime']}\n"
-        f"**ID:** {character['id']:03}"
+        f"🎁 Gifted Successfully\n\n"
+        f"Character: {character['name']}\n"
+        f"From: {character['anime']}\n"
+        f"ID: {character['id']:03}"
     )
     
     await message.reply_text(success_message)
