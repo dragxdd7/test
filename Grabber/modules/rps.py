@@ -45,7 +45,7 @@ async def rps_button(client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     user_balance = await show_balance(user_id)
 
-    if user_balance < amount:
+    if int(user_balance) < amount:
         await callback_query.answer("Insufficient balance to make the bet.")
         return
 
