@@ -3,6 +3,8 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 import random
 from . import add as add_balance, deduct as deduct_balance, show as show_balance, app
 
+user_data = {}
+
 @app.on_message(filters.command("rps"))
 async def rps(client, message):
     try:
@@ -28,7 +30,7 @@ async def rps(client, message):
     reply_markup = InlineKeyboardMarkup(keyboard)
     sent_message = await message.reply_text("Choose your move:", reply_markup=reply_markup)
 
-    client.user_data[message.chat.id] = {'amount': amount, 'message_id': sent_message.message_id}
+    user_data[message.chat.id] = {'amount': amount, 'message_id': sent_message.message_id}
 
 @app.on_callback_query(filters.regex('^(rock|paper|scissors|play_again)$'))
 async def rps_button(client, callback_query: CallbackQuery):
@@ -38,8 +40,8 @@ async def rps_button(client, callback_query: CallbackQuery):
         await play_again(client, callback_query)
         return
 
-    user_data = client.user_data.get(callback_query.message.chat.id, {})
-    amount = user_data.get('amount')
+    data = user_data.get(callback_query.message.chat.id, {})
+    amount = data.get('amount')
     user_id = callback_query.from_user.id
     user_balance = await show_balance(user_id)
 
