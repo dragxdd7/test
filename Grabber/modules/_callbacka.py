@@ -9,7 +9,8 @@ from .info import check
 from .ptb_store import store_callback_handler, sales_list_callback
 from .start import button
 from .sgift import confirm_gift, cancel_gift
-from .trade import confirm_trade, cancel_trade 
+from .trade import confirm_trade, cancel_trade
+from .rps import rps_button 
 
 
 async def cbq(update: Update, context: CallbackContext):
@@ -40,5 +41,7 @@ async def cbq(update: Update, context: CallbackContext):
         await cancel_trade(update, context)
     elif data.startswith('confirm_gift'):
         await confirm_gift(update, context)
+    elif data in ('rock', 'paper', 'scissors', 'play_again'):
+        await rps_button(update, context)
         
 application.add_handler(CallbackQueryHandler(cbq, pattern='.*'))
