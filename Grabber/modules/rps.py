@@ -7,7 +7,7 @@ from . import add as add_balance , deduct as deduct_balance, show as show_balanc
 
 async def rps(update, context):
     try:
-        amount = int(context.args[0])
+        amount = int(context.args[1])
         if amount < 1:
             raise ValueError("Invalid bet amount.")
     except (IndexError, ValueError):
