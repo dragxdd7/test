@@ -1,25 +1,24 @@
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+from telegram.ext import CommandHandler, CallbackQueryHandler
+from Grabber import application, user_collection
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import random
-from . import add as add_balance, deduct as deduct_balance, show as show_balance, app
+from . import add as add_balance , deduct as deduct_balance, show as show_balance
 
-user_data = {}
 
-@app.on_message(filters.command("rps"))
-async def rps(client, message):
+async def rps(update, context):
     try:
-        amount = int(message.command[1])
+        amount = int(context.args[0])
         if amount < 1:
             raise ValueError("Invalid bet amount.")
     except (IndexError, ValueError):
-        await message.reply_text("Use /rps [amount]")
+        await update.message.reply_text("Use /rps [amount]")
         return
 
-    user_id = message.from_user.id
+    user_id = update.effective_user.id
     user_balance = await show_balance(user_id)
 
     if user_balance < amount:
-        await message.reply_text("Insufficient balance to make the bet.")
+        await update.message.reply_text("Insufficient balance to make the bet.")
         return
 
     keyboard = [
@@ -28,25 +27,25 @@ async def rps(client, message):
         [InlineKeyboardButton("Scissors ✂️", callback_data='scissors')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    sent_message = await message.reply_text("Choose your move:", reply_markup=reply_markup)
+    message = await update.message.reply_text("Choose your move:", reply_markup=reply_markup)
 
-    user_data[message.chat.id] = {'amount': amount, 'message_id': sent_message.message_id}
+    context.user_data['amount'] = amount
+    context.user_data['message_id'] = message.message_id
 
-@app.on_callback_query(filters.regex('^(rock|paper|scissors|play_again)$'))
-async def rps_button(client, callback_query: CallbackQuery):
-    choice = callback_query.data
+async def rps_button(update, context):
+    query = update.callback_query
+    choice = query.data
 
     if choice == 'play_again':
-        await play_again(client, callback_query)
+        await play_again(update, context)
         return
 
-    data = user_data.get(callback_query.message.chat.id, {})
-    amount = data.get('amount')
-    user_id = callback_query.from_user.id
+    amount = context.user_data.get('amount')
+    user_id = update.effective_user.id
     user_balance = await show_balance(user_id)
 
-    if int(user_balance) < amount:
-        await callback_query.answer("Insufficient balance to make the bet.")
+    if user_balance < amount:
+        await query.answer("Insufficient balance to make the bet.")
         return
 
     computer_choice = random.choice(['rock', 'paper', 'scissors'])
@@ -64,16 +63,22 @@ async def rps_button(client, callback_query: CallbackQuery):
 
     updated_balance = await show_balance(user_id)
 
-    await callback_query.message.edit_text(
-        f"You chose {choice.capitalize()} and the computer chose {computer_choice.capitalize()}\n\n{result_message}\nYour updated balance is {updated_balance}\n\nPlay again?",
+    await query.message.edit_text(
+        f"You chose {choice.capitalize()} and the computer chose {computer_choice.capitalize()}\n\n.\n{result_message} Your updated balance is {updated_balance}\n\nPlay again?",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Play Again 🔄", callback_data='play_again')]])
     )
 
-async def play_again(client, callback_query):
+async def play_again(update, context):
+    query = update.callback_query
+
     keyboard = [
         [InlineKeyboardButton("Rock 🪨", callback_data='rock'),
          InlineKeyboardButton("Paper 📄", callback_data='paper')],
         [InlineKeyboardButton("Scissors ✂️", callback_data='scissors')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await callback_query.message.edit_text("Choose your move:", reply_markup=reply_markup)
+    await query.message.edit_text("Choose your move:", reply_markup=reply_markup)
+
+application.add_handler(CommandHandler("rps", rps))
+
+
