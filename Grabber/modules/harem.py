@@ -39,10 +39,17 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-    f"♦️ {capsify(f'{character['name']} (x{count})')}\n"
-    f"   Anime: {character['anime']}\n"
-    f"   ID: {character['id']}\n"
-    f"   {character.get('rarity', '')}\n\n")
+    "♦️ {} (x{})\n"
+    "   Anime: {}\n"
+    "   ID: {}\n"
+    "   {}\n\n"
+).format(
+    capsify(character['name']),
+    count,
+    character['anime'],
+    character['id'],
+    character.get('rarity', '')
+)
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
