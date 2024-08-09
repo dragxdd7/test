@@ -83,12 +83,18 @@ async def scrabble(client, message: Message):
 
 @app.on_message(~filters.me, group=1)
 async def check_answer(client, message: Message):
+    if message.from_user is None:
+        return
+
     user_id = message.from_user.id
 
     if user_id not in active_scrabbles:
         return
 
     if message.sticker:
+        return
+
+    if message.text.startswith('/'):
         return
 
     answer = message.text.strip()
@@ -117,7 +123,7 @@ async def check_answer(client, message: Message):
                     photo=scrabble_data['character']['img_url'],
                     caption=capsify(f"{scrabble_data['character']['name']} added to your collection! 🎉")
                 )
-            except Exception:  # Handle cases where the image might fail to send
+            except Exception:
                 await message.reply_text(capsify(f"{scrabble_data['character']['name']} added to your collection! 🎉"))
             
             await user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
