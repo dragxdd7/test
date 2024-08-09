@@ -2,10 +2,11 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 import math
-from . import add, deduct, show, abank, dbank, sbank, user_collection, app
+from . import add, deduct, show, abank, dbank, sbank, user_collection, app, capsify
 
 async def handle_error(client: Client, message: Message, error: Exception):
-    await message.reply_text(f"An error occurred: {str(error)}")
+    error_message = f"An error occurred: {str(error)}"
+    await message.reply_text(capsify(error_message))
     print(f"Error: {error}")
 
 async def save(client: Client, message: Message):
@@ -24,15 +25,15 @@ async def save(client: Client, message: Message):
         balance_amount = int(user_data.get('balance', 0))
 
         if amount > balance_amount:
-            await message.reply_text("Insufficient balance to save this amount.")
+            await message.reply_text(capsify("Insufficient balance to save this amount."))
             return
 
         await deduct(user_id, amount)
         await abank(user_id, amount)
 
-        await message.reply_text(f"You saved Ŧ{amount} in your bank account.")
+        await message.reply_text(capsify(f"You saved Ŧ{amount} in your bank account."))
     else:
-        await message.reply_text("User data not found.")
+        await message.reply_text(capsify("User data not found."))
 
 async def withdraw(client: Client, message: Message):
     try:
@@ -50,15 +51,15 @@ async def withdraw(client: Client, message: Message):
         saved_amount = int(user_data.get('saved_amount', 0))
 
         if amount > saved_amount:
-            await message.reply_text("Insufficient saved amount to withdraw.")
+            await message.reply_text(capsify("Insufficient saved amount to withdraw."))
             return
 
         await add(user_id, amount)
         await dbank(user_id, amount)
 
-        await message.reply_text(f"You withdrew Ŧ{amount} from your bank account.")
+        await message.reply_text(capsify(f"You withdrew Ŧ{amount} from your bank account."))
     else:
-        await message.reply_text("User data not found.")
+        await message.reply_text(capsify("User data not found."))
 
 async def loan(client: Client, message: Message):
     try:
@@ -86,8 +87,8 @@ async def loan(client: Client, message: Message):
             total_deducted = int(user_data['balance']) + penalty
             await user_collection.update_one({'id': user_id}, {'$set': {'balance': 0, 'saved_amount': 0, 'loan_amount': 0}})
             log_message = f"User {message.from_user.first_name} ({user_id}) tried to exploit the loan system. Deducted balance and penalty: {total_deducted} tokens."
-            await client.send_message(-1002220682772, log_message)
-            await message.reply_text("You tried to exploit the loan system. Your balance and saved amount have been reset to 0 as a penalty.")
+            await client.send_message(-1002220682772, capsify(log_message))
+            await message.reply_text(capsify("You tried to exploit the loan system. Your balance and saved amount have been reset to 0 as a penalty."))
             return
 
         current_time = datetime.now()
@@ -100,11 +101,11 @@ async def loan(client: Client, message: Message):
         )
         await add(user_id, loan_amount)
 
-        await message.reply_text(f"You successfully took a loan of Ŧ{loan_amount}. You must repay it within 10 days to avoid a penalty.")
+        await message.reply_text(capsify(f"You successfully took a loan of Ŧ{loan_amount}. You must repay it within 10 days to avoid a penalty."))
         log_message = f"Loan: +{loan_amount} tokens | User ID: {user_id} | Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')}"
-        await client.send_message(-1002220682772, log_message)
+        await client.send_message(-1002220682772, capsify(log_message))
     else:
-        await message.reply_text("User data not found.")
+        await message.reply_text(capsify("User data not found."))
 
 async def repay(client: Client, message: Message):
     try:
@@ -124,23 +125,23 @@ async def repay(client: Client, message: Message):
         current_time = datetime.now()
 
         if repayment_amount > loan_amount:
-            await message.reply_text("Repayment amount cannot exceed the loan amount.")
+            await message.reply_text(capsify("Repayment amount cannot exceed the loan amount."))
             return
 
         if current_time > loan_due_date:
             overdue_hours = (current_time - loan_due_date).total_seconds() / 3600
             penalty = math.ceil(overdue_hours) * (loan_amount * 0.05)
             repayment_amount += penalty
-            await message.reply_text(f"You have a penalty of Ŧ{penalty:.2f} due to late repayment.")
+            await message.reply_text(capsify(f"You have a penalty of Ŧ{penalty:.2f} due to late repayment."))
 
         new_loan_amount = loan_amount - repayment_amount
 
         await user_collection.update_one({'id': user_id}, {'$set': {'loan_amount': new_loan_amount}})
         await deduct(user_id, repayment_amount)
 
-        await message.reply_text(f"You successfully repaid Ŧ{repayment_amount} of your loan.")
+        await message.reply_text(capsify(f"You successfully repaid Ŧ{repayment_amount} of your loan."))
     else:
-        await message.reply_text("User data not found.")
+        await message.reply_text(capsify("User data not found."))
 
 @app.on_message(filters.command("loan"))
 async def loan_handler(client: Client, message: Message):
