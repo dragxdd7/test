@@ -14,6 +14,26 @@ app = Grabberu
 
 dev_users = {6919722801}
 
+ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
+ALL_CAPS = "ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ"
+
+
+
+def capsify(text: str) -> str:
+  txt = ""
+  for x in text.split():
+    for y in x:
+      if y.lower() in ALPHABETS:
+        ind = ALPHABETS.index(y.lower())
+        txt += ALL_CAPS[ind]
+      else:
+        txt += y
+    txt += " "
+  return txt
+
+async def acapsify(text: str) -> str:
+  return capsify(text)
+
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
