@@ -16,3 +16,4 @@ telegraph
 pyttsx3
 psutil
 nekos.py
+APScheduler
