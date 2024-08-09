@@ -42,6 +42,9 @@ async def get_image_and_caption(id: int):
     form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
     return char['img_url'], capsify(form.format(char['name'], char['anime'], char['id'], price))
 
+async def get_character_ids() -> list:
+    all_characters = await collection.find({}).to_list(length=None)
+    return [x['id'] for x in all_characters]
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
