@@ -4,7 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime, timedelta
 from Grabber import collection, user_collection, user_totals_collection
-from . import add as add_balance, deduct as deduct_balance, app
+from . import add as add_balance, deduct as deduct_balance, app, capsify
 
 rarity_map = {
     "🟢 Common": True,
@@ -17,19 +17,19 @@ rarity_map = {
 last_propose_times = {}
 proposing_users = {}
 
-@app.on_message(filters.command("propose") )
+@app.on_message(filters.command("propose"))
 async def propose(client, message: Message):
     user_id = message.from_user.id
 
     user_data = await user_collection.find_one({'id': user_id})
 
     if not user_data or int(user_data.get('balance', 0)) < 20000:
-        await message.reply_text("You need at least 20000 tokens to propose.")
+        await message.reply_text(capsify("You need at least 20000 tokens to propose."))
         proposing_users[user_id] = False
         return
 
     if proposing_users.get(user_id):
-        await message.reply_text("You are already proposing. Please wait for the current proposal to finish.")
+        await message.reply_text(capsify("You are already proposing. Please wait for the current proposal to finish."))
         proposing_users[user_id] = False
         return
     else:
@@ -42,24 +42,24 @@ async def propose(client, message: Message):
             remaining_cooldown = timedelta(minutes=5) - time_since_last_propose
             remaining_cooldown_minutes = remaining_cooldown.total_seconds() // 60
             remaining_cooldown_seconds = remaining_cooldown.total_seconds() % 60
-            await message.reply_text(f"Cooldown! Please wait {int(remaining_cooldown_minutes)}m {int(remaining_cooldown_seconds)}s before proposing again.")
+            await message.reply_text(capsify(f"Cooldown! Please wait {int(remaining_cooldown_minutes)}m {int(remaining_cooldown_seconds)}s before proposing again."))
             proposing_users[user_id] = False
             return
 
     await deduct_balance(user_id, 10000)
 
-    proposal_message = "✨ 𝐓𝐢𝐦𝐞 𝐭𝐨 𝐏𝐫𝐨𝐩𝐨𝐬𝐞 ✨"
+    proposal_message = capsify("✨ Time to Propose ✨")
     photo_path = 'https://telegra.ph/file/68491359070e2e045c919.jpg'
     await message.reply_photo(photo=photo_path, caption=proposal_message)
 
     await asyncio.sleep(2)
 
-    await message.reply_text("𝐀𝐬𝐤𝐢𝐧𝐠 𝐟𝐨𝐫 𝐇𝐞𝐫 𝐇𝐚𝐧𝐝 💍")
+    await message.reply_text(capsify("Asking for Her Hand 💍"))
 
     await asyncio.sleep(2)
 
     if random.random() < 0.6:
-        rejection_message = "𝐒𝐡𝐞 𝐩𝐮𝐬𝐡𝐞𝐝 𝐲𝐨𝐮 𝐚𝐰𝐚𝐲 𝐚𝐧𝐝 𝐬𝐜𝐫𝐞𝐚𝐦𝐞𝐝 😂"
+        rejection_message = capsify("She pushed you away and screamed 😂")
         rejection_photo_path = 'https://graph.org/file/43ac16b34453bafe480d9.jpg'
         await message.reply_photo(photo=rejection_photo_path, caption=rejection_message)
     else:
@@ -67,12 +67,12 @@ async def propose(client, message: Message):
         valid_characters = [char for char in all_characters if char.get('rarity') in rarity_map.keys()]
 
         if not valid_characters:
-            await message.reply_text("No characters available with the specified rarity.")
+            await message.reply_text(capsify("No characters available with the specified rarity."))
             return
 
         character = random.choice(valid_characters)
         await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-        await message.reply_photo(photo=character['img_url'], caption=f"{character['name']} accepted your proposal!")
+        await message.reply_photo(photo=character['img_url'], caption=capsify(f"{character['name']} accepted your proposal!"))
 
     last_propose_times[user_id] = datetime.now()
     proposing_users[user_id] = False
