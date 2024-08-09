@@ -16,7 +16,7 @@ async def add_sudo(client, update: Message):
     else:
         try:
             tar = int(m.text.split()[1])
-        except Exception as e:
+        except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
     if tar in PROTECTED_IDS:
@@ -29,7 +29,6 @@ async def add_sudo(client, update: Message):
         await sudb.insert_one({'user_id': tar})
         await m.reply_text('User added to sudo list.')
     except Exception as e:
-        print(e)
         await m.reply_text('Failed to add user to sudo list.')
 
 @app.on_message(filters.command("rmsudo") & dev_filter)
@@ -40,7 +39,7 @@ async def remove_sudo(client, update: Message):
     else:
         try:
             tar = int(m.text.split()[1])
-        except Exception as e:
+        except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
     if not await sudb.find_one({'user_id': tar}):
@@ -50,7 +49,6 @@ async def remove_sudo(client, update: Message):
         await sudb.delete_one({'user_id': tar})
         await m.reply_text('User removed from sudo list.')
     except Exception as e:
-        print(e)
         await m.reply_text('Failed to remove user from sudo list.')
 
 @app.on_message(filters.command("adddev") & dev_filter)
@@ -61,7 +59,7 @@ async def add_dev(client, update: Message):
     else:
         try:
             tar = int(m.text.split()[1])
-        except Exception as e:
+        except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
     if tar in PROTECTED_IDS:
@@ -71,7 +69,6 @@ async def add_dev(client, update: Message):
         await devb.insert_one({'user_id': tar})
         await m.reply_text('User added to dev list.')
     except Exception as e:
-        print(e)
         await m.reply_text('Failed to add user to dev list.')
 
 @app.on_message(filters.command("rmdev") & dev_filter)
@@ -82,7 +79,7 @@ async def remove_dev(client, update: Message):
     else:
         try:
             tar = int(m.text.split()[1])
-        except Exception as e:
+        except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
     if tar == 6919722801:
@@ -95,7 +92,6 @@ async def remove_dev(client, update: Message):
         await devb.delete_one({'user_id': tar})
         await m.reply_text('User removed from dev list.')
     except Exception as e:
-        print(e)
         await m.reply_text('Failed to remove user from dev list.')
 
 @app.on_message(filters.command("sudolist") & sudo_filter)
@@ -110,16 +106,14 @@ async def sudo_list(client, update: Message):
             try:
                 user = await client.get_users(user_id)
                 user_list.append(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)")
-            except Exception as e:
-                # Skip users that cannot be fetched
-                print(f"Failed to fetch details for user ID {user_id}: {e}")
+            except Exception:
+                user_list.append(f"• User ID: {user_id} (`{user_id}`)")
 
         if not user_list:
             return await update.reply_text('No valid sudo users found.')
 
         await update.reply_text(f'Total sudos: {len(user_list)}\n\n' + '\n'.join(user_list))
-    except Exception as e:
-        print(e)
+    except Exception:
         await update.reply_text('Error fetching sudo list.')
 
 @app.on_message(filters.command("devlist") & sudo_filter)
@@ -134,14 +128,12 @@ async def dev_list(client, update: Message):
             try:
                 user = await client.get_users(user_id)
                 user_list.append(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)")
-            except Exception as e:
-                # Skip users that cannot be fetched
-                print(f"Failed to fetch details for user ID {user_id}: {e}")
+            except Exception:
+                user_list.append(f"• User ID: {user_id} (`{user_id}`)")
 
         if not user_list:
             return await update.reply_text('No valid developers found.')
 
         await update.reply_text(f'Total developers: {len(user_list)}\n\n' + '\n'.join(user_list))
-    except Exception as e:
-        print(e)
+    except Exception:
         await update.reply_text('Error fetching developer list.')
