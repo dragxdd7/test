@@ -42,7 +42,7 @@ def provide_hint(word, attempts):
     else:
         return f"{word[:2]}{'_' * (len(word) - 3)}{word[-1]}"
 
-@app.on_message(filters.command("scrabble"))
+@app.on_message(filters.command("crabble"))
 async def scrabble(client, message: Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
