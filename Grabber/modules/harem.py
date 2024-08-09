@@ -1,15 +1,15 @@
 import math
 from itertools import groupby
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from Grabber import user_collection, application
+from Grabber import user_collection, application, capsify
 
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        message = '𝙔𝙤𝙪 𝙃𝙖𝙫𝙚 𝙉𝙤𝙩 𝙂𝙧𝙖𝙗𝙗𝙚𝙙 𝙖𝙣𝙮 𝙎𝙡𝙖𝙫𝙚𝙨 𝙔𝙚𝙩...'
+        message = capsify("You have not grabbed any slaves yet...")
         if update.message:
             await update.message.reply_text(message)
         else:
@@ -31,7 +31,7 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     if page < 0 or page >= total_pages:
         page = 0
 
-    harem_message = f"<b>Collection - Page {page + 1}/{total_pages}</b>\n"
+    harem_message = capsify(f"Collection - Page {page + 1}/{total_pages}\n")
     harem_message += "--------------------------------------\n\n"
 
     current_characters = unique_characters[page * 7:(page + 1) * 7]
@@ -39,7 +39,7 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            f"♦️ <b>{character['name']} (x{count})</b>\n"
+            f"♦️ {capsify(f'{character['name']} (x{count})')}\n"
             f"   Anime: {character['anime']}\n"
             f"   ID: {character['id']}\n"
             f"   {character['rarity']}\n\n"
@@ -47,30 +47,30 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
-    harem_message += f"<b>Total Characters: {total_count}</b>"
+    harem_message += capsify(f"Total Characters: {total_count}")
 
-    keyboard = [[InlineKeyboardButton(f"ɪɴʟɪɴᴇ ({total_count})", switch_inline_query_current_chat=f"collection.{user_id}")]]
+    keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
     if total_pages > 1:
         nav_buttons = []
         if page > 0:
-            nav_buttons.append(InlineKeyboardButton("◄", callback_data=f"harem:{page - 1}:{user_id}"))
+            nav_buttons.append(IKB(capsify("◄"), callback_data=f"harem:{page - 1}:{user_id}"))
         if page < total_pages - 1:
-            nav_buttons.append(InlineKeyboardButton("►", callback_data=f"harem:{page + 1}:{user_id}"))
+            nav_buttons.append(IKB(capsify("►"), callback_data=f"harem:{page + 1}:{user_id}"))
         keyboard.append(nav_buttons)
 
         skip_buttons = []
         if page > 4:
-            skip_buttons.append(InlineKeyboardButton("x5◀", callback_data=f"harem:{page - 5}:{user_id}"))
+            skip_buttons.append(IKB(capsify("x5◀"), callback_data=f"harem:{page - 5}:{user_id}"))
         if page < total_pages - 5:
-            skip_buttons.append(InlineKeyboardButton("▶5x", callback_data=f"harem:{page + 5}:{user_id}"))
+            skip_buttons.append(IKB(capsify("▶5x"), callback_data=f"harem:{page + 5}:{user_id}"))
         keyboard.append(skip_buttons)
 
     chat_id = update.effective_chat.id
     if chat_id != -1002225496870:
-        close_button = [InlineKeyboardButton("Close", callback_data=f"saleslist:close_{user_id}")]
+        close_button = [IKB(capsify("Close"), callback_data=f"saleslist:close_{user_id}")]
         keyboard.append(close_button)
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = IKM(keyboard)
 
     if 'favorites' in user and user['favorites']:
         fav_character_id = user['favorites'][0]
@@ -92,7 +92,6 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
         if update.callback_query.message.text != harem_message:
             await update.callback_query.edit_message_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
 
-
 async def harem_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     data = query.data
@@ -103,14 +102,14 @@ async def harem_callback(update: Update, context: CallbackContext) -> None:
             await query.answer()
             await query.message.delete()
         else:
-            await query.answer("This is not your Harem", show_alert=True)
+            await query.answer(capsify("This is not your Harem"), show_alert=True)
         return
 
     _, page, user_id = data.split(':')
     page = int(page)
     user_id = int(user_id)
     if query.from_user.id != user_id:
-        await query.answer("This is not your Harem", show_alert=True)
+        await query.answer(capsify("This is not your Harem"), show_alert=True)
         return
     await harem(update, context, page)
 
