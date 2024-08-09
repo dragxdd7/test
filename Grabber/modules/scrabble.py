@@ -1,4 +1,29 @@
-character = random.choice(all_characters)
+import asyncio
+from telegram.ext import CommandHandler, CallbackContext
+from telegram import Update
+import random
+from datetime import datetime
+from pytz import timezone
+from . import collection, user_collection, application, capsify
+
+active_scrabbles = {}
+MAX_ATTEMPTS = 5
+WIN_LIMIT = 5
+COOLDOWN_TIME = 30
+cooldown_users = {}
+
+def is_new_day(last_win_time):
+    ist = timezone('Asia/Kolkata')
+    now_ist = datetime.now(ist)
+    last_win_ist = last_win_time.astimezone(ist)
+    return now_ist.date() != last_win_ist.date()
+
+async def get_random_character():
+    all_characters = await collection.find({
+        'id': {'$gte': '01', '$lte': '1100'}
+    }).to_list(length=None)
+    while True:
+        character = random.choice(all_characters)
         if len(character['name'].split()[0]) > 3:
             return character
 
@@ -48,13 +73,11 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
     }
 
     await update.message.reply_text(
-        capsify(
-            f"🔠 Welcome to Word Scramble! 🔠\n\n"
-            f"Can you unscramble this word? Try it out:\n\n"
-            f"{scrambled_word}\n\n"
-            f"⏳ You have {MAX_ATTEMPTS} attempts to respond.\n"
-            f"⏳ Use /xscrabble to terminate the game."
-        )
+        f"{capsify('Welcome to Word Scramble!')}\n\n"
+        f"Can you unscramble this word? Try it out:\n\n"
+        f"{scrambled_word}\n\n"
+        f"⏳ You have {MAX_ATTEMPTS} attempts to respond.\n"
+        f"⏳ Use /xscrabble to terminate the game."
     )
 
 async def check_answer(update: Update, context: CallbackContext) -> None:
@@ -116,12 +139,10 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
     else:
         hint = provide_hint(scrabble_data['word'], scrabble_data['attempts'])
         await update.message.reply_text(
-            capsify(
-                f"Hint ❌ Incorrect Answer! ❌\n\n"
-                f"{scrabble_data['scrambled_word']}\n\n"
-                f"Hint: {hint}\n\n"
-                f"Try again."
-            )
+            capsify(f"Hint ❌ Incorrect Answer! ❌\n\n"
+            f"{scrabble_data['scrambled_word']}\n\n"
+            f"Hint: {hint}\n\n"
+            f"Try again.")
         )
 
 async def remove_cooldown(user_id):
