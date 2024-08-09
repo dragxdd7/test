@@ -47,7 +47,7 @@ async def get_user_balance(user_id: int):
         return user.get('balance', 0)
     return 0  # Return 0 if user not found or balance not present
 
-@app.on_message(filters.command("store"))
+@app.on_message(filters.command("shop"))
 async def shop(client, message):
     user_id = message.from_user.id
     x = await get_today_characters(user_id)
