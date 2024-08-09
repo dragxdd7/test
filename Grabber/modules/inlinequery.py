@@ -9,7 +9,7 @@ from telegram import Update
 from telegram.ext import InlineQueryHandler, CallbackContext, CommandHandler
 from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
 
-from . import user_collection, collection, application, db
+from . import user_collection, collection, application, db, capsify
 
 lock = asyncio.Lock()
 db.characters.create_index([('id', DESCENDING)])
@@ -104,22 +104,22 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 user_id_str = str(user.get('id', 'unknown'))
                 user_first_name = escape(user.get('first_name', user_id_str))
                 caption = (
-                    f"<b> Look At <a href='tg://user?id={user_id_str}'>{user_first_name}</a>'s Character</b>\n\n"
-                    f"🌟 ɴᴀᴍᴇ : <b>{character['name']} (x{user_character_count})</b>\n\n"
-                    f"📺 ᴀɴɪᴍᴇ : <b>{character['anime']} ({user_anime_characters}/{anime_characters})</b>\n\n"
-                    f"🌟 ʀᴀʀɪᴛʏ :{character.get('rarity', '')}\n\n"
-                    f"<b>🆔 ɪᴅ :</b> {character['id']} "
+                    f"{capsify('Look At')} <a href='tg://user?id={user_id_str}'>{capsify(user_first_name)}</a>'s {capsify('Character')}\n\n"
+                    f"🌟 {capsify('Name')}: <b>{capsify(character['name'])} (x{user_character_count})</b>\n\n"
+                    f"📺 {capsify('Anime')}: <b>{capsify(character['anime'])} ({user_anime_characters}/{anime_characters})</b>\n\n"
+                    f"🌟 {capsify('Rarity')}: {capsify(character.get('rarity', ''))}\n\n"
+                    f"<b>{capsify('ID')}:</b> {capsify(character['id'])} "
                 )
             else:
                 caption = (
-                    f"<b>Look At This Character !!</b>\n\n"
-                    f"🌟 ɴᴀᴍᴇ :<b> {character['name']}</b>\n\n"
-                    f"📺 ᴀɴɪᴍᴇ : <b>{character['anime']}</b>\n\n"
-                    f"🆔 ɪᴅ : <b>{character['id']}</b>\n\n"
-                    f"🌟 ʀᴀʀɪᴛʏ :{character.get('rarity', '')}\n\n"
+                    f"{capsify('Look At This Character !!')}\n\n"
+                    f"🌟 {capsify('Name')}: <b>{capsify(character['name'])}</b>\n\n"
+                    f"📺 {capsify('Anime')}: <b>{capsify(character['anime'])}</b>\n\n"
+                    f"🆔 {capsify('ID')}: <b>{capsify(character['id'])}</b>\n\n"
+                    f"🌟 {capsify('Rarity')}: {capsify(character.get('rarity', ''))}\n\n"
                 )
 
-            keyboard = [[IKB("ʜᴏᴡ ᴍᴀɴʏ ɪ ʜᴀᴠᴇ ❓", callback_data=f"check_{character['id']}")]]
+            keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
             reply_markup = IKM(keyboard)
 
             results.append(
@@ -127,7 +127,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     thumbnail_url=character['img_url'],
                     id=f"{character['id']}_{time.time()}",
                     photo_url=character['img_url'],
-                    caption=caption,
+                    caption=capsify(caption),
                     parse_mode='HTML',
                     photo_width=300,
                     photo_height=300,
@@ -148,4 +148,4 @@ async def check(update: Update, context: CallbackContext) -> None:
     characters = user_data.get('characters', [])
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
-    await query.answer(f"You have {quantity} of this character.", show_alert=True)
+    await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
