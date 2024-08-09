@@ -1,14 +1,14 @@
 import io
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import collection, user_collection, app, capsify
+from . import collection, user_collection, app
 
 async def duplicate(client: Client, message: Message) -> None:
     user_id = message.from_user.id
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
-        await message.reply_text(capsify('You have no collected characters yet.'))
+        await message.reply_text('You have no collected characters yet.')
         return
 
     character_counts = {}
@@ -22,24 +22,24 @@ async def duplicate(client: Client, message: Message) -> None:
     duplicate_characters = {char_id: count for char_id, count in character_counts.items() if count > 1}
 
     if not duplicate_characters:
-        await message.reply_text(capsify('You have no duplicate characters.'))
+        await message.reply_text('You have no duplicate characters.')
         return
 
     duplicate_character_details = await collection.find({'id': {'$in': list(duplicate_characters.keys())}}).to_list(length=None)
 
-    duplicate_text = capsify("Duplicate Characters:\n\n")
+    duplicate_text = "Duplicate Characters:\n\n"
     for character in duplicate_character_details:
         char_id = character['id']
         count = duplicate_characters[char_id]
         rarity = character.get('rarity', 'Unknown')
         duplicate_text += (
-            f"♦️ {capsify(character['name'])}\n"
-            f"  [{capsify(character['anime'])}]\n"
-            f"  🆔 : {capsify(char_id)} ({capsify(str(count))}x)\n"
-            f"  🌟 Rarity: {capsify(rarity)}\n\n"
+            f"♦️ {character['name']}\n"
+            f"  [{character['anime']}]\n"
+            f"  🆔 : {char_id} ({count}x)\n"
+            f"  🌟 Rarity: {rarity}\n\n"
         )
 
-    file_name = capsify(f"duplicate_characters_{user_id}.txt")
+    file_name = f"duplicate_characters_{user_id}.txt"
     file = io.BytesIO()
     file.write(duplicate_text.encode())
     file.seek(0)
@@ -48,3 +48,6 @@ async def duplicate(client: Client, message: Message) -> None:
     file.close()
 
 app.on_message(filters.command("duplicate"))(duplicate)
+
+
+Add capsify to this
