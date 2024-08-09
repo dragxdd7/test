@@ -2,7 +2,7 @@ import math
 from itertools import groupby
 from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from Grabber import user_collection, application, capsify
+from . import user_collection, application, capsify
 
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
@@ -39,11 +39,10 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            f"♦️ {capsify(f'{character['name']} (x{count})')}\n"
-            f"   Anime: {character['anime']}\n"
-            f"   ID: {character['id']}\n"
-            f"   {character.get('rarity', '')}\n\n"
-        )
+    f"♦️ {capsify(f'{character['name']} (x{count})')}\n"
+    f"   Anime: {character['anime']}\n"
+    f"   ID: {character['id']}\n"
+    f"   {character.get('rarity', '')}\n\n")
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
