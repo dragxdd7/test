@@ -1,7 +1,7 @@
 import random
 from pyrogram import Client, filters
 from Grabber import user_collection
-from . import add, deduct, show, abank, dbank, sbank, app
+from . import add, deduct, show, abank, dbank, sbank, app, capsify
 
 @app.on_message(filters.command("gamble"))
 async def gamble(client, message):
@@ -11,38 +11,38 @@ async def gamble(client, message):
 
     args = message.text.split()[1:]
     if len(args) != 2:
-        await message.reply_text("Usage: /gamble <amount> <l/r>")
+        await message.reply_text(capsify("Usage: /gamble <amount> <l/r>"))
         return
 
     try:
         amount = int(args[0])
         choice = args[1].lower()
     except ValueError:
-        await message.reply_text("Invalid amount.")
+        await message.reply_text(capsify("Invalid amount."))
         return
 
     if choice not in ['l', 'r']:
-        await message.reply_text("Invalid choice. Please use /gamble l/r.")
+        await message.reply_text(capsify("Invalid choice. Please use /gamble l/r."))
         return
 
     min_bet = int(balance * 0.07)
     if amount < min_bet:
-        await message.reply_text(f"Please gamble at least 7% of your balance, which is Ŧ{min_bet}.")
+        await message.reply_text(capsify(f"Please gamble at least 7% of your balance, which is Ŧ{min_bet}."))
         return
 
     if amount > balance:
-        await message.reply_text(f"You do not have enough balance to gamble Ŧ{amount}. Your current balance is Ŧ{balance}.")
+        await message.reply_text(capsify(f"You do not have enough balance to gamble Ŧ{amount}. Your current balance is Ŧ{balance}."))
         return
 
     # Winning chance is 30 out of 100
     if random.randint(1, 100) <= 30:  # 30% chance to win
         coin_side = choice
         new_balance = amount  # Amount to add
-        message_text = f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand."
+        message_text = capsify(f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand.")
     else:
         coin_side = 'l' if choice == 'r' else 'r'
         new_balance = -amount  # Amount to deduct
-        message_text = f"🥲 You chose {choice} and lost Ŧ{amount}.\nCoin was in {coin_side} hand."
+        message_text = capsify(f"🥲 You chose {choice} and lost Ŧ{amount}.\nCoin was in {coin_side} hand.")
 
     await add(user_id, new_balance)
 
