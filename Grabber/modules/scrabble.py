@@ -1,10 +1,10 @@
 import asyncio
-from telegram.ext import CommandHandler, CallbackContext
-from telegram import Update
+from pyrogram import Client, filters
+from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import collection, user_collection, application, capsify
+from . import collection, user_collection, app, capsify
 
 active_scrabbles = {}
 MAX_ATTEMPTS = 5
@@ -42,22 +42,23 @@ def provide_hint(word, attempts):
     else:
         return f"{word[:2]}{'_' * (len(word) - 3)}{word[-1]}"
 
-async def scrabble(update: Update, context: CallbackContext) -> None:
-    user_id = update.effective_user.id
-    chat_id = update.effective_chat.id
+@app.on_message(filters.command("scrabble"))
+async def scrabble(client, message: Message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
 
     if chat_id != -1002225496870:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=capsify("This command can only be used at @dragons_support."))
+        await message.reply_text(capsify("This command can only be used at @dragons_support."))
         return
 
     if user_id in cooldown_users:
         remaining_time = COOLDOWN_TIME - (datetime.now() - cooldown_users[user_id]).total_seconds()
         remaining_time = max(remaining_time, 0)
-        await update.message.reply_text(capsify(f"Please wait {int(remaining_time)} seconds before starting a new game."))
+        await message.reply_text(capsify(f"Please wait {int(remaining_time)} seconds before starting a new game."))
         return
 
     if user_id in active_scrabbles:
-        await update.message.reply_text(capsify("You already have an active scrabble. Please wait for it to finish."))
+        await message.reply_text(capsify("You already have an active scrabble. Please wait for it to finish."))
         return
 
     character = await get_random_character()
@@ -72,7 +73,7 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
         'attempts': 0
     }
 
-    await update.message.reply_text(
+    await message.reply_text(
         f"{capsify('Welcome to Word Scramble!')}\n\n"
         f"Can you unscramble this word? Try it out:\n\n"
         f"{scrambled_word}\n\n"
@@ -80,16 +81,17 @@ async def scrabble(update: Update, context: CallbackContext) -> None:
         f"⏳ Use /xscrabble to terminate the game."
     )
 
-async def check_answer(update: Update, context: CallbackContext) -> None:
-    user_id = update.effective_user.id
+@app.on_message(~filters.me, group=1)
+async def check_answer(client, message: Message):
+    user_id = message.from_user.id
 
     if user_id not in active_scrabbles:
         return
 
-    if update.message.sticker:
+    if message.sticker:
         return
 
-    answer = update.message.text.strip()
+    answer = message.text.strip()
     scrabble_data = active_scrabbles[user_id]
     scrabble_data['attempts'] += 1
 
@@ -111,19 +113,19 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
 
         if user_data['wins'] <= WIN_LIMIT:
             try:
-                await update.message.reply_photo(
+                await message.reply_photo(
                     photo=scrabble_data['character']['img_url'],
                     caption=capsify(f"{scrabble_data['character']['name']} added to your collection! 🎉")
                 )
-            except telegram.error.BadRequest:
-                await update.message.reply_text(capsify(f"{scrabble_data['character']['name']} added to your collection! 🎉"))
+            except Exception:  # Handle cases where the image might fail to send
+                await message.reply_text(capsify(f"{scrabble_data['character']['name']} added to your collection! 🎉"))
             
             await user_collection.update_one({'id': user_id}, {'$push': {'characters': scrabble_data['character']}})
             if user_data['wins'] == WIN_LIMIT:
-                await update.message.reply_text(capsify("You won 5 games today. Now you will get gold instead of characters."))
+                await message.reply_text(capsify("You won 5 games today. Now you will get gold instead of characters."))
         else:
             gold = random.randint(30, 60)
-            await update.message.reply_text(capsify(f"You've won {gold} gold!"))
+            await message.reply_text(capsify(f"You've won {gold} gold!"))
             await user_collection.update_one({'id': user_id}, {'$inc': {'gold': gold}})
 
         del active_scrabbles[user_id]
@@ -132,13 +134,13 @@ async def check_answer(update: Update, context: CallbackContext) -> None:
         asyncio.create_task(remove_cooldown(user_id))
 
     elif scrabble_data['attempts'] >= MAX_ATTEMPTS:
-        await update.message.reply_text(
+        await message.reply_text(
             capsify(f"Out of attempts ❌ Correct answer was: {scrabble_data['word']}")
         )
         del active_scrabbles[user_id]
     else:
         hint = provide_hint(scrabble_data['word'], scrabble_data['attempts'])
-        await update.message.reply_text(
+        await message.reply_text(
             capsify(f"Hint ❌ Incorrect Answer! ❌\n\n"
             f"{scrabble_data['scrambled_word']}\n\n"
             f"Hint: {hint}\n\n"
@@ -150,19 +152,17 @@ async def remove_cooldown(user_id):
     if user_id in cooldown_users:
         del cooldown_users[user_id]
 
-async def xscrabble(update: Update, context: CallbackContext) -> None:
-    user_id = update.effective_user.id
-    chat_id = update.effective_chat.id
+@app.on_message(filters.command("xscrabble"))
+async def xscrabble(client, message: Message):
+    user_id = message.from_user.id
+    chat_id = message.chat.id
 
     if chat_id != -1002225496870:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=capsify("This command can only be used at @dragons_support."))
+        await message.reply_text(capsify("This command can only be used at @dragons_support."))
         return
 
     if user_id in active_scrabbles:
         del active_scrabbles[user_id]
-        await update.message.reply_text(capsify("Your current game has been terminated."))
+        await message.reply_text(capsify("Your current game has been terminated."))
     else:
-        await update.message.reply_text(capsify("You don't have an active game to terminate."))
-
-application.add_handler(CommandHandler('scrabble', scrabble, block=False))
-application.add_handler(CommandHandler('xscrabble', xscrabble, block=False))
+        await message.reply_text(capsify("You don't have an active game to terminate."))
