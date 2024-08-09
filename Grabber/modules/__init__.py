@@ -36,6 +36,9 @@ async def acapsify(text: str) -> str:
     return capsify(text)
 
 
+async def get_character(id: int):
+    return await collection.find_one({'id': id})
+
 async def get_image_and_caption(id: int):
     char = await get_character(id)
     price = random.randint(60000, 90000)
