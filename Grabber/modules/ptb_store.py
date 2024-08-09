@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 import random
 from datetime import datetime as dt
-from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids
+from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character
 
 sdb = db.new_store
 user_db = db.bought
@@ -19,9 +19,6 @@ async def clear_today(user_id):
 
 def today():
     return str(dt.now()).split()[0]
-
-async def get_character(id: int):
-    return await collection.find_one({'id': id})
 
 async def update_user_bought(user_id: int, data):
     await user_db.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
