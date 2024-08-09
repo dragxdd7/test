@@ -1,4 +1,4 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+"""from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import timezone
 from datetime import datetime
 from . import user_collection, app
@@ -17,4 +17,4 @@ async def on_startup():
 
 @app.on_shutdown
 async def on_shutdown():
-    scheduler.shutdown(wait=False)
+    scheduler.shutdown(wait=False)"""
