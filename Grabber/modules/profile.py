@@ -5,7 +5,7 @@ import aiofiles
 from pyrogram import Client, filters
 from datetime import datetime
 import pytz
-from . import user_collection, collection, app
+from . import user_collection, collection, app, capsify
 
 def custom_format_number(num):
     if int(num) >= 10**6:
@@ -64,14 +64,14 @@ async def xprofile(client, message):
 
             gender_icon = '👦🏻' if gender == 'male' else '👧🏻' if gender == 'female' else '👶🏻'
 
-            balance_message = (
-                f"\t\t 𝐏𝐑𝐎𝐅𝐈𝐋𝐄\n\n"
-                f"ɴᴀᴍᴇ: {message.from_user.first_name or ''} {message.from_user.last_name or ''} [{gender_icon}]\n"
-                f"ɪᴅ: `{user_id}`\n\n"
-                f"ᴄᴏɪɴꜱ: Ŧ`{custom_format_number(balance_amount)}`\n"
-                f"ʙᴀɴᴋ: Ŧ`{custom_format_number(bank_balance)}`\n"
-                f"ᴄʜᴀʀᴀᴄᴛᴇʀꜱ: `{total_characters}/{total_database_characters}`\n"
-                f"ᴅᴀʏs ᴏʟᴅ: `{days_old}`\n"
+            balance_message = capsify(
+                f"PROFILE\n\n"
+                f"Name: {message.from_user.first_name or ''} {message.from_user.last_name or ''} [{gender_icon}]\n"
+                f"ID: `{user_id}`\n\n"
+                f"Coins: Ŧ`{custom_format_number(balance_amount)}`\n"
+                f"Bank: Ŧ`{custom_format_number(bank_balance)}`\n"
+                f"Characters: `{total_characters}/{total_database_characters}`\n"
+                f"Days Old: `{days_old}`\n"
             )
 
             if profile_media:
@@ -88,7 +88,7 @@ async def xprofile(client, message):
                 await message.reply_text(balance_message)
 
         else:
-            await message.reply_text("Claim bonus first using /xbonus")
+            await message.reply_text(capsify("Claim bonus first using /xbonus"))
 
     except Exception as e:
-        await message.reply_text(f"An error occurred: {e}")
+        await message.reply_text(capsify(f"An error occurred: {e}"))
