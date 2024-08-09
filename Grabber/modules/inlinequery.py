@@ -1,6 +1,5 @@
 import re
 import time
-from html import escape
 from cachetools import TTLCache
 from pymongo import MongoClient, DESCENDING
 import asyncio
@@ -102,24 +101,24 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
                 user_anime_characters = sum(1 for c in user.get('characters', []) if c['anime'] == character['anime'])
                 user_id_str = str(user.get('id', 'unknown'))
-                user_first_name = escape(user.get('first_name', user_id_str))
+                user_first_name = user.get('first_name', user_id_str)
                 caption = (
-                    f"{capsify('Look At')} <a href='tg://user?id={user_id_str}'>{capsify(user_first_name)}</a>'s {capsify('Character')}\n\n"
-                    f"🌟 {capsify('Name')}: <b>{capsify(character['name'])} (x{user_character_count})</b>\n\n"
-                    f"📺 {capsify('Anime')}: <b>{capsify(character['anime'])} ({user_anime_characters}/{anime_characters})</b>\n\n"
-                    f"🌟 {capsify('Rarity')}: {capsify(character.get('rarity', ''))}\n\n"
-                    f"<b>{capsify('ID')}:</b> {capsify(character['id'])} "
+                    f"Character from {user_first_name}'s collection:\n\n"
+                    f"Name: {character['name']} (x{user_character_count})\n"
+                    f"Anime: {character['anime']} ({user_anime_characters}/{anime_characters})\n"
+                    f"Rarity: {character.get('rarity', '')}\n"
+                    f"ID: {character['id']}"
                 )
             else:
                 caption = (
-                    f"{capsify('Look At This Character !!')}\n\n"
-                    f"🌟 {capsify('Name')}: <b>{capsify(character['name'])}</b>\n\n"
-                    f"📺 {capsify('Anime')}: <b>{capsify(character['anime'])}</b>\n\n"
-                    f"🆔 {capsify('ID')}: <b>{capsify(character['id'])}</b>\n\n"
-                    f"🌟 {capsify('Rarity')}: {capsify(character.get('rarity', ''))}\n\n"
+                    f"Character details:\n\n"
+                    f"Name: {character['name']}\n"
+                    f"Anime: {character['anime']}\n"
+                    f"ID: {character['id']}\n"
+                    f"Rarity: {character.get('rarity', '')}"
                 )
 
-            keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
+            keyboard = [[IKB("How many I have ❓", callback_data=f"check_{character['id']}")]]
             reply_markup = IKM(keyboard)
 
             results.append(
@@ -127,8 +126,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     thumbnail_url=character['img_url'],
                     id=f"{character['id']}_{time.time()}",
                     photo_url=character['img_url'],
-                    caption=capsify(caption),
-                    parse_mode='HTML',
+                    caption=caption,
                     photo_width=300,
                     photo_height=300,
                     reply_markup=reply_markup
@@ -148,4 +146,4 @@ async def check(update: Update, context: CallbackContext) -> None:
     characters = user_data.get('characters', [])
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
-    await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
+    await query.answer(f"You have {quantity} of this character.", show_alert=True)
