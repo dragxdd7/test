@@ -33,7 +33,7 @@ async def get_user_balance(user_id: int):
         return user.get('balance', 0)
     return 0
 
-@app.on_message(filters.command("shop"))
+@app.on_message(filters.command("store"))
 async def shop(client, message):
     user_id = message.from_user.id
     x = await get_today_characters(user_id)
