@@ -6,7 +6,7 @@ from Grabber.utils.button import button_click as bc
 from .delta import sumu
 from .harem import harem_callback as hc
 from .info import check
-from .ptb_store sales_list_callback
+from .ptb_store import sales_list_callback
 from .start import button
 from .sgift import confirm_gift, cancel_gift
 from .trade import confirm_trade, cancel_trade
