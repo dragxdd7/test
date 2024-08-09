@@ -1,15 +1,10 @@
-import os
 import random
-import html
 
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
 
-from Grabber import (application, PHOTO_URL, OWNER_ID,
-                    user_collection, top_global_groups_collection, top_global_groups_collection, 
-                    group_user_totals_collection)
-
-from . import application ,devcmd
+from Grabber import (application, PHOTO_URL, user_collection, group_user_totals_collection)
+from . import capsify, devcmd
 
 photo = random.choice(PHOTO_URL)
 
@@ -39,7 +34,11 @@ async def broadcast(update: Update, context: CallbackContext) -> None:
         if mode in ['all', 'users']:
             for user_id in unique_user_ids:
                 try:
-                    await context.bot.forward_message(chat_id=user_id, from_chat_id=update.effective_chat.id, message_id=update.message.reply_to_message.message_id)
+                    await context.bot.forward_message(
+                        chat_id=user_id,
+                        from_chat_id=update.effective_chat.id,
+                        message_id=update.message.reply_to_message.message_id
+                    )
                     total_sent += 1
                 except Exception:
                     total_failed += 1
@@ -47,14 +46,22 @@ async def broadcast(update: Update, context: CallbackContext) -> None:
         if mode in ['all', 'groups']:
             for group_id in unique_group_ids:
                 try:
-                    await context.bot.forward_message(chat_id=group_id, from_chat_id=update.effective_chat.id, message_id=update.message.reply_to_message.message_id)
+                    await context.bot.forward_message(
+                        chat_id=group_id,
+                        from_chat_id=update.effective_chat.id,
+                        message_id=update.message.reply_to_message.message_id
+                    )
                     total_sent += 1
                 except Exception:
                     total_failed += 1
 
+        report_text = (f'Broadcast report:\n\n'
+                       f'TOTAL MESSAGES SENT SUCCESSFULLY: {total_sent}\n'
+                       f'TOTAL MESSAGES FAILED TO SEND: {total_failed}')
+
         await context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f'Broadcast report:\n\nTotal messages sent successfully: {total_sent}\nTotal messages failed to send: {total_failed}'
+            text=capsify(report_text)
         )
     except Exception as e:
         print(e)
