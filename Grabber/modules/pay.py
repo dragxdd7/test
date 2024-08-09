@@ -4,7 +4,7 @@ from Grabber import application, user_collection
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 import asyncio
-from . import add, deduct, show, app
+from . import add, deduct, show, app, capsify
 
 last_payment_times = {}
 last_loan_times = {}
@@ -20,13 +20,13 @@ async def mpay(client, message):
     sender_id = message.from_user.id
 
     if not message.reply_to_message:
-        await message.reply_text("Please reply to a user to /pay.")
+        await message.reply_text(capsify("Please reply to a user to /pay."))
         return
 
     recipient_id = message.reply_to_message.from_user.id
 
     if sender_id == recipient_id:
-        await message.reply_text("You can't pay yourself.")
+        await message.reply_text(capsify("You can't pay yourself."))
         return
 
     try:
@@ -34,12 +34,12 @@ async def mpay(client, message):
         if amount <= 0:
             raise ValueError("Amount must be greater than zero.")
     except (IndexError, ValueError):
-        await message.reply_text("Invalid amount. Please provide a valid positive amount.")
+        await message.reply_text(capsify("Invalid amount. Please provide a valid positive amount."))
         return
 
     sender_balance = await show(sender_id)
     if not sender_balance or sender_balance < amount:
-        await message.reply_text("Insufficient balance to make the payment.")
+        await message.reply_text(capsify("Insufficient balance to make the payment."))
         return
 
     last_payment_time = last_payment_times.get(sender_id)
@@ -48,7 +48,7 @@ async def mpay(client, message):
         if time_since_last_payment < timedelta(minutes=10):
             cooldown_time = timedelta(minutes=10) - time_since_last_payment
             formatted_cooldown = format_timedelta(cooldown_time)
-            await message.reply_text(f"Cooldown! You can pay again in {formatted_cooldown}.")
+            await message.reply_text(capsify(f"Cooldown! You can pay again in {formatted_cooldown}."))
             return
 
     await deduct(sender_id, amount)
@@ -58,5 +58,5 @@ async def mpay(client, message):
 
     await client.send_message(
         message.chat.id,
-        f"Payment Successful! You Paid Ŧ{amount} Tokens to {message.reply_to_message.from_user.username}."
+        capsify(f"Payment Successful! You Paid Ŧ{amount} Tokens to {message.reply_to_message.from_user.username}.")
     )
