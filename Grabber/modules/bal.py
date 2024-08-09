@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import Grabberu as app, user_collection, show, sbank, sudo_filter, capsify
+from . import Grabberu as app, user_collection, show, sbank, capsify
 from datetime import datetime
 
 @app.on_message(filters.command("bal"))
