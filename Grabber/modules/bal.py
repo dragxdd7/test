@@ -5,6 +5,10 @@ from datetime import datetime
 
 @app.on_message(filters.command("bal"))
 async def balance(client: Client, message: Message):
+    if not message.from_user:
+        await message.reply_text("Couldn't retrieve user information.")
+        return
+
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'potion_amount': 1, 'potion_expiry': 1})
 
