@@ -1,13 +1,13 @@
 from telegram import Update, InlineQueryResultPhoto as IRP, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from Grabber import user_collection, collection, application
+from Grabber import user_collection, collection, application, capsify
 
 async def details(update: Update, context: CallbackContext) -> None:
     try:
         args = context.args
         character_id = args[0]
     except (IndexError, ValueError):
-        await update.message.reply_text("Please provide a valid character ID.")
+        await update.message.reply_text(capsify("Please provide a valid character ID."))
         return
 
     character = await collection.find_one({'id': character_id})
@@ -17,28 +17,28 @@ async def details(update: Update, context: CallbackContext) -> None:
 
         rarity = character.get('rarity', None)
         caption = (
-            f"<b>ᴄʜᴀʀᴀᴄᴛᴇʀ ᴅᴇᴛᴀɪʟs</b>\n"
-            f"🌟 <b>ɴᴀᴍᴇ</b>: {character['name']}\n"
-            f"📺 <b>ᴀɴɪᴍᴇ</b>: {character['anime']}\n"
-            f"🌟 <b>ʀᴀʀɪᴛʏ</b>: {rarity}\n"
-            f"🆔 <b>ɪᴅ</b>: {character['id']}\n\n"
-            f"📊 <b>ᴏᴡɴᴇᴅ ʙʏ</b>: {global_count} ᴜsᴇʀs"
+            f"{capsify('Character Details')}\n"
+            f"🌟 {capsify('Name')}: {character['name']}\n"
+            f"📺 {capsify('Anime')}: {character['anime']}\n"
+            f"🌟 {capsify('Rarity')}: {rarity}\n"
+            f"🆔 {capsify('ID')}: {character['id']}\n\n"
+            f"📊 {capsify('Owned by')}: {global_count} users"
         )
 
         keyboard = [
-            [IKB("ʜᴏᴡ ᴍᴀɴʏ ɪ ʜᴀᴠᴇ ❓", callback_data=f"check_{character_id}")]
+            [IKB(capsify("How many I have ❓"), callback_data=f"check_{character_id}")]
         ]
         reply_markup = IKM(keyboard)
 
         await update.message.reply_photo(
             photo=character['img_url'],
-            caption=caption,
+            caption=capsify(caption),
             parse_mode='HTML',
             reply_markup=reply_markup
         )
 
     else:
-        await update.message.reply_text("Character not found.")
+        await update.message.reply_text(capsify("Character not found."))
 
 async def check(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
@@ -51,8 +51,8 @@ async def check(update: Update, context: CallbackContext) -> None:
     if user_data:
         characters = user_data.get('characters', [])
         quantity = sum(1 for char in characters if char['id'] == character_id)
-        await query.answer(f"You have {quantity} of this character.", show_alert=True)
+        await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
     else:
-        await query.answer("You have 0 of this character.", show_alert=True)
+        await query.answer(capsify("You have 0 of this character."), show_alert=True)
 
 application.add_handler(CommandHandler('p', details, block=False))
