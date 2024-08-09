@@ -36,6 +36,13 @@ async def acapsify(text: str) -> str:
     return capsify(text)
 
 
+async def get_image_and_caption(id: int):
+    char = await get_character(id)
+    price = random.randint(60000, 90000)
+    form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
+    return char['img_url'], capsify(form.format(char['name'], char['anime'], char['id'], price))
+
+
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[logging.FileHandler("log.txt"), logging.StreamHandler()],
