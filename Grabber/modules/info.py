@@ -1,6 +1,7 @@
 from telegram import Update, InlineQueryResultPhoto as IRP, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from Grabber import user_collection, collection, application, capsify
+from Grabber import user_collection, collection, application
+from . import capsify
 
 async def details(update: Update, context: CallbackContext) -> None:
     try:
