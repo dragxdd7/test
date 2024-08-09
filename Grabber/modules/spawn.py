@@ -14,7 +14,7 @@ from Grabber.modules import ALL_MODULES
 from Grabber.utils.bal import add, deduct , show 
 from .delta import delta
 from .gandu import handle_messages
-from .scrabble import check_answer
+#from .scrabble import check_answer
 
 locks = {}
 message_counters = {}
@@ -37,7 +37,7 @@ def escape_markdown(text):
 async def message_counter(update: Update, context: CallbackContext) -> None:
     await delta(update, context)
     await handle_messages(update, context)
-    await check_answer(update, context)
+    #await check_answer(update, context)
     chat_id = str(update.effective_chat.id)
     user_id = update.effective_user.id
 
