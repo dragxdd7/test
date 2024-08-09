@@ -49,5 +49,4 @@ async def duplicate(client: Client, message: Message) -> None:
 
 app.on_message(filters.command("duplicate"))(duplicate)
 
-
-Add capsify to this
+#Add capsify to this
