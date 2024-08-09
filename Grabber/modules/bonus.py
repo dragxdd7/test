@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import user_collection, Grabberu
-from . import add as add_balance, show as show_balance
+from . import add as add_balance, show as show_balance, capsify
 
 last_payment_times = {}
 
@@ -42,7 +42,8 @@ def format_timedelta(delta):
         return f"{seconds}s"
 
 async def handle_error(client: Client, message: Message, error: Exception):
-    await message.reply_text(f"An error occurred: {str(error)}")
+    error_message = capsify(f"An error occurred: {str(error)}")
+    await message.reply_text(error_message)
     print(f"Error: {error}")
 
 async def daily_reward(client: Client, message: Message):
@@ -56,13 +57,13 @@ async def daily_reward(client: Client, message: Message):
                 time_since_last_claim = datetime.utcnow() - last_claimed_date
                 time_until_next_claim = timedelta(days=1) - time_since_last_claim
                 formatted_time_until_next_claim = format_timedelta(time_until_next_claim)
-                await message.reply_text(f"You already claimed your today's reward. Come back Tomorrow!\nTime Until Next Claim: `{formatted_time_until_next_claim}`.")
+                await message.reply_text(capsify(f"You already claimed your today's reward. Come back Tomorrow!\nTime Until Next Claim: `{formatted_time_until_next_claim}`."))
                 return
 
         await user_collection.update_one({'id': user_id}, {'$set': {'last_daily_reward': datetime.utcnow()}}, upsert=True)
         await add_balance(user_id, 50000)
         updated_balance = await show_balance(user_id)
-        await message.reply_text(f"Daily reward claimed! You've received Ŧ50,000 tokens.\nYour new balance is Ŧ{custom_format_number(updated_balance)}.")
+        await message.reply_text(capsify(f"Daily reward claimed! You've received Ŧ50,000 tokens.\nYour new balance is Ŧ{custom_format_number(updated_balance)}."))
     except Exception as e:
         await handle_error(client, message, e)
 
@@ -77,13 +78,13 @@ async def weekly(client: Client, message: Message):
                 time_since_last_claim = datetime.utcnow() - last_claimed_date
                 time_until_next_claim = timedelta(days=7) - time_since_last_claim
                 formatted_time_until_next_claim = format_timedelta(time_until_next_claim)
-                await message.reply_text(f"You already claimed your weekly bonus for this week. Come back next week!\nTime Until Next Claim: `{formatted_time_until_next_claim}`.")
+                await message.reply_text(capsify(f"You already claimed your weekly bonus for this week. Come back next week!\nTime Until Next Claim: `{formatted_time_until_next_claim}`."))
                 return
 
         await user_collection.update_one({'id': user_id}, {'$set': {'last_weekly_bonus': datetime.utcnow()}}, upsert=True)
         await add_balance(user_id, 500000)
         updated_balance = await show_balance(user_id)
-        await message.reply_text(f"Congratulations! You claimed Ŧ500,000 Tokens as your weekly bonus.\nYour new balance is Ŧ{custom_format_number(updated_balance)}.")
+        await message.reply_text(capsify(f"Congratulations! You claimed Ŧ500,000 Tokens as your weekly bonus.\nYour new balance is Ŧ{custom_format_number(updated_balance)}."))
     except Exception as e:
         await handle_error(client, message, e)
 
@@ -94,4 +95,3 @@ async def daily_reward_handler(client: Client, message: Message):
 @Grabberu.on_message(filters.command("xbonus"))
 async def weekly_handler(client: Client, message: Message):
     await weekly(client, message)
-
