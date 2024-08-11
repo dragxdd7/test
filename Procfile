@@ -1,1 +1,1 @@
-python3 -m Grabber
+worker: python3 -m Grabber
