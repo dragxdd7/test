@@ -12,7 +12,7 @@ cooldown_duration_roll = 30  # 30 seconds
 last_usage_time_roll = {}
 
 # Command to roll the dart
-@bot.on_message(filters.command(["dart"]))
+@app.on_message(filters.command(["dart"]))
 async def roll_dart(_: bot, message: t.Message):
     user_id = message.from_user.id
     current_time = time.time()
