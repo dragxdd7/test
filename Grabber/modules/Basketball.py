@@ -44,12 +44,12 @@ async def roll_dart(client: Client, message: t.Message):
     if bastek_amount < min_bet_amount:
         return await message.reply_text(f"Please bet at least 7% of your balance, which is ₩{min_bet_amount}.")
 
-    value = await client.send_dice(chat_id=message.chat.id, emoji="🎯")
+    value = await client.send_dice(chat_id=message.chat.id, emoji="🏀")
 
     await asyncio.sleep(2)
     if value.dice.value in [4, 5, 6]:
         await add(user_id, bastek_amount)
-        await message.reply_text(f"[🎰](https://graph.org//file/5a2360e5023e2976eb23c.jpg) You're lucky!\nYou won ₩{bastek_amount}")
+        await message.reply_text(f"[🏀](https://graph.org//file/5a2360e5023e2976eb23c.jpg) You're lucky!\nYou won ₩{bastek_amount}")
         await add_xp(user_id, 4)
     else:
         await deduct(user_id, bastek_amount)
