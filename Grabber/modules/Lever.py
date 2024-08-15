@@ -51,7 +51,7 @@ async def roll_dart(_, message: t.Message):
 
     last_usage_time_roll[user_id] = current_time
 
-    value = await bot.send_dice(chat_id=message.chat.id, emoji="🎰")
+    value = await client.send_dice(chat_id=message.chat.id, emoji="🎰")
     await asyncio.sleep(random.uniform(1, 5))
     slot_value = value.dice.value
 
