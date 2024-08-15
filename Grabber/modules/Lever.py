@@ -9,7 +9,7 @@ from . import add, deduct, show , app
 cooldown_duration_roll = 600
 last_usage_time_roll = {}
 
-@bot.on_message(filters.command(["lever"]))
+@app.on_message(filters.command(["lever"]))
 async def roll_dart(_, message: t.Message):
     user_id = message.from_user.id
     current_time = time.time()
