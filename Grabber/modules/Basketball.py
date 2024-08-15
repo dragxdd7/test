@@ -4,7 +4,7 @@ import time
 import asyncio
 from pyrogram import Client
 from Grabber import application, user_collection
-from . import add, deduct, show
+from . import add, deduct, show, app
 
 cooldown_duration_roll = 30
 last_usage_time_roll = {}
