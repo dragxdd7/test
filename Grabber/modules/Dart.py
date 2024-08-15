@@ -13,10 +13,10 @@ last_usage_time_roll = {}
 
 # Command to roll the dart
 @app.on_message(filters.command(["dart"]))
-async def roll_dart(_: bot, message: t.Message):
+async def roll_dart(client: Client, message: t.Message):
     user_id = message.from_user.id
     current_time = time.time()
-   
+
     # Check if the user is registered
     if not await user_collection.find_one({'id': user_id}):
         await message.reply("You need to grab some slave first.")
@@ -32,18 +32,18 @@ async def roll_dart(_: bot, message: t.Message):
     command_parts = message.text.split()
     if len(command_parts) != 2:
         return await message.reply_text("Invalid command.\nUsage: /dart 10000")
-    
+
     # Get the bet amount from the command
     try:
         dart_amount = int(command_parts[1])
     except ValueError:
         return await message.reply_text("Invalid amount.")
-    
+
     # Get the user's balance
     bal = await show(user_id)
     if bal is None:
         return await message.reply_text("You don't have enough cash to place this bet.")
-    
+
     # Check if the user has enough tokens to place the bet
     if dart_amount > bal:
         return await message.reply_text("Insufficient balance to place this bet.")
@@ -53,9 +53,9 @@ async def roll_dart(_: bot, message: t.Message):
     # Check if the amount is greater than or equal to the minimum bet amount
     if dart_amount < min_bet_amount:
         return await message.reply_text(f"Please bet at least 7% of your balance, which is ₩{min_bet_amount}.")
-    
+
     # Roll the dart
-    value = await bot.send_dice(chat_id=message.chat.id, emoji="🎯")
+    value = await client.send_dice(chat_id=message.chat.id, emoji="🎯")
 
     await asyncio.sleep(2)
     if value.dice.value in [4, 5, 6]:
