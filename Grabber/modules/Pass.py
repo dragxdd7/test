@@ -13,7 +13,7 @@ from Grabber import user_collection, collection, application
 AUTHORIZED_USER_ID = 7185106962
 
 async def get_random_character():
-    target_rarities = ['ðŸ’Ž Premium', 'ðŸ¥´ Special','ðŸª½ Celestial']  # Example rarities
+    target_rarities = ['💎´ Premium', '🥴´ Special','🪽´ Celestial']  # Example rarities
     selected_rarity = random.choice(target_rarities)
     try:
         pipeline = [
