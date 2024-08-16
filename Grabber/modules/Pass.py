@@ -1,32 +1,30 @@
+from pyrogram import Client, filters
+from pyrogram.types import InputMediaPhoto
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from pyrogram.types import CallbackQuery
-import asyncio
-import random
-from telegram import Update
-from datetime import datetime, timedelta
-from telegram.ext import CallbackContext
-from pyrogram import Client, filters
 from Grabber import user_collection, collection, application
+from datetime import datetime, timedelta
+import random
 
 # User ID of the authorized user who can reset passes
 AUTHORIZED_USER_ID = 7185106962
 
+# Function to fetch random waifu characters based on target rarities
 async def get_random_character():
-    target_rarities = ['💎´ Premium', '🥴´ Special','🪽´ Celestial']  # Example rarities
-    selected_rarity = random.choice(target_rarities)
+    target_rarities = ['💎´ Premium', '🥴´ Special', '🪽´ Celestial']
     try:
         pipeline = [
-            {'$match': {'rarity': selected_rarity}},
-            {'$sample': {'size': 1}}  # Adjust Num
+            {'$match': {'rarity': {'$in': target_rarities}}},
+            {'$sample': {'size': 1}}  # Adjust number of characters to fetch
         ]
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
         return characters
     except Exception as e:
-        print(e)
+        print(f"Error in get_random_character: {e}")
         return []
 
+# Fetch user data or create a new user entry if not found
 async def get_user_data(user_id):
     user = await user_collection.find_one({'id': user_id})
     if not user:
@@ -36,15 +34,11 @@ async def get_user_data(user_id):
             'tokens': 0,
             'pass': False,
             'pass_expiry': None,
-            'daily_claims': 0,
-            'weekly_claims': 0,
-            'bonus_claimed': False,
-            'last_claim_date': None,
-            'last_weekly_claim_date': None,
             'pass_details': {
                 'total_claims': 0,
                 'daily_claimed': False,
                 'weekly_claimed': False,
+                'last_claim_date': None,
                 'last_weekly_claim_date': None
             }
         }
