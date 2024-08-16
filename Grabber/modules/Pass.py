@@ -211,28 +211,23 @@ async def claim_weekly_cmd(update: Update, context: CallbackContext):
     
     await update.message.reply_html("<b>â° ð—£ ð—” ð—¦ ð—¦ ð—ª ð—˜ ð—˜ ð—ž ð—Ÿ ð—¬ ðŸŽ â±\n\n10000 gold claimed.</b>")
 
-async def claim_pass_bonus_cmd(update: Update, context: CallbackContext):
+async def claim_pass_bonus_cmd(update, context):
     user_id = update.effective_user.id
+    user_name = update.effective_user.first_name
     user_data = await get_user_data(user_id)
+
     # Check if the user has a pass
     if not user_data.get('pass'):
-        await update.message.reply_html("<b>You don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>")
-        return
-    # Get the user's current streak
-    current_streak = user_data.get('streak', 0)
-
-
-    if current_streak < 10:
-        await update.message.reply_html(f"<b>You need to maintain a streak of 10 in /guess to claim the pass bonus.\nYour current streak : {current_streak}âš¡ï¸.</b>")
+        await update.message.reply_html(f"<b>{user_name}, you don't have a membership pass. Buy one to unlock extra rewards.</b>")
         return
 
-    PASS_BONUS_TOKENS = 500  
-    await user_collection.update_one({'id': user_id}, {
-        '$inc': {'gold': PASS_BONUS_TOKENS},
-        '$set': {'streak': 0}
-    })
+    PASS_BONUS_TOKENS = 500
+    await user_collection.update_one(
+        {'id': user_id},
+        {'$inc': {'gold': PASS_BONUS_TOKENS}}
+    )
 
-    await update.message.reply_html("<b>â° ð—£ ð—” ð—¦ ð—¦  ð—• ð—¢ ð—¡ ð—¨ ð—¦ ðŸŽ â±\n500 tokens! Your streak has been reset.</b>")
+    await update.message.reply_html(f"<b>🎉 Pass Bonus Claimed! You received {PASS_BONUS_TOKENS} tokens.</b>")
 
 async def reset_passes_cmd(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
