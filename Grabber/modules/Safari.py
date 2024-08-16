@@ -111,7 +111,7 @@ async def enter_safari(update: Update, context: CallbackContext):
   }
     await save_safari_user(user_id)
 
-    await message.reply_html(f"<b>Welcome to the slave Zone!\nEntry fee deducted: {entry_fee} Tokens\n\nBegin your /explore for rare slave.</b>")
+    await message.reply_html(f"<b>Welcome to the pick Zone!\nEntry fee deducted: {entry_fee} Tokens\n\nBegin your /explore for rare slave.</b>")
 
 async def exit_safari(update: Update, context: CallbackContext):
     message = update.message
@@ -225,9 +225,10 @@ async def throw_ball(callback_query):
 
         await save_safari_user(user_id)
 
-        outcome = await typing_animation(callback_query, "ð™”ð™¤ð™ª ð™ð™¨ð™šð™™ ð™Šð™£ð™š ð˜¾ð™¤ð™£ð™©ð™§ð™–ð™˜ð™© ð˜¾ð™§ð™®ð™¨ð™©ð™–ð™¡.\n\n")
+        outcome = await typing_animation(callback_query, "Attempting to capture the waifu.\n\n")
+      
 
-        if outcome == "âš¡ï¸âš¡ï¸âš¡ï¸":
+        if outcome == "🔮🔮🔮":
             await callback_query.message.edit_caption(caption=f"<b>âœ¨ congratulation âœ¨\nyou caught the wild slave!</b>", parse_mode="HTML")
 
             character = sessions[waifu_id]
