@@ -47,7 +47,7 @@ async def check_stats(_, message: Message):
     user_data = await user_collection.find_one({'id': user_id})
     
     if not user_data:
-        return await message.reply_text("You need to grab slave first.")
+        return await message.reply_text("You need to pick slave first.")
     
     # Fetch user's XP from the database
     user_xp_data = await user_collection.find_one({'id': user_id})
@@ -77,7 +77,7 @@ async def xtop(update, context):
         top_users_message += f"{i}. {user_link} - ({user.get('xp', 0):,.0f} xp)\n"
     
     top_users_message += "────────────────────\nTop 10 Users via @Guess_Yourr_Waifu_bot"
-    photo_path = 'https://graph.org/file/c6fefec4aab0367ad53.jpg'
+    photo_path = 'https://telegra.ph/file/0dd6484b96c63f06379ef.jpg'
     await update.message.reply_photo(photo=photo_path, caption=top_users_message, parse_mode='HTML')
 
 application.add_handler(CommandHandler("xtop", xtop, block=False))
