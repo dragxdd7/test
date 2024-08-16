@@ -72,16 +72,17 @@ async def pass_cmd(update: Update, context: CallbackContext):
     weekly_claimed = "âœ…" if pass_details.get('weekly_claimed', False) else "âŒ"
     
     pass_info_text = (
-        f"â° pick ð—£ ð—” ð—¦ ð—¦ ðŸŽŸï¸ â±\n"
-        f"â–°â–±â–°â–±â–°â–±â–°â–±â–°â–±\n\n"
-        f"â— Owner of pass : {update.effective_user.first_name}\n"
-        f"â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\n"
-        f"â— Daily Claimed: {daily_claimed}\n"
-        f"â— Weekly Claimed: {weekly_claimed}\n"
-        f"â— Total Claims: {total_claims}\n"
-        f"â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€\n"
-        f"â— Pass Expiry: Sunday"
+        f"° pick 'your pass' 🌟 🥇 🎟️ ±\n"
+        f"▰▰▰▰▰▰▰▰▰▰\n\n"
+        f"• Owner of pass : {update.effective_user.first_name}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"• Daily Claimed: {daily_claimed}\n"
+        f"• Weekly Claimed: {weekly_claimed}\n"
+        f"• Total Claims: {total_claims}\n"
+        f"━━━━━━━━━━━━━━\n"
+        f"• Pass Expiry: Sunday"
     )
+    
     
     await update.message.reply_text(pass_info_text)
 
