@@ -122,7 +122,7 @@ async def confirm_callback(update: Update, context: CallbackContext):
         
         user_data['gold'] -= 30000
         user_data['pass'] = True
-        await user_collection.update_one({'id': user_id}, {'$set': {'tokens': user_data['tokens'], 'pass': True}})
+        await user_collection.update_one({'id': user_id}, {'$set': {'gold': user_data['gold'], 'pass': True}})
         
         await query.message.edit_text("Pass successfully purchased. Enjoy your new benefits!")
     
@@ -179,13 +179,14 @@ async def claim_daily_cmd(update: Update, context: CallbackContext):
     pass_details['total_claims'] = pass_details.get('total_claims', 0) + 1
     
     await user_collection.update_one(
-        {'id': user_id},
-        {
-            '$inc': {'tokens': daily_reward},
-            '$set': {'pass_details': pass_details},
-            '$push': {'characters': character}
-        }
+    {'id': user_id},
+    {
+        '$inc': {'gold': daily_reward},
+        '$set': {'pass_details': pass_details},
+        '$push': {'characters': character}
+    }
     )
+    
     
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
@@ -222,7 +223,7 @@ async def claim_weekly_cmd(update: Update, context: CallbackContext):
     await user_collection.update_one(
         {'id': user_id},
         {
-            '$inc': {'tokens': weekly_reward},
+            '$inc': {'gold': weekly_reward},
             '$set': {'pass_details': pass_details}
         }
     )
@@ -246,7 +247,7 @@ async def claim_pass_bonus_cmd(update: Update, context: CallbackContext):
 
     PASS_BONUS_TOKENS = 500  
     await user_collection.update_one({'id': user_id}, {
-        '$inc': {'tokens': PASS_BONUS_TOKENS},
+        '$inc': {'gold': PASS_BONUS_TOKENS},
         '$set': {'streak': 0}
     })
 
