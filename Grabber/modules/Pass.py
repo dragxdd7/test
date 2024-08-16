@@ -5,25 +5,13 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from Grabber import application
 from datetime import datetime, timedelta
 import random
-from . import ac, rc, app, user_collection, collection
+from pyrogram import Client, filters
+from pyrogram.types import InputMediaPhoto
+from . import app, user_collection, collection
 
 # User ID of the authorized user who can reset passes
 AUTHORIZED_USER_ID = 7185106962
 
-# Function to fetch random waifu characters based on target rarities
-async def get_random_character():
-    target_rarities = ['💎´ Premium', '🥴´ Special', '🪽´ Celestial']
-    try:
-        pipeline = [
-            {'$match': {'rarity': {'$in': target_rarities}}},
-            {'$sample': {'size': 1}}  # Adjust number of characters to fetch
-        ]
-        cursor = collection.aggregate(pipeline)
-        characters = await cursor.to_list(length=None)
-        return characters
-    except Exception as e:
-        print(f"Error in get_random_character: {e}")
-        return []
 
 # Fetch user data or create a new user entry if not found
 async def get_user_data(user_id):
@@ -125,60 +113,7 @@ async def confirm_callback(update: Update, context: CallbackContext):
     elif query.data == 'cancel_buy_pass':
         await query.message.edit_text("Purchase canceled.")
 
-async def claim_daily_cmd(update, context):
-    user_id = update.effective_user.id
-    user_name = update.effective_user.first_name
-    user_data = await get_user_data(user_id)
 
-    # Check if the user has a pass
-    if not user_data.get('pass'):
-        await update.message.reply_html(f"<b>{user_name}, you don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>")
-        return
-
-    pass_details = user_data.get('pass_details', {})
-    last_claim_date = pass_details.get('last_claim_date')
-
-    if last_claim_date:
-        time_since_last_claim = datetime.now() - last_claim_date
-        if time_since_last_claim < timedelta(hours=24):
-            await update.message.reply_html(f"<b>{user_name}, you can only claim daily rewards once every 24 hours.</b>")
-            return
-
-    # Get the daily reward and a random waifu character
-    daily_reward = 500  # Default reward
-    characters = await get_random_character()
-    if not characters:
-        await update.message.reply_html(f"<b>{user_name}, failed to fetch a random character for your daily reward.</b>")
-        return
-
-    character = characters[0]
-    character_info_text = (
-        f"<b>{character['name']}</b> from <i>{character['anime']}</i> : \n"
-        f"{character['rarity']}\n"
-    )
-
-    # Update the user's pass details
-    pass_details['last_claim_date'] = datetime.now()
-    pass_details['daily_claimed'] = True
-    pass_details['total_claims'] = pass_details.get('total_claims', 0) + 1
-
-    await user_collection.update_one(
-        {'id': user_id},
-        {
-            '$inc': {'gold': daily_reward},
-            '$set': {'pass_details': pass_details},
-            '$push': {'characters': character}
-        }
-    )
-
-    # Send the waifu image and reward message
-    await context.bot.send_photo(
-        chat_id=update.effective_chat.id,
-        photo=character['img_url'],
-        caption=f"🎉 {user_name} claimed their daily reward and received a new waifu!\n\n{character_info_text}\nReward: <b>{daily_reward} Tokens</b>.",
-        parse_mode='HTML',
-        reply_to_message_id=update.message.message_id
-    )
 async def claim_weekly_cmd(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_data = await get_user_data(user_id)
@@ -213,23 +148,119 @@ async def claim_weekly_cmd(update: Update, context: CallbackContext):
     
     await update.message.reply_html("<b>â° ð—£ ð—” ð—¦ ð—¦ ð—ª ð—˜ ð—˜ ð—ž ð—Ÿ ð—¬ ðŸŽ â±\n\n10000 gold claimed.</b>")
 
-async def claim_pass_bonus_cmd(update, context):
-    user_id = update.effective_user.id
-    user_name = update.effective_user.first_name
-    user_data = await get_user_data(user_id)
+# Last claim time dictionary for tracking cooldowns
+last_claim_time = {}
 
-    # Check if the user has a pass
-    if not user_data.get('pass'):
-        await update.message.reply_html(f"<b>{user_name}, you don't have a membership pass. Buy one to unlock extra rewards.</b>")
+# Function to fetch rare and unique characters
+async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
+    try:
+        pipeline = [
+            {'$match': {'rarity': {'$in': target_rarities}}},
+            {'$sample': {'size': 1}}
+        ]
+        cursor = collection.aggregate(pipeline)
+        characters = await cursor.to_list(length=None)
+
+        return characters
+    except Exception as e:
+        print(f"Error in get_unique_characters: {e}")
+        return []
+
+# Updated pwaifu command
+@app.on_message(filters.command("cliam"))
+async def pwaifu(client: Client, message):
+    chat_id = message.chat.id
+    first_name = message.from_user.first_name
+    user_id = message.from_user.id
+
+    # Fetch user data
+    user_data = await user_collection.find_one({'id': user_id})
+    if not user_data or not user_data.get('pass'):
+        await message.reply_text(f"<b>{first_name}, you don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>", quote=True)
         return
 
-    PASS_BONUS_TOKENS = 500
+    # Check cooldown (1 claim per day)
+    now = datetime.now()
+    if user_id in last_claim_time:
+        last_claim_date = last_claim_time[user_id]
+        if last_claim_date.date() == now.date():
+            next_claim_time = last_claim_date + timedelta(days=1)
+            remaining_time = next_claim_time - now
+            hours, remainder = divmod(remaining_time.seconds, 3600)
+            minutes, _ = divmod(remainder, 60)
+            formatted_time = f"{hours:02}:{minutes:02}"
+            await message.reply_text(f"Please wait for `after {formatted_time}` to claim your next waifu.", quote=True)
+            return
+
+    # Set last claim time
+    last_claim_time[user_id] = now
+
+    # Get unique characters
+    unique_characters = await get_unique_characters(target_rarities=['💎 Premium', '🥴 Special', '🪽 Celestial'])
+    if not unique_characters:
+        await message.reply_text("No new waifus available to claim.", quote=True)
+        return
+
+    try:
+        for character in unique_characters:
+            await user_collection.update_one(
+                {'id': user_id},
+                {'$push': {'characters': character}}
+            )
+
+        img_urls = [character['img_url'] for character in unique_characters]
+        captions = [
+            f"Congratulations {first_name}! You have received a new waifu for your harem 💕!\n"
+            f"Name: {character['name']}\n"
+            f"Rarity: {character['rarity']}\n"
+            f"Anime: {character['anime']}\n"
+            for character in unique_characters
+        ]
+        media_group = [InputMediaPhoto(media=img_url, caption=caption) for img_url, caption in zip(img_urls, captions)]
+        await message.reply_media_group(media_group)
+    except Exception as e:
+        print(f"Error in pwaifu: {e}")
+        await message.reply_text("An error occurred while processing your request.", quote=True)
+
+# Updated pbonus command
+@app.on_message(filters.command("pbonus"))
+async def claim_pass_bonus_cmd(client: Client, message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name
+
+    # Fetch user data
+    user_data = await user_collection.find_one({'id': user_id})
+    if not user_data or not user_data.get('pass'):
+        await message.reply_html(f"<b>{user_name}, you don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>")
+        return
+
+    pass_details = user_data.get('pass_details', {})
+    last_weekly_claim_date = pass_details.get('last_weekly_claim_date')
+
+    today = datetime.utcnow()
+    if last_weekly_claim_date and (today - last_weekly_claim_date).days < 7:
+        await message.reply_html("<b>You can only claim the pass bonus once every 7 days (on Sundays).</b>")
+        return
+
+    # Check if today is Sunday
+    if today.weekday() != 6:
+        await message.reply_html("<b>You can only claim the pass bonus on Sundays.</b>")
+        return
+
+    # Update the user's pass details and add the bonus
+    weekly_reward = 5000
+    pass_details['last_weekly_claim_date'] = today
+
     await user_collection.update_one(
         {'id': user_id},
-        {'$inc': {'gold': PASS_BONUS_TOKENS}}
+        {
+            '$inc': {'gold': weekly_reward},
+            '$set': {'pass_details': pass_details}
+        }
     )
 
-    await update.message.reply_html(f"<b>🎉 Pass Bonus Claimed! You received {PASS_BONUS_TOKENS} tokens.</b>")
+    await message.reply_html(f"<b>🎉 {user_name}, you have successfully claimed your weekly pass bonus of {weekly_reward} tokens!</b>")
+
 
 async def reset_passes_cmd(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
@@ -258,9 +289,8 @@ async def reset_passes_cmd(update: Update, context: CallbackContext):
     await update.message.reply_html("<b>All passes have been reset. Users will need to buy again.</b>")
 
 # Register the command handler
-application.add_handler(CommandHandler("pbonus", claim_pass_bonus_cmd))
+
 application.add_handler(CommandHandler("pass", pass_cmd, block=False))
-application.add_handler(CommandHandler("claim", claim_daily_cmd, block=False))
 application.add_handler(CommandHandler("pweekly", claim_weekly_cmd, block=False))
 application.add_handler(CommandHandler("rpass", reset_passes_cmd, block=False))
 application.add_handler(CallbackQueryHandler(button_callback, pattern='buy_pass', block=False))
