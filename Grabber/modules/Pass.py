@@ -149,21 +149,8 @@ async def claim_weekly_cmd(update: Update, context: CallbackContext):
 # Last claim time dictionary for tracking cooldowns
 last_claim_time = {}
 
-# Function to fetch rare and unique characters
-async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
-    try:
-        pipeline = [
-            {'$match': {'rarity': {'$in': target_rarities}}},
-            {'$sample': {'size': 1}}
-        ]
-        cursor = collection.aggregate(pipeline)
-        characters = await cursor.to_list(length=None)
 
-        return characters
-    except Exception as e:
-        print(f"Error in get_unique_characters: {e}")
-        return []
-
+# Updated pwaifu command
 # Updated pwaifu command
 @app.on_message(filters.command("cliam"))
 async def pwaifu(client: Client, message):
@@ -179,19 +166,16 @@ async def pwaifu(client: Client, message):
 
     # Check cooldown (1 claim per day)
     now = datetime.now()
-    if user_id in last_claim_time:
-        last_claim_date = last_claim_time[user_id]
-        if last_claim_date.date() == now.date():
-            next_claim_time = last_claim_date + timedelta(days=1)
-            remaining_time = next_claim_time - now
-            hours, remainder = divmod(remaining_time.seconds, 3600)
-            minutes, _ = divmod(remainder, 60)
-            formatted_time = f"{hours:02}:{minutes:02}"
-            await message.reply_text(f"Please wait for `after {formatted_time}` to claim your next waifu.", quote=True)
-            return
-
+    pass_details = user_data.get('pass_details', {})
+    
+    if pass_details.get('daily_claimed', False):
+        await message.reply_text("You have already claimed today. Please try again tomorrow.", quote=True)
+        return
+    
     # Set last claim time
-    last_claim_time[user_id] = now
+    pass_details['last_claim_date'] = now
+    pass_details['daily_claimed'] = True
+    pass_details['total_claims'] = pass_details.get('total_claims', 0) + 1
 
     # Get unique characters
     unique_characters = await get_unique_characters(target_rarities=['💎 Premium', '🥴 Special', '🪽 Celestial'])
@@ -205,6 +189,12 @@ async def pwaifu(client: Client, message):
                 {'id': user_id},
                 {'$push': {'characters': character}}
             )
+
+        # Update user's claim details in the database
+        await user_collection.update_one(
+            {'id': user_id},
+            {'$set': {'pass_details': pass_details}}
+        )
 
         img_urls = [character['img_url'] for character in unique_characters]
         captions = [
