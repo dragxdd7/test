@@ -123,40 +123,27 @@ async def confirm_callback(update: Update, context: CallbackContext):
     elif query.data == 'cancel_buy_pass':
         await query.message.edit_text("Purchase canceled.")
 
-async def claim_daily_cmd(update: Update, context: CallbackContext):
+async def claim_daily_cmd(update, context):
     user_id = update.effective_user.id
     user_name = update.effective_user.first_name
     user_data = await get_user_data(user_id)
-    
+
+    # Check if the user has a pass
     if not user_data.get('pass'):
         await update.message.reply_html(f"<b>{user_name}, you don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>")
         return
-    
+
     pass_details = user_data.get('pass_details', {})
     last_claim_date = pass_details.get('last_claim_date')
-    
+
     if last_claim_date:
         time_since_last_claim = datetime.now() - last_claim_date
         if time_since_last_claim < timedelta(hours=24):
             await update.message.reply_html(f"<b>{user_name}, you can only claim daily rewards once every 24 hours.</b>")
             return
 
-    # Get the current day of the week
-    today = datetime.now().weekday()
-
-    # Set rewards for each day
-    daily_rewards = {
-        0: 1000,  # Monday
-        1: 500, # Tuesday
-        2: 1500,  # Wednesday
-        3: 5000,  # Thursday
-        4: 1500, # Friday
-        5: 3000, # Saturday
-        6: 5000  # Sunday
-    }
-
-    daily_reward = daily_rewards.get(today, 500)  # Default to 500 if day not found
-
+    # Get the daily reward and a random waifu character
+    daily_reward = 500  # Default reward
     characters = await get_random_character()
     if not characters:
         await update.message.reply_html(f"<b>{user_name}, failed to fetch a random character for your daily reward.</b>")
@@ -167,29 +154,29 @@ async def claim_daily_cmd(update: Update, context: CallbackContext):
         f"<b>{character['name']}</b> from <i>{character['anime']}</i> : \n"
         f"{character['rarity']}\n"
     )
-    
+
+    # Update the user's pass details
     pass_details['last_claim_date'] = datetime.now()
     pass_details['daily_claimed'] = True
     pass_details['total_claims'] = pass_details.get('total_claims', 0) + 1
-    
+
     await user_collection.update_one(
-    {'id': user_id},
-    {
-        '$inc': {'gold': daily_reward},
-        '$set': {'pass_details': pass_details},
-        '$push': {'characters': character}
-    }
+        {'id': user_id},
+        {
+            '$inc': {'gold': daily_reward},
+            '$set': {'pass_details': pass_details},
+            '$push': {'characters': character}
+        }
     )
-    
-    
+
+    # Send the waifu image and reward message
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
         photo=character['img_url'],
-        caption=f"â° <b>ð—£ ð—” ð—¦ ð—¦ ð—— ð—” ð—œ ð—Ÿ ð—¬ ðŸŽ</b> â±\n\n{character_info_text}\nReward: <b>{daily_reward} Tokens</b>.",
+        caption=f"🎉 {user_name} claimed their daily reward and received a new waifu!\n\n{character_info_text}\nReward: <b>{daily_reward} Tokens</b>.",
         parse_mode='HTML',
         reply_to_message_id=update.message.message_id
     )
-    
 async def claim_weekly_cmd(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_data = await get_user_data(user_id)
