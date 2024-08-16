@@ -10,6 +10,20 @@ from . import ac, rc, app, user_collection, collection
 # User ID of the authorized user who can reset passes
 AUTHORIZED_USER_ID = 7185106962
 
+# Function to fetch random waifu characters based on target rarities
+async def get_random_character():
+    target_rarities = ['💎´ Premium', '🥴´ Special', '🪽´ Celestial']
+    try:
+        pipeline = [
+            {'$match': {'rarity': {'$in': target_rarities}}},
+            {'$sample': {'size': 1}}  # Adjust number of characters to fetch
+        ]
+        cursor = collection.aggregate(pipeline)
+        characters = await cursor.to_list(length=None)
+        return characters
+    except Exception as e:
+        print(f"Error in get_random_character: {e}")
+        return []
 
 # Fetch user data or create a new user entry if not found
 async def get_user_data(user_id):
@@ -131,7 +145,7 @@ async def claim_daily_cmd(update, context):
 
     # Get the daily reward and a random waifu character
     daily_reward = 500  # Default reward
-    characters = await get_unique_characters(target_rarities=['💎´ Premium', '🥴´ Special', '🪽´ Celestial'])
+    characters = await get_random_character()
     if not characters:
         await update.message.reply_html(f"<b>{user_name}, failed to fetch a random character for your daily reward.</b>")
         return
@@ -164,7 +178,6 @@ async def claim_daily_cmd(update, context):
         parse_mode='HTML',
         reply_to_message_id=update.message.message_id
     )
-
 async def claim_weekly_cmd(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     user_data = await get_user_data(user_id)
