@@ -1,6 +1,6 @@
 from pyrogram import filters
 from Grabber import application, user_collection
-from • , app
+from . import app as bot
 from pyrogram.types import Message
 from html import escape
 from telegram.ext import CommandHandler
