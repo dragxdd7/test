@@ -131,7 +131,7 @@ async def hunt(update: Update, context: CallbackContext):
     user_id = message.from_user.id
 
     if user_id not in safari_users:
-        await message.reply_text("Not in the pick zone. use /stour first")
+        await message.reply_text("Not in the pick zone. use /ptour first")
         return
 
     if user_id in current_hunts and current_hunts[user_id] is not None:
@@ -172,7 +172,7 @@ async def hunt(update: Update, context: CallbackContext):
 
     await save_safari_user(user_id)
 
-    text = f"<b>A wild {waifu_name} ( {waifu_rarity} ) has appeared!</b>\n\n<b>/explore limit: {user_data['used_hunts']}/{user_data['hunt_limit']}\nâš¡ï¸ contract crystals: {user_data['safari_balls']}</b>"
+    text = f"<b>A wild {waifu_name} ( {waifu_rarity} ) has appeared!</b>\n\n<b>/explore limit: {user_data['used_hunts']}/{user_data['hunt_limit']}\🔮¸ contract crystals: {user_data['safari_balls']}</b>"
     keyboard = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("contract", callback_data=f"engage_{waifu_id}_{user_id}")]
@@ -191,7 +191,7 @@ async def typing_animation(callback_query, text):
             duration = random.choice([1, 2])
 
         for i in range(1, duration + 1):
-            dots = "âš¡ï¸" * i
+            dots = "🔮" * i
             await callback_query.message.edit_caption(caption=text + dots)
             await asyncio.sleep(1)
 
@@ -199,7 +199,7 @@ async def typing_animation(callback_query, text):
     except Exception as e:
         logger.error(f"Error in typing_animation: {e}")
         logger.error(traceback.format_exc())
-        return "âš¡ï¸âš¡ï¸âš¡ï¸"  # Fallback to ensure flow continues
+        return "🔮🔮🔮"  # Fallback to ensure flow continues
 
 async def throw_ball(callback_query):
     try:
