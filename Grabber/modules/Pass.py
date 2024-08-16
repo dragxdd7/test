@@ -2,10 +2,10 @@ from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
-from Grabber import user_collection, collection, application
+from Grabber import application
 from datetime import datetime, timedelta
 import random
-
+from . import ac, rc, app, user_collection, collection
 
 # User ID of the authorized user who can reset passes
 AUTHORIZED_USER_ID = 7185106962
