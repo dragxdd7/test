@@ -5,8 +5,6 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from Grabber import application
 from datetime import datetime, timedelta
 import random
-from pyrogram import Client, filters
-from pyrogram.types import InputMediaPhoto
 from . import app, user_collection, collection
 
 # User ID of the authorized user who can reset passes
