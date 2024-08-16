@@ -54,8 +54,8 @@ async def pass_cmd(update: Update, context: CallbackContext):
     await user_collection.update_one({'id': user_id}, {'$set': user_data})
     
     pass_expiry = pass_expiry_date.strftime("%m-%d")
-    daily_claimed = "âœ…" if pass_details.get('daily_claimed', False) else "âŒ"
-    weekly_claimed = "âœ…" if pass_details.get('weekly_claimed', False) else "âŒ"
+    daily_claimed = "✅" if pass_details.get('daily_claimed', False) else "❌"
+    weekly_claimed = "✅" if pass_details.get('weekly_claimed', False) else "❌"
     
     pass_info_text = (
         f"° pick 'your pass' 🌟 🥇 🎟️ ±\n"
