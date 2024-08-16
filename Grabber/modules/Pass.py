@@ -149,8 +149,20 @@ async def claim_weekly_cmd(update: Update, context: CallbackContext):
 # Last claim time dictionary for tracking cooldowns
 last_claim_time = {}
 
+async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
+    try:
+        pipeline = [
+            {'$match': {'rarity': {'$in': target_rarities}}},
+            {'$sample': {'size': 1}}
+        ]
+        cursor = collection.aggregate(pipeline)
+        characters = await cursor.to_list(length=None)
 
-# Updated pwaifu command
+        return characters
+    except Exception as e:
+        print(f"Error in get_unique_characters: {e}")
+        return []
+
 # Updated pwaifu command
 @app.on_message(filters.command("cliam"))
 async def pwaifu(client: Client, message):
