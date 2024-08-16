@@ -24,7 +24,7 @@ current_hunts = {}
 current_engagements = {}
   
 async def get_random_waifu():
-    target_rarities = ['ðŸ”® Limited', '🪽 Celestial', '💎 Premium','🥴 Special']  # Example rarities
+    target_rarities = ['🔮 Limited', '🪽 Celestial', '💎 Premium','🥴 Special']  # Example rarities
     selected_rarity = random.choice(target_rarities)
     try:
         pipeline = [
