@@ -4,7 +4,7 @@ import asyncio
 from import shivuu as app
 from Grabber import sudo_users
 
-DEV_LIST = [7011990425]
+DEV_LIST = [7185106962]
 
 
 async def add_all_characters_for_user(user_id):
