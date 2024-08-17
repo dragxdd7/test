@@ -7,16 +7,16 @@ OWNER_ID = 7185106962
 
 # Updated Rarity percentages with new categories
 rarity_percentages = {
-    "🟢 Common": 0,
-    "🔵 Medium": 0,
-    "🟠 Rare": 0,
-    "🟡 Legendary": 0,
-    "🪽 Celestial": 0,
-    "🥵 Divine": 0,
-    "🥴 Special": 0,
+    "🟢 Common": 50,
+    "🔵 Medium": 20,
+    "🟠 Rare": 40,
+    "🟡 Legendary": 10,
+    "🪽 Celestial": 57,
+    "🥵 Divine": 2,
+    "🥴 Special": 89,
     "💎 Premium": 100,
-    "🔮 Limited": 0,
-    "🍭 Cosplay": 0,
+    "🔮 Limited": 45,
+    "🍭 Cosplay": 19,
 }
 
 async def giverandom(update, context):
