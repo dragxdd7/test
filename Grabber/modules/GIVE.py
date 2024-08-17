@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 import asyncio
-from . import db, collection, top_global_groups_collection, group_user_totals_collection, user_totals_collection, user_collection, app
+from . import db, collection, user_collection, app
 from Grabber import sudo_users
 
 DEV_LIST = [7185106962]
