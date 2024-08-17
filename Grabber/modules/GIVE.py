@@ -1,7 +1,6 @@
 from pyrogram import Client, filters
 import asyncio
 from . import db, collection, user_collection, app
-from Grabber import sudo_users
 
 DEV_LIST = [7185106962]
 
