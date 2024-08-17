@@ -1,8 +1,8 @@
 from telegram.ext import CommandHandler
-from   import application, user_collection
+from . import db, collection, user_collection, app
 
-# Replace OWNER_ID with the actual owner's user ID
-OWNER_ID = 7011990425
+#Replace OWNER_ID with the actual owner's user ID
+OWNER_ID = 7185106962
 
 async def transfer(update, context):
     try:
