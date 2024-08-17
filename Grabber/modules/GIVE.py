@@ -1,7 +1,6 @@
 from pyrogram import Client, filters
-from Grabber import db, collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
 import asyncio
-from import shivuu as app
+from . import db, collection, top_global_groups_collection, group_user_totals_collection, user_totals_collection, user_collection, app
 from Grabber import sudo_users
 
 DEV_LIST = [7185106962]
