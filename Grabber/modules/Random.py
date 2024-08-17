@@ -1,6 +1,6 @@
 from telegram.ext import CommandHandler
 from random import choices
-from shivu import application, user_collection, collection
+from . import db, collection, user_collection, app
 
 # Replace OWNER_ID with the actual owner's user ID
 OWNER_ID = 7185106962
