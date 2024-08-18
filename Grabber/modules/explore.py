@@ -1,4 +1,4 @@
-from pyrogram import Client, filters
+"""from pyrogram import Client, filters
 from pyrogram.types import Message
 from datetime import datetime, timedelta
 from Grabber import application, user_collection
@@ -56,4 +56,4 @@ async def random_daily_reward(client, message):
 
 @app.on_message(filters.command("explore") & filters.group)
 async def explore_command(client, message):
-    await random_daily_reward(client, message)
+    await random_daily_reward(client, message)"""
