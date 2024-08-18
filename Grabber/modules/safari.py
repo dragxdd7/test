@@ -185,7 +185,7 @@ async def hunt(update: Update, context: CallbackContext):
 async def typing_animation(callback_query, text):
     try:
         # 10% chance to get 3 dots
-        if random.random() < 0.40:
+        if random.random() < 0.25:
             duration = 3
         else:
             duration = random.choice([1, 2])
