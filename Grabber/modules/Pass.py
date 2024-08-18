@@ -164,7 +164,7 @@ async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '�
         return []
 
 # Updated pwaifu command
-@app.on_message(filters.command("cliam"))
+@app.on_message(filters.command("claim"))
 async def pwaifu(client: Client, message):
     chat_id = message.chat.id
     first_name = message.from_user.first_name
