@@ -1,40 +1,58 @@
-from pyrogram import Client, filters
+from pyrogram import filters, Client
 from pyrogram.types import Message
-from . import Grabberu as app, user_collection, show, sbank, capsify
-from datetime import datetime
+from html import escape
+from pymongo import MongoClient
+from . import app, user_collection, capsify 
 
-@app.on_message(filters.command("bal"))
-async def balance(client: Client, message: Message):
-    if not message.from_user:
-        await message.reply_text("Couldn't retrieve user information.")
-        return
+XP_PER_LEVEL = 40
 
+LEVEL_TITLES = {
+    (0, 10): "👤 Rokki",
+    (11, 30): "🌟 F",
+    (31, 50): "⚡️ E",
+    (51, 75): "🔫 D",
+    (76, 100): "🛡 C",
+    (101, 125): "🗡 B",
+    (126, 150): "⚔️ A",
+    (151, 175): "🎖 S",
+    (176, 200): "🔱 National",
+    (201, 2000): "👑 Monarch",
+}
+
+client = MongoClient("mongodb://localhost:27017/")
+db = client["my_database"]
+
+@app.on_message(filters.command("xp"))
+async def check_stats(client, message: Message):
     user_id = message.from_user.id
-    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'potion_amount': 1, 'potion_expiry': 1})
+    if message.reply_to_message:
+        user_id = message.reply_to_message.from_user.id
+    
+    user_data = await user_collection.find_one({'id': user_id})
+    
+    if not user_data:
+        return await message.reply_text(capsify("You need to pick slave first."))
+    
+    user_xp = user_data.get('xp', 0)
+    user_level = calculate_level(user_xp)
+    user_level_title = get_user_level_title(user_level)
+    first_name = user_data.get('first_name', 'User')
+    reply_text = f"{first_name} is a {user_level_title} rank at level {user_level} with {user_xp} XP."
+    await message.reply_text(capsify(reply_text))
 
-    if user_data:
-        ub = await show(user_id)
-        balance_amount = int(ub)
-        bb = await sbank(user_id)
-        saved_amount = int(bb)
-        loan_amount = user_data.get('loan_amount', 0)
-        potion_amount = user_data.get('potion_amount', 0)
-        potion_expiry = user_data.get('potion_expiry')
+@app.on_message(filters.command("xtop"))
+async def xtop(client, message: Message):
+    top_users = await user_collection.find({}, projection={'id': 1, 'first_name': 1, 'last_name': 1, 'xp': 1}).sort('xp', -1).limit(10).to_list(10)
+    top_users_message = "Top 10 XP Users:\n───────────────────\n"
+    
+    for i, user in enumerate(top_users, start=1):
+        first_name = user.get('first_name', 'Unknown')
+        last_name = user.get('last_name', '')
+        user_id = user.get('id', 'Unknown')
+        user_link = f"<a href='tg://user?id={user_id}'>{escape(first_name)}</a>"
+        top_users_message += f"{i}. {user_link} - ({user.get('xp', 0):,.0f} XP)\n"
+    
+    top_users_message += "────────────────────\nTop 10 Users via @Guess_Yourr_Waifu_bot"
+    photo_path = 'https://telegra.ph/file/0dd6484b96c63f06379ef.jpg'
+    await message.reply_photo(photo=photo_path, caption=capsify(top_users_message))
 
-        formatted_balance = f"🔹 Your Current Balance: `{balance_amount:,.0f}`\n"
-        formatted_saved = f"🔸 Amount Saved: `{saved_amount:,.0f}`\n"
-        formatted_loan = f"🔻 Loan Amount: `{loan_amount:,.0f}`\n"
-        formatted_potion = f"🔹 Potion Amount: `{potion_amount}`\n"
-
-        if potion_expiry:
-            time_remaining = potion_expiry - datetime.now()
-            formatted_potion += f"⏳ Potion Time Remaining: `{time_remaining}`\n"
-
-        balance_message = formatted_balance + formatted_saved + formatted_loan + formatted_potion
-        balance_message = capsify(balance_message)
-
-        await message.reply_text(balance_message)
-    else:
-        balance_message = "You haven't added any character yet. Please add a character to unlock all features."
-        balance_message = capsify(balance_message)
-        await message.reply_text(balance_message)
