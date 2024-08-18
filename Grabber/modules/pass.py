@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime, timedelta
 import random
-from . import app, uaer_collection, collection 
+from . import app, user_collection, collection 
 
 AUTHORIZED_USER_ID = 7185106962
 
