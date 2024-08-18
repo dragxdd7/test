@@ -1,8 +1,9 @@
-from pyrogram import filters, Client
+from pyrogram import filters
+from Grabber import application, user_collection
+from . import app as bot
 from pyrogram.types import Message
 from html import escape
-from pymongo import MongoClient
-from . import app, user_collection, capsify , db
+from telegram.ext import CommandHandler
 
 XP_PER_LEVEL = 40
 
@@ -19,26 +20,43 @@ LEVEL_TITLES = {
     (201, 2000): "👑 Monarch",
 }
 
-@app.on_message(filters.command("xp"))
-async def check_stats(client, message: Message):
+def calculate_level(xp):
+    return xp // XP_PER_LEVEL
+
+def get_user_level_title(user_level):
+    for level_range, title in LEVEL_TITLES.items():
+        if level_range[0] <= user_level <= level_range[1]:
+            return title
+    return "👤 Rokki"
+
+@bot.on_message(filters.command(["xp"]))
+async def check_stats(_, message: Message):
     user_id = message.from_user.id
+    replied_user_id = None
+    
     if message.reply_to_message:
-        user_id = message.reply_to_message.from_user.id
+        replied_user_id = message.reply_to_message.from_user.id
+    
+    if replied_user_id:
+        user_id = replied_user_id
     
     user_data = await user_collection.find_one({'id': user_id})
     
     if not user_data:
-        return await message.reply_text(capsify("You need to pick slave first."))
+        return await message.reply_text("You need to pick slave first.")
     
-    user_xp = user_data.get('xp', 0)
-    user_level = calculate_level(user_xp)
-    user_level_title = get_user_level_title(user_level)
-    first_name = user_data.get('first_name', 'User')
-    reply_text = f"{first_name} is a {user_level_title} rank at level {user_level} with {user_xp} XP."
-    await message.reply_text(capsify(reply_text))
+    user_xp_data = await user_collection.find_one({'id': user_id})
+    
+    if user_xp_data:
+        user_xp = user_xp_data.get('xp', 0)
+        user_level = user_xp // XP_PER_LEVEL
+        user_level_title = get_user_level_title(user_level)
+        first_name = user_data.get('first_name', 'User')
+        await message.reply_text(f"{first_name} is a {user_level_title} rank at level {user_level} with {user_xp} XP.")
+    else:
+        await message.reply_text("You don't have any XP yet.")
 
-@app.on_message(filters.command("xtop"))
-async def xtop(client, message: Message):
+async def xtop(update, context):
     top_users = await user_collection.find({}, projection={'id': 1, 'first_name': 1, 'last_name': 1, 'xp': 1}).sort('xp', -1).limit(10).to_list(10)
     top_users_message = "Top 10 XP Users:\n───────────────────\n"
     
@@ -46,10 +64,12 @@ async def xtop(client, message: Message):
         first_name = user.get('first_name', 'Unknown')
         last_name = user.get('last_name', '')
         user_id = user.get('id', 'Unknown')
+        full_name = f"{first_name} {last_name}" if last_name else first_name
         user_link = f"<a href='tg://user?id={user_id}'>{escape(first_name)}</a>"
-        top_users_message += f"{i}. {user_link} - ({user.get('xp', 0):,.0f} XP)\n"
+        top_users_message += f"{i}. {user_link} - ({user.get('xp', 0):,.0f} xp)\n"
     
     top_users_message += "────────────────────\nTop 10 Users via @Guess_Yourr_Waifu_bot"
     photo_path = 'https://telegra.ph/file/0dd6484b96c63f06379ef.jpg'
-    await message.reply_photo(photo=photo_path, caption=capsify(top_users_message))
+    await update.message.reply_photo(photo=photo_path, caption=top_users_message, parse_mode='HTML')
 
+application.add_handler(CommandHandler("xtop", xtop, block=False))
