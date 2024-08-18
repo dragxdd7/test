@@ -1,12 +1,12 @@
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
-from datetime import datetime, timedelta
 import random
 import time
 import asyncio
+
 from Grabber import user_collection, collection, application, safari_cooldown_collection, safari_users_collection
-from . import app
+from . import app 
 
 sessions = {}
 safari_users = {}
@@ -51,8 +51,8 @@ async def save_safari_user(user_id):
         upsert=True
     )
 
-async def enter_safari(update, context):
-    message = update
+@app.on_message(filters.command("enter_safari"))
+async def enter_safari_command(client, message):
     user_id = message.from_user.id
 
     if user_id in safari_users:
@@ -103,8 +103,8 @@ async def enter_safari(update, context):
 
     await message.reply_text(f"**Welcome to the safari zone!**\nEntry fee deducted: {entry_fee} Tokens\n\nBegin your /explore for rare waifus.")
 
-async def exit_safari(update, context):
-    message = update
+@app.on_message(filters.command("exit_safari"))
+async def exit_safari_command(client, message):
     user_id = message.from_user.id
 
     if user_id not in safari_users:
@@ -116,28 +116,16 @@ async def exit_safari(update, context):
 
     await message.reply_text("You have now exited the safari zone.")
 
-async def hunt(update, context):
-    message = update
+@app.on_message(filters.command("explore"))
+async def explore_command(client, message):
     user_id = message.from_user.id
-
     if user_id not in safari_users:
-        await message.reply_text("Not in the safari zone. Use /enter_safari first.")
+        await message.reply_text("You need to enter the safari zone first using /enter_safari.")
         return
-
-    if user_id in current_hunts and current_hunts[user_id] is not None:
-        if user_id not in current_engagements:
-            await message.reply_text("You already have an ongoing hunt. Finish it first!")
-            return
 
     user_data = safari_users[user_id]
     if user_data['used_hunts'] >= user_data['hunt_limit']:
         await message.reply_text("You have reached your hunt limit.")
-        del safari_users[user_id]
-        await safari_users_collection.delete_one({'user_id': user_id})
-        return
-
-    if user_data['safari_balls'] <= 0:
-        await message.reply_text("You have run out of safari balls.")
         del safari_users[user_id]
         await safari_users_collection.delete_one({'user_id': user_id})
         return
@@ -165,32 +153,21 @@ async def hunt(update, context):
     text = f"**A wild {waifu_name} ({waifu_rarity}) has appeared!**\n\n**/explore limit: {user_data['used_hunts']}/{user_data['hunt_limit']}\nSafari balls: {user_data['safari_balls']}**"
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton("Throw crystal", callback_data=f"engage_{waifu_id}_{user_id}")],
+            [InlineKeyboardButton("Throw ball", callback_data=f"engage_{waifu_id}_{user_id}")],
             [InlineKeyboardButton("Run away", callback_data=f"run_away_{waifu_id}_{user_id}")]
         ]
     )
     await message.reply_photo(photo=waifu_img_url, caption=text, reply_markup=keyboard, parse_mode='Markdown')
 
-    if user_id in current_engagements:
-        del current_engagements[user_id]
+@app.on_callback_query(filters.regex(r"^engage_"))
+async def engage_callback(client, callback_query: CallbackQuery):
+    await throw_ball(callback_query)
 
-async def typing_animation(callback_query, text):
-    try:
-        if random.random() < 0.25:
-            duration = 3
-        else:
-            duration = random.choice([1, 2])
+@app.on_callback_query(filters.regex(r"^run_away_"))
+async def run_away_callback(client, callback_query: CallbackQuery):
+    await run_away(callback_query)
 
-        for i in range(1, duration + 1):
-            dots = "🔮" * i
-            await callback_query.message.edit_caption(caption=text + dots, parse_mode='Markdown')
-            await asyncio.sleep(1)
-
-        return dots
-    except Exception:
-        return "🔮🔮🔮"
-
-async def throw_ball(callback_query):
+async def throw_ball(callback_query: CallbackQuery):
     try:
         data = callback_query.data.split("_")
         waifu_id = data[1]
@@ -217,7 +194,7 @@ async def throw_ball(callback_query):
         outcome = await typing_animation(callback_query, "Attempting to capture the waifu.\n\n")
 
         if outcome == "🔮🔮🔮":
-            await callback_query.message.edit_caption(caption="**Congratulations!**\nYou caught the wild waifu!", parse_mode="Markdown")
+            await callback_query.message.edit_caption("**Congratulations!**\nYou caught the wild waifu!", parse_mode="Markdown")
 
             character = sessions[waifu_id]
             await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
@@ -225,20 +202,21 @@ async def throw_ball(callback_query):
             del sessions[waifu_id]
 
         else:
-            await callback_query.message.edit_caption(caption="**Your safari ball failed.**\n**The wild waifu fled.**", parse_mode="Markdown")
+            await callback_query.message.edit_caption("**Your ball failed.**\n**The wild waifu fled.**", parse_mode="Markdown")
             del sessions[waifu_id]
 
         if user_data['safari_balls'] <= 0:
-            await callback_query.message.edit_caption(caption="You have run out of safari balls.")
+            await callback_query.message.edit_caption("You have run out of safari balls.")
             del safari_users[user_id]
             await safari_users_collection.delete_one({'user_id': user_id})
 
         del current_hunts[user_id]
 
-    except Exception:
+    except Exception as e:
+        print(f"Error in throw_ball: {e}")
         await callback_query.answer("An error occurred. Please try again later.", show_alert=True)
 
-async def run_away(callback_query):
+async def run_away(callback_query: CallbackQuery):
     try:
         data = callback_query.data.split("_")
         waifu_id = data[1]
@@ -253,44 +231,34 @@ async def run_away(callback_query):
             return
 
         if waifu_id not in sessions:
-            await callback_query.answer("The wild waifu has already fled!", show_alert=True)
+            await callback_query.answer("The wild waifu has fled!", show_alert=True)
             return
 
-        del current_hunts[user_id]
         del sessions[waifu_id]
+        del current_hunts[user_id]
+
+        await callback_query.message.edit_caption("**The wild waifu has fled.**\n**Try again!**", parse_mode="Markdown")
 
         user_data = safari_users[user_id]
         user_data['safari_balls'] -= 1
         safari_users[user_id] = user_data
+
         await save_safari_user(user_id)
 
         if user_data['safari_balls'] <= 0:
-            await callback_query.message.edit_caption("You have run out of safari balls. Exiting safari.")
+            await callback_query.message.edit_caption("You have run out of safari balls.")
             del safari_users[user_id]
             await safari_users_collection.delete_one({'user_id': user_id})
-        else:
-            await callback_query.message.edit_caption("You successfully ran away from the wild waifu.")
 
-    except Exception:
+    except Exception as e:
+        print(f"Error in run_away: {e}")
         await callback_query.answer("An error occurred. Please try again later.", show_alert=True)
 
-# Register handlers
-@app.on_message(filters.command("enter_safari"))
-async def enter_safari_handler(client, message):
-    await enter_safari(message, None)
+async def typing_animation(callback_query: CallbackQuery, text: str):
+    typing_msg = await callback_query.message.reply_text(text)
+    await asyncio.sleep(2)  # Simulate typing delay
+    await typing_msg.edit_text(text + "🔮🔮🔮")
+    return "🔮🔮🔮"
 
-@app.on_message(filters.command("exit_safari"))
-async def exit_safari_handler(client, message):
-    await exit_safari(message, None)
-
-@app.on_message(filters.command("hunt"))
-async def hunt_handler(client, message):
-    await hunt(message, None)
-
-@app.on_callback_query(filters.regex(r'^engage_\d+_\d+$'))
-async def engage_handler(client, callback_query):
-    await throw_ball(callback_query)
-
-@app.on_callback_query(filters.regex(r'^run_away_\d+_\d+$'))
-async def run_away_handler(client, callback_query):
-    await run_away(callback_query)
+if __name__ == "__main__":
+    app.run()
