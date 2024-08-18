@@ -2,7 +2,7 @@ from pyrogram import filters, Client
 from pyrogram.types import Message
 from html import escape
 from pymongo import MongoClient
-from . import app, user_collection, capsify 
+from . import app, user_collection, capsify , db
 
 XP_PER_LEVEL = 40
 
@@ -18,9 +18,6 @@ LEVEL_TITLES = {
     (176, 200): "🔱 National",
     (201, 2000): "👑 Monarch",
 }
-
-client = MongoClient("mongodb://localhost:27017/")
-db = client["my_database"]
 
 @app.on_message(filters.command("xp"))
 async def check_stats(client, message: Message):
