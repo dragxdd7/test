@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 
 OWNER_ID = "7185106962"
 GROUP_ID = "-1002225496870"
-TOKEN = "6942284208:AAEWkrua1mDILCfhofxaTNzt0pGnEzPPicI"
+TOKEN = "6942284208:AAGwbMDHbqehCYlS1KrnGHle6-ePfDLkF5g"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
     "https://graph.org/file/f10bec6ec695bba69037d.jpg",
@@ -52,6 +52,8 @@ db = client['Character_catcher']
 collection = db['anime_characters']
 user_totals_collection = db['user_totals']
 user_collection = db["user_collection"]
+safari_cooldown_collection = db['safari_cooldown_collection']
+safari_users_collection = db['safari_users_collection']
 group_user_totals_collection = db['group_user_total']
 top_global_groups_collection = db['top_global_groups']
 guild = db["guild_team"]
