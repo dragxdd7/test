@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from random import choices
-from . import db, collection, user_collection, app, devcmd
+from . import db, collection, user_collection, app, dev_filter
 
 rarity_percentages = {
     "🟢 Common": 50,
@@ -16,7 +16,7 @@ rarity_percentages = {
     "🍭 Cosplay": 19,
 }
 
-@app.on_message(devcmd & filters.command("giver"))
+@app.on_message(filters.command("giver") & dev_filter)
 async def giverandom(client: Client, message: Message):
     try:
         args = message.text.split()[1:]
