@@ -185,7 +185,7 @@ async def hunt(update: Update, context: CallbackContext):
 async def typing_animation(callback_query, text):
     try:
         # 10% chance to get 3 dots
-        if random.random() < 0.25:
+        if random.random() < 0.40:
             duration = 3
         else:
             duration = random.choice([1, 2])
@@ -368,6 +368,3 @@ application.add_handler(CommandHandler("ptour", enter_safari))
 application.add_handler(CommandHandler("exit", exit_safari))
 application.add_handler(CommandHandler("explore", hunt))
 application.add_handler(CallbackQueryHandler(hunt_callback_query, pattern="^(engage|throw|run)_", block=False))
-
-
-
