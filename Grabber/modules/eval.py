@@ -148,3 +148,22 @@ async def show_time(client, callback_query):
 @app.on_callback_query(filters.regex("close"))
 async def close_message(client, callback_query):
     await callback_query.message.delete()
+
+@Client.on_message(filters.command("sh") & dev_filter)
+async def shell_command(_, m):
+    if len(m.text.split()) == 1:
+        return await m.reply("Give me a command to execute.")
+    cmd = m.text[4:]
+    try:
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        output = result.stdout + result.stderr
+        if len(output) == 0:
+            output = "Command executed successfully, but there is no output."
+        if len(output) > 4096:
+            with open("output.txt", "w+") as o:
+                o.write(output)
+            await m.reply_document("output.txt")
+        else:
+            await m.reply(f"**Command:**\n`{cmd}`\n\n**Output:**\n```\n{output}\n```")
+    except Exception as e:
+        await m.reply(f"An error occurred:\n`{e}`")
