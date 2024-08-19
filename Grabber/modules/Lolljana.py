@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import user_collection, db, deduct, add, capsify, get_character, app
+from . import user_collection, db, capsify
 
 sales_db = db.sales
 
@@ -23,7 +23,7 @@ async def sell_waifu(client, message):
         waifu_id, price = message.text.split()[1], int(message.text.split()[2])
         user_data = await user_collection.find_one({'id': user_id})
 
-        if waifu_id not in user_data['characters']:
+        if not user_data or waifu_id not in user_data['characters']:
             return await message.reply_text(capsify("You don't own this waifu!"))
 
         await create_sale(user_id, waifu_id, price)
