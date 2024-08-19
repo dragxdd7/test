@@ -362,7 +362,26 @@ async def dc_command(update: Update, context: CallbackContext):
     except Exception as e:
         print(f"Error resetting safari cooldown for user {replied_user_id}: {e}")
         await update.message.reply_text("An error occurred while resetting the tour cooldown. Please try again later.")
-        
+
+# Add the following function to handle the /soja command
+async def reset_hunt(update: Update, context: CallbackContext):
+    message = update.message
+    user_id = message.from_user.id
+
+    if user_id not in safari_users:
+        await message.reply_text("You are not in the safari zone! Use /ptour to enter.")
+        return
+
+    if user_id in current_hunts:
+        del current_hunts[user_id]
+    
+    if user_id in current_engagements:
+        del current_engagements[user_id]
+
+    await message.reply_text("Your current hunt has been reset. You can now explore again!")
+
+# Add the handler for the /soja command
+application.add_handler(CommandHandler("soja", reset_hunt))
 application.add_handler(CommandHandler("dc", dc_command))
 application.add_handler(CommandHandler("ptour", enter_safari))
 application.add_handler(CommandHandler("exit", exit_safari))
