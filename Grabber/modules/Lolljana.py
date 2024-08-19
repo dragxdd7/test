@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import user_collection, db, deduct, add, capsify, get_character
+from . import user_collection, db, deduct, add, capsify, get_character, app
 
 sales_db = db.sales
 
