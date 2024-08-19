@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import user_collection, deduct, add, capsify, get_character, app
+from . import user_collection, app
 
 async def get_user_sales(user_id: int):
     user_data = await user_collection.find_one({'id': user_id})
@@ -13,17 +13,20 @@ async def sell_waifu(client, message):
         waifu_id, price = message.text.split()[1], int(message.text.split()[2])
         user_data = await user_collection.find_one({'id': user_id})
 
-        if waifu_id not in [waifu['id'] for waifu in user_data['characters']]:
-            return await message.reply_text(capsify("You don't own this waifu!"))
+        if not user_data or waifu_id not in [waifu['id'] for waifu in user_data.get('characters', [])]:
+            return await message.reply_text("You don't own this waifu!")
 
-        # Remove waifu from user's collection and add the sale amount to user's balance
+        # Remove waifu and update balance
         await user_collection.update_one(
             {'id': user_id},
             {'$pull': {'characters': {'id': waifu_id}}, '$inc': {'balance': price}}
         )
-        await message.reply_text(capsify(f"Waifu {waifu_id} sold for {price} gold."))
+        await message.reply_text(f"Waifu {waifu_id} sold for {price} gold.")
     except (IndexError, ValueError):
         await message.reply_text("Usage: /sell <waifu_id> <price>")
+    except Exception as e:
+        await message.reply_text(f"An error occurred: {str(e)}")
+
 
 @app.on_message(filters.command("mysales"))
 async def my_sales(client, message):
