@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import user_collection, deduct, add, capsify, get_character
+from . import user_collection, deduct, add, capsify, get_character, app
 
 async def get_user_sales(user_id: int):
     user_data = await user_collection.find_one({'id': user_id})
