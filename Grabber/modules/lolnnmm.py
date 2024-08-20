@@ -70,7 +70,7 @@ async def sell_waifu(client: Client, message):
             f"**Anime:** {character.get('anime', 'N/A')}\n"
             f"**Price:** {price} gold\n\n"
             f"Use `/sales {character_id}` to view or purchase this waifu.",
-    parse_mode="markdown_v2"  # Change this to markdown_v2 or html
+    parse_mode="htlm"  # Change this to markdown_v2 or html
 )
 
 
