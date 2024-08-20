@@ -151,7 +151,7 @@ async def sales(client: Client, message):
         [[InlineKeyboardButton(f"Buy for {price} gold", callback_data=f"buy_{sale_id}")]]
     )
 
-    # Send the sale message
+    # Send the sale message with the inline keyboard
     await message.reply_photo(
         photo=character['img_url'],
         caption=f"Waifu for sale!\n\n"
@@ -162,6 +162,7 @@ async def sales(client: Client, message):
                 f"Price: {price} gold",
         reply_markup=keyboard
     )
+
 
 @app.on_message(filters.command("randomsale"))
 async def random_sale(client: Client, message):
@@ -174,13 +175,12 @@ async def random_sale(client: Client, message):
     seller_id = sale['seller_id']
     price = sale['price']
 
-
-    # Send the sale message
+    # Send the sale message without the inline keyboard
     await message.reply_text(
         f"Random Waifu for sale!\n\n"
         f"Seller ID: {seller_id}\n"
         f"Waifu ID: {character['id']}\n"
         f"Price: {price} gold\n\n"
-        f"Use /sales <waifu_id> to buy this waifu.",
-        reply_markup=keyboard
+        f"Use /sales <waifu_id> to buy this waifu."
     )
+
