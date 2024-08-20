@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime
 from random import choice
+from . import user_collection, collection, app 
 
 # Store active sales and their details
 active_sales = {}
