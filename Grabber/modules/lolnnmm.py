@@ -1,12 +1,25 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import choice
-from . import add, deduct, show, ac, rc, app, user_collection, collection
+from . import app, user_collection, collection  # Only import necessary modules
 
 # Store active sales and their details
 active_sales = {}
 
+# Function to fetch or create user data
+async def get_user_data(user_id):
+    user = await user_collection.find_one({'id': user_id})
+    if not user:
+        user = {
+            'id': user_id,
+            'gold': 0,
+            'characters': [],
+        }
+        await user_collection.insert_one(user)
+    return user
+
+# Fetch character data by ID
 async def get_character_by_id(character_id):
     try:
         character = await collection.find_one({'id': character_id})
@@ -28,7 +41,7 @@ async def sell_waifu(client: Client, message):
     price = int(message.command[2])
 
     # Retrieve the character from the user's collection
-    user = await user_collection.find_one({'id': user_id})
+    user = await get_user_data(user_id)
     character = next((char for char in user.get('characters', []) if char['id'] == character_id), None)
 
     if not character:
@@ -44,20 +57,15 @@ async def sell_waifu(client: Client, message):
         'created_at': datetime.now()
     }
 
-    # Create an inline keyboard for buying
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(f"Buy for {price} tokens", callback_data=f"buy_{sale_id}")]]
-    )
-
-    # Send the sale message
+    # Send a message confirming the waifu is up for sale
     await message.reply_photo(
         photo=character['img_url'],
         caption=f"{first_name} is selling a waifu!\n\n"
                 f"Name: {character['name']}\n"
                 f"Rarity: {character['rarity']}\n"
                 f"Anime: {character['anime']}\n"
-                f"Price: {price} tokens",
-        reply_markup=keyboard
+                f"Price: {price} gold\n"
+                f"(Use /sales <waifu_id> to view or purchase this waifu.)"
     )
 
 @app.on_callback_query(filters.regex(r"buy_"))
@@ -75,20 +83,23 @@ async def buy_waifu(client: Client, callback_query):
     character = sale['character']
     price = sale['price']
 
-    # Check if the buyer has enough tokens
-    buyer_balance = await show(buyer_id)
-    if buyer_balance < price:
-        await callback_query.answer("You don't have enough tokens.", show_alert=True)
+    # Get buyer and seller data
+    buyer_data = await get_user_data(buyer_id)
+    seller_data = await get_user_data(seller_id)
+
+    # Check if the buyer has enough gold
+    if buyer_data['gold'] < price:
+        await callback_query.answer("You don't have enough gold.", show_alert=True)
         return
 
-    # Transfer the waifu from seller to buyer
-    await user_collection.update_one({'id': buyer_id}, {'$push': {'characters': character}, '$inc': {'balance': -price}})
-    await user_collection.update_one({'id': seller_id}, {'$pull': {'characters': {'id': character['id']}}, '$inc': {'balance': price}})
+    # Transfer the waifu and update gold balances
+    await user_collection.update_one({'id': buyer_id}, {'$push': {'characters': character}, '$inc': {'gold': -price}})
+    await user_collection.update_one({'id': seller_id}, {'$pull': {'characters': {'id': character['id']}}, '$inc': {'gold': price}})
 
     await callback_query.answer("Purchase successful!")
     await client.send_message(
         chat_id=seller_id,
-        text=f"{first_name} bought your waifu '{character['name']}' for {price} tokens!"
+        text=f"{first_name} bought your waifu '{character['name']}' for {price} gold!"
     )
 
     # Remove the sale
@@ -109,7 +120,7 @@ async def my_sales(client: Client, message):
         response += (f"ID: {character['id']}\n"
                      f"Name: {character['name']}\n"
                      f"Rarity: {character['rarity']}\n"
-                     f"Price: {sale['price']} tokens\n\n")
+                     f"Price: {sale['price']} gold\n\n")
 
     await message.reply_text(response)
 
@@ -137,7 +148,7 @@ async def sales(client: Client, message):
 
     # Create an inline keyboard for buying
     keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(f"Buy for {price} tokens", callback_data=f"buy_{sale_id}")]]
+        [[InlineKeyboardButton(f"Buy for {price} gold", callback_data=f"buy_{sale_id}")]]
     )
 
     # Send the sale message
@@ -148,7 +159,7 @@ async def sales(client: Client, message):
                 f"Name: {character['name']}\n"
                 f"Rarity: {character['rarity']}\n"
                 f"Anime: {character['anime']}\n"
-                f"Price: {price} tokens",
+                f"Price: {price} gold",
         reply_markup=keyboard
     )
 
@@ -163,18 +174,13 @@ async def random_sale(client: Client, message):
     seller_id = sale['seller_id']
     price = sale['price']
 
-    # Create an inline keyboard for buying
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(f"Buy for {price} tokens", callback_data=f"buy_{sale['id']}")]]
-    )
 
     # Send the sale message
     await message.reply_text(
         f"Random Waifu for sale!\n\n"
         f"Seller ID: {seller_id}\n"
         f"Waifu ID: {character['id']}\n"
-        f"Price: {price} tokens\n\n"
+        f"Price: {price} gold\n\n"
         f"Use /sales <waifu_id> to buy this waifu.",
         reply_markup=keyboard
     )
-
