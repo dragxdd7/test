@@ -1,8 +1,7 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
-from datetime import datetime, timedelta
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from datetime import datetime
 from random import choice
-from . import app, user_collection, collection  # Only import necessary modules
 
 # Store active sales and their details
 active_sales = {}
@@ -126,11 +125,14 @@ async def my_sales(client: Client, message):
 
 @app.on_message(filters.command("sales"))
 async def sales(client: Client, message):
-    if len(message.command) < 2:
-        await message.reply_text("Usage: /sales <waifu_id>")
+    if len(message.command) == 2:
+        character_id = message.command[1]
+    elif message.reply_to_message:
+        character_id = message.reply_to_message.text.split()[1]
+    else:
+        await message.reply_text("Usage: /sales <waifu_id> or reply to a sale message.")
         return
 
-    character_id = message.command[1]
     character = await get_character_by_id(character_id)
 
     if not character:
@@ -183,4 +185,3 @@ async def random_sale(client: Client, message):
         f"Price: {price} gold\n\n"
         f"Use /sales <waifu_id> to buy this waifu."
     )
-
