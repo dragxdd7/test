@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime
 from random import choice
-from . import user_collection, collection, app 
+from . import user_collection, collection, app
 
 # Store active sales and their details
 active_sales = {}
@@ -73,7 +73,6 @@ async def sell_waifu(client: Client, message):
     )
 
 
-
 @app.on_callback_query(filters.regex(r"^waifu_buy_\d+_\w+$"))
 async def buy_waifu(client: Client, callback_query):
     sale_id = callback_query.data.split("waifu_buy_")[1]
@@ -112,6 +111,16 @@ async def buy_waifu(client: Client, callback_query):
         {'$pull': {'characters': {'id': character['id']}}, '$inc': {'gold': price}}
     )
 
+    # Edit the original sales message to indicate the waifu has been sold
+    await callback_query.message.edit_caption(
+        caption=f"**Sold!**\n\n"
+                f"**Name:** {character.get('name', 'N/A')}\n"
+                f"**Rarity:** {character.get('rarity', 'N/A')}\n"
+                f"**Anime:** {character.get('anime', 'N/A')}\n"
+                f"**Price:** {price} gold\n\n"
+                f"Purchased by: {buyer_name}",
+    )
+
     await callback_query.answer("Purchase successful!", show_alert=True)
     await client.send_message(
         chat_id=seller_id,
@@ -138,6 +147,7 @@ async def my_sales(client: Client, message):
                      f"**Rarity:** {character.get('rarity', 'N/A')}\n"
                      f"**Price:** {sale['price']} gold\n\n")
 
+    await message.reply_text(response)
 
 
 @app.on_message(filters.command("sales"))
@@ -176,8 +186,8 @@ async def sales(client: Client, message):
                 f"**Anime:** {character.get('anime', 'N/A')}\n"
                 f"**Price:** {price} gold",
         reply_markup=keyboard
-        
     )
+
 
 @app.on_message(filters.command("randomsale"))
 async def random_sale(client: Client, message):
@@ -199,5 +209,4 @@ async def random_sale(client: Client, message):
         f"**Rarity:** {character.get('rarity', 'N/A')}\n"
         f"**Price:** {price} gold\n\n"
         f"Use `/sales {character.get('id', '')}` to buy this waifu.",
-        
     )
