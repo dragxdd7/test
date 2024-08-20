@@ -70,8 +70,9 @@ async def sell_waifu(client: Client, message):
                 f"**Anime:** {character.get('anime', 'N/A')}\n"
                 f"**Price:** {price} gold\n\n"
                 f"Use `/sales {character_id}` to view or purchase this waifu.",
-        parse_mode="markdown"
+        parse_mode="Markdown"
     )
+
 
 @app.on_callback_query(filters.regex(r"^waifu_buy_\d+_\w+$"))
 async def buy_waifu(client: Client, callback_query):
