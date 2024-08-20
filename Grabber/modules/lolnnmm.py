@@ -68,9 +68,9 @@ async def sell_waifu(client: Client, message):
                 f"(Use /sales <waifu_id> to view or purchase this waifu.)"
     )
 
-@app.on_callback_query(filters.regex(r"buy_"))
+@app.on_callback_query(filters.regex(r"buy_\d+_\d+"))
 async def buy_waifu(client: Client, callback_query):
-    sale_id = callback_query.data.split("_")[1]
+    sale_id = callback_query.data.split("_", 1)[1]  # Capture everything after "buy_"
     buyer_id = callback_query.from_user.id
     first_name = callback_query.from_user.first_name
 
@@ -165,7 +165,6 @@ async def sales(client: Client, message):
                 f"Price: {price} gold",
         reply_markup=keyboard
     )
-
 
 @app.on_message(filters.command("randomsale"))
 async def random_sale(client: Client, message):
