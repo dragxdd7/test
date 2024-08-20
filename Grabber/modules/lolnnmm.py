@@ -138,7 +138,7 @@ async def my_sales(client: Client, message):
                      f"**Rarity:** {character.get('rarity', 'N/A')}\n"
                      f"**Price:** {sale['price']} gold\n\n")
 
-    await message.reply_text(response, parse_mode="markdown")
+
 
 @app.on_message(filters.command("sales"))
 async def sales(client: Client, message):
@@ -175,8 +175,8 @@ async def sales(client: Client, message):
                 f"**Rarity:** {character.get('rarity', 'N/A')}\n"
                 f"**Anime:** {character.get('anime', 'N/A')}\n"
                 f"**Price:** {price} gold",
-        reply_markup=keyboard,
-        parse_mode="markdown"
+        reply_markup=keyboard
+        
     )
 
 @app.on_message(filters.command("randomsale"))
@@ -199,5 +199,5 @@ async def random_sale(client: Client, message):
         f"**Rarity:** {character.get('rarity', 'N/A')}\n"
         f"**Price:** {price} gold\n\n"
         f"Use `/sales {character.get('id', '')}` to buy this waifu.",
-        parse_mode="markdown"
+        
     )
