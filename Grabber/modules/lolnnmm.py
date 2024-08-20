@@ -63,15 +63,14 @@ async def sell_waifu(client: Client, message):
 
     # Send a message confirming the waifu is up for sale
     await message.reply_photo(
-    photo=character.get('img_url', ''),
-    caption=f"{first_name} is selling a waifu!\n\n"
-            f"**Name:** {character.get('name', 'N/A')}\n"
-            f"**Rarity:** {character.get('rarity', 'N/A')}\n"
-            f"**Anime:** {character.get('anime', 'N/A')}\n"
-            f"**Price:** {price} gold\n\n"
-            f"Use `/sales {character_id}` to view or purchase this waifu.",
-    parse_mode="htlm"  # Change this to markdown_v2 or html
-)
+        photo=character['img_url'],
+        caption=f"{first_name} is selling a waifu!\n\n"
+                f"Name: {character['name']}\n"
+                f"Rarity: {character['rarity']}\n"
+                f"Anime: {character['anime']}\n"
+                f"Price: {price} gold\n"
+                f"(Use /sales <waifu_id> to view or purchase this waifu.)"
+    )
 
 
 
