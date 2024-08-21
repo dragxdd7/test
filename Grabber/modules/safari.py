@@ -60,7 +60,15 @@ async def save_safari_user(user_id):
         {'$set': user_data},
         upsert=True
     )
-  
+
+async def safe_edit_message(callback_query, new_text=None, new_markup=None):
+    try:
+        if callback_query.message.text == new_text and callback_query.message.reply_markup == new_markup:
+            return
+        await callback_query.message.edit_text(text=new_text, reply_markup=new_markup)
+    except Exception as e:
+        logger.error(f"Error in safe_edit_message: {e}")
+
 async def enter_safari(update: Update, context: CallbackContext):
     message = update.message
     user_id = message.from_user.id
@@ -297,9 +305,6 @@ async def engage(callback_query):
 
         if user_id in current_hunts and current_hunts[user_id] == waifu_id:
             waifu = sessions[waifu_id]
-            waifu_name = waifu['name']
-            waifu_img_url = waifu['img_url']
-
             text = f"Choose your action:"
             keyboard = InlineKeyboardMarkup(
                 [
@@ -309,8 +314,7 @@ async def engage(callback_query):
                     ]
                 ]
             )
-            await callback_query.message.edit_caption(caption=text, reply_markup=keyboard)
-            await callback_query.answer()
+            await safe_edit_message(callback_query, new_text=text, new_markup=keyboard)
 
             current_engagements[user_id] = waifu_id
 
@@ -319,6 +323,7 @@ async def engage(callback_query):
 
     except Exception as e:
         print(f"Error handling engage: {e}")
+
 
 async def hunt_callback_query(update: Update, context: CallbackContext):
     callback_query = update.callback_query
