@@ -32,13 +32,13 @@ async def get_user_data(user_id):
 cooldowns = {}
 
 @app.on_message(filters.command(["beastshop"]))
-async def beastshop_cmd(_: bot, update: t.Update):
+async def beastshop_cmd(_:, update: t.Update):
     # Display a list of available beasts and their prices
     beast_list_text = "\n".join([f"{beast_id}. {beast['name']} - 𝐑𝐚𝐜𝐞 : {beast['rarity']}, 𝐏𝐫𝐢𝐜𝐞 : Ŧ`{beast['price']}`" for beast_id, beast in beast_list.items()])
     return await update.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
 
 @app.on_message(filters.command(["buybeast"]))
-async def buybeast_cmd(_: bot, update: t.Update):
+async def buybeast_cmd(_:, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
 
@@ -69,7 +69,7 @@ async def buybeast_cmd(_: bot, update: t.Update):
     return await update.reply_photo(photo=beast_list[beast_id]['img_url'], caption=f"You have successfully purchased a {beast_list[beast_id]['name']}! Use /beast to see your new beast.")
 
 @app.on_message(filters.command(["beast"]))
-async def showbeast_cmd(_: bot, update: t.Update):
+async def showbeast_cmd(_:, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
 
@@ -125,9 +125,9 @@ async def showbeastdetails_cmd(_, update: Update):
     await update.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
 
 @app.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
-async def givebeast_cmd(_: bot, update: t.Update):
+async def givebeast_cmd(_:, update: t.Update):
     try:
-        # Extract user_id and beast_id from the command
+        #  user_id and beast_id from the command
         _, user_id, beast_id = update.text.split()
         user_id = int(user_id)
         beast_id = int(beast_id)
@@ -152,7 +152,7 @@ async def givebeast_cmd(_: bot, update: t.Update):
 
 # Command for the bot owner to delete all beasts of a user
 @app.on_message(filters.command(["delbeast"]) & filters.user(6890857225))
-async def deletebeasts_cmd(_: bot, update: t.Update):
+async def deletebeasts_cmd(_:, update: t.Update):
     try:
         # Extract user_id from the command
         _, user_id = update.text.split()
@@ -172,7 +172,7 @@ async def deletebeasts_cmd(_: bot, update: t.Update):
         return await update.reply_text("Invalid command format. Use /delbeast <user_id>.")
 
 @app.on_message(filters.command(["setbeast"]))
-async def setbeast_cmd(_: bot, update: t.Update):
+async def setbeast_cmd(_:, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
 
