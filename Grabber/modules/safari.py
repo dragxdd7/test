@@ -63,12 +63,21 @@ async def save_safari_user(user_id):
 
 async def safe_edit_message(callback_query, new_text=None, new_markup=None):
     try:
-        if callback_query.message.text == new_text and callback_query.message.reply_markup == new_markup:
-            return
-        await callback_query.message.edit_text(text=new_text, reply_markup=new_markup)
+        # Handle cases where the message might be a photo with a caption
+        if callback_query.message.text:
+            if callback_query.message.text == new_text and callback_query.message.reply_markup == new_markup:
+                return
+            await callback_query.message.edit_text(text=new_text, reply_markup=new_markup)
+        elif callback_query.message.caption:
+            if callback_query.message.caption == new_text and callback_query.message.reply_markup == new_markup:
+                return
+            await callback_query.message.edit_caption(caption=new_text, reply_markup=new_markup)
+        else:
+            # If there's no text or caption, log a warning or handle the case accordingly
+            logger.warning("No text or caption to edit in the message.")
     except Exception as e:
         logger.error(f"Error in safe_edit_message: {e}")
-
+      
 async def enter_safari(update: Update, context: CallbackContext):
     message = update.message
     user_id = message.from_user.id
