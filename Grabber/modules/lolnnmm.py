@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 from random import choice
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from . import user_collection, collection, app
+from pytz import timezone
+
+# Example of setting a timezone with pytz
+scheduler = AsyncIOScheduler(timezone=timezone('UTC'))
 
 # Store active sales and their details
 active_sales = {}
