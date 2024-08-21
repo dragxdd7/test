@@ -163,7 +163,7 @@ async def setbeast_cmd(client: Client, message):
     # Check if the user has any beasts
     if 'beasts' in user_data and user_data['beasts']:
         # Extract the beast ID from the command
-        beast_id = int(update.text.split()[1]) if len(update.text.split()) > 1 else None
+        beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
 
         if beast_id is not None:
             # Check if the specified beast_id exists in the user's collection
