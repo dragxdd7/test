@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 from random import choice
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from pytz import timezone
-from . user_collection, app
+from . import app, user_collection, collection
+
+
 scheduler = AsyncIOScheduler(timezone=timezone('UTC'))
 
 # Store active sales and their details
