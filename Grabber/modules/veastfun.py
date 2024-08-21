@@ -35,7 +35,7 @@ cooldowns = {}
 async def beastshop_cmd(_: bot, update: t.Update):
     # Display a list of available beasts and their prices
     beast_list_text = "\n".join([f"{beast_id}. {beast['name']} - 𝐑𝐚𝐜𝐞 : {beast['rarity']}, 𝐏𝐫𝐢𝐜𝐞 : Ŧ`{beast['price']}`" for beast_id, beast in beast_list.items()])
-    return await update.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」🔞\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
+    return await update.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
 
 @bot.on_message(filters.command(["buybeast"]))
 async def buybeast_cmd(_: bot, update: t.Update):
@@ -56,11 +56,11 @@ async def buybeast_cmd(_: bot, update: t.Update):
 
     # Check if the user has enough tokens to buy the beast
     beast_price = beast_list[beast_id]['price']
-    if user_data.get('balance', 0) < beast_price:
+    if user_data.get('gold', 0) < beast_price:
         return await update.reply_text(f"You don't have enough tokens to buy this beast. You need {beast_price} tokens.")
 
     # Deduct the beast price from the user's balance
-    await user_collection.update_one({'id': user_id}, {'$inc': {'balance': -beast_price}})
+    await user_collection.update_one({'id': user_id}, {'$inc': {'gold': -beast_price}})
 
     # Add the new beast to the user's list of beasts with rarity information
     new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
