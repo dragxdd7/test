@@ -1,6 +1,6 @@
 import random
 from pyrogram import filters, Client, types as t
-from . import bot
+from . import bot as app
 from Grabber import user_collection  # Make sure to import the user_collection
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
