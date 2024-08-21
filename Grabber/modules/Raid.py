@@ -8,7 +8,7 @@ from Grabber import user_collection
 from pyrogram.errors import UserNotParticipant, ChatWriteForbidden
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-MUST_JOIN = "Badmosh_gang"
+MUST_JOIN = "dragons_support"
 
 # Dictionary of dungeon sets with their images, captions, win chances, and text messages
 dungeon_sets = {
@@ -53,7 +53,7 @@ dungeon_sets = {
 async def send_log(log_message):
     await app.send_message(LOG_GROUP_CHAT_ID, log_message)
 
-LOG_GROUP_CHAT_ID = -1002050519804
+LOG_GROUP_CHAT_ID = -1002243796014
 
 # Define a dictionary to store the last time each user executed the shunt command
 last_usage_time_shunt = {}
@@ -131,7 +131,7 @@ async def shunt_command(client, message):
 # Set the cooldown duration for the shunt command (in seconds)
 cooldown_duration_shunt = 60  # 1 minute
 
-owner_id = 7011990425
+owner_id = 7185106962
 
 # Command to reset the balance of a user
 @bot.on_message(filters.user(owner_id) & filters.command(["resetbalance"]))
