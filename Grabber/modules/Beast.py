@@ -29,85 +29,72 @@ async def get_user_data(user_id):
 cooldowns = {}
 
 @app.on_message(filters.command(["beastshop"]))
-async def beastshop_cmd(client: Client, message):
-    # Display a list of available beasts and their prices
+async def beastshop_cmd(client: Client, message: Message):
     beast_list_text = "\n".join([f"{beast_id}. {beast['name']} - 𝐑𝐚𝐜𝐞 : {beast['rarity']}, 𝐏𝐫𝐢𝐜𝐞 : Ŧ`{beast['price']}`" for beast_id, beast in beast_list.items()])
-    return await update.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
+    return await message.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
 
 @app.on_message(filters.command(["buybeast"]))
-async def buybeast_cmd(client: Client, message):
-    user_id = update.from_user.id
+async def buybeast_cmd(client: Client, message: Message):
+    user_id = message.from_user.id
     user_data = await get_user_data(user_id)
 
-    # Check if the user has already bought the specified beast
-    beast_id = int(update.text.split()[1]) if len(update.text.split()) > 1 else None
+    beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
 
     if beast_id is not None:
         beast_type = beast_list[beast_id]['name'].lower()
         if 'beasts' in user_data and any(beast['name'].lower() == beast_type for beast in user_data.get('beasts', [])):
-            return await update.reply_text(f"You already own a {beast_type.capitalize()} beast. Choose a different type from /beastshop.")
+            return await message.reply_text(f"You already own a {beast_type.capitalize()} beast. Choose a different type from /beastshop.")
 
-    # Check if the specified beast_id is valid
     if beast_id not in beast_list:
-        return await update.reply_text("Usage : `/buybeast 1/which one you want`.")
+        return await message.reply_text("Usage : `/buybeast 1/which one you want`.")
 
-    # Check if the user has enough tokens to buy the beast
     beast_price = beast_list[beast_id]['price']
     if user_data.get('gold', 0) < beast_price:
-        return await update.reply_text(f"You don't have enough tokens to buy this beast. You need {beast_price} tokens.")
+        return await message.reply_text(f"You don't have enough tokens to buy this beast. You need {beast_price} tokens.")
 
-    # Deduct the beast price from the user's balance
     await user_collection.update_one({'id': user_id}, {'$inc': {'gold': -beast_price}})
 
-    # Add the new beast to the user's list of beasts with rarity information
     new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
     await user_collection.update_one({'id': user_id}, {'$push': {'beasts': new_beast}})
 
-    return await update.reply_photo(photo=beast_list[beast_id]['img_url'], caption=f"You have successfully purchased a {beast_list[beast_id]['name']}! Use /beast to see your new beast.")
+    return await message.reply_photo(photo=beast_list[beast_id]['img_url'], caption=f"You have successfully purchased a {beast_list[beast_id]['name']}! Use /beast to see your new beast.")
 
 @app.on_message(filters.command(["beast"]))
-async def showbeast_cmd(client: Client, message):
-    user_id = update.from_user.id
+async def showbeast_cmd(client: Client, message: Message):
+    user_id = message.from_user.id
     user_data = await get_user_data(user_id)
 
-    # Check if the user has any beasts
     if 'beasts' in user_data and user_data['beasts']:
-        # Check if the user has a main beast set
         main_beast_id = user_data.get('main_beast')
 
-        # Generate text for other beasts
         other_beasts_text = "\n".join([f"𝐈𝐃 : {beast.get('id', 'N/A')} ⌠ {beast.get('rarity', 'N/A')} ⌡ {beast.get('name', 'N/A')} (𝐏𝐨𝐰𝐞𝐫: `{beast.get('power', 'N/A')}`)" for beast in user_data['beasts']])
 
         if main_beast_id:
             main_beast = next((beast for beast in user_data['beasts'] if beast['id'] == main_beast_id), None)
             if main_beast:
-                await update.reply_photo(
+                await message.reply_photo(
                     photo=main_beast['img_url'],
                     caption="⛩️ 𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐭𝐡𝐞 𝐟𝐨𝐥𝐥𝐨𝐰𝐢𝐧𝐠 𝐛𝐞𝐚𝐬𝐭 𝐬𝐥𝐚𝐯𝐞 ⛩️\n\n" + other_beasts_text + "\n\n𝐔𝐬𝐞 /binfo <𝐢𝐝> 𝐭𝐨 𝐬𝐞𝐞 𝐲𝐨𝐮𝐫 𝐛𝐞𝐚𝐬𝐭",
                 )
                 return
 
-        return await update.reply_text(other_beasts_text + "\n")
+        return await message.reply_text(other_beasts_text + "\n")
     
-    return await update.reply_text("You don't have any beasts. Buy a beast using `/beastshop`.")
-    
-# Add a new command to show beast details along with an image
-from pyrogram import filters
-from pyrogram.types import Update
-from html import escape
+    return await message.reply_text("You don't have any beasts. Buy a beast using `/beastshop`.")
 
+# Add a new command to show beast details along with an image
 @app.on_message(filters.command(["binfo"]))
-async def showbeastdetails_cmd(client: Client, message):
-    user_id, user_data = update.from_user.id, await get_user_data(update.from_user.id)
+async def showbeastdetails_cmd(client: Client, message: Message):
+    user_id, user_data = message.from_user.id, await get_user_data(message.from_user.id)
 
     if 'beasts' in user_data and user_data['beasts']:
-        beast_id = int(update.text.split()[1]) if len(update.text.split()) > 1 else None
+        beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
 
         if beast_id is not None:
             selected_beast = next((beast for beast in user_data.get('beasts', []) if beast.get('id') == beast_id), None)
 
             if selected_beast and all(key in selected_beast for key in ('img_url', 'name', 'rarity', 'power')):
-                user_first_name = update.from_user.first_name
+                user_first_name = message.from_user.first_name
                 user_link = f'<a href="tg://user?id={user_id}">{escape(user_first_name)}</a>'
                 caption = (
                     f"𝐎𝐰𝐎! 𝐂𝐡𝐞𝐜𝐤 𝐨𝐮𝐭 𝐭𝐡𝐢𝐬 {user_link} 𝐁𝐞𝐚𝐬𝐭!\n\n"
@@ -116,10 +103,10 @@ async def showbeastdetails_cmd(client: Client, message):
                     f"🔮 𝐏𝐨𝐰𝐞𝐫: `{selected_beast['power']}`\n"
                     f"(🆔 `{beast_id}`)\n\n"
                 )
-                await update.reply_photo(photo=selected_beast['img_url'], caption=caption)
+                await message.reply_photo(photo=selected_beast['img_url'], caption=caption)
                 return
     
-    await update.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
+    await message.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
 
 @app.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
 async def givebeast_cmd(client: Client, message):
@@ -170,7 +157,7 @@ async def deletebeasts_cmd(client: Client, message):
 
 @app.on_message(filters.command(["setbeast"]))
 async def setbeast_cmd(client: Client, message):
-    user_id = update.from_user.id
+    user_id = message.from_user.id
     user_data = await get_user_data(user_id)
 
     # Check if the user has any beasts
