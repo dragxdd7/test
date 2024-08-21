@@ -3,17 +3,14 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime, timedelta
 from random import choice
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from . import user_collection, collection, app
 from pytz import timezone
 
-# Example of setting a timezone with pytz
 scheduler = AsyncIOScheduler(timezone=timezone('UTC'))
 
 # Store active sales and their details
 active_sales = {}
 scheduler = AsyncIOScheduler()
 
-# Function to fetch or create user data
 async def get_user_data(user_id):
     user = await user_collection.find_one({'id': user_id})
     if not user:
@@ -25,7 +22,6 @@ async def get_user_data(user_id):
         await user_collection.insert_one(user)
     return user
 
-# Fetch character data by ID
 async def get_character_by_id(character_id):
     try:
         character = await collection.find_one({'id': character_id})
@@ -40,7 +36,7 @@ async def sell_waifu(client: Client, message):
     first_name = message.from_user.first_name
 
     if len(message.command) < 3:
-        await message.reply_text("Usage: /sellwaifu <waifu_id> <price>")
+        await message.reply_text("Usage: /sale <waifu_id> <price>")
         return
 
     character_id = message.command[1]
@@ -58,8 +54,13 @@ async def sell_waifu(client: Client, message):
         await message.reply_text("You don't own a waifu with that ID.")
         return
 
-    # Prepare the sale details
+    # Check if this waifu is already on sale
     sale_id = f"{user_id}_{character_id}"
+    if sale_id in active_sales:
+        await message.reply_text("This waifu is already on sale.")
+        return
+
+    # Prepare the sale details
     active_sales[sale_id] = {
         'seller_id': user_id,
         'character': character,
@@ -219,5 +220,3 @@ def rotate_random_sale():
     app.loop.create_task(random_sale(app, None))
 
 scheduler.add_job(rotate_random_sale, 'interval', minutes=10, timezone=timezone('UTC'))
-
-
