@@ -2,7 +2,7 @@ import time
 import asyncio
 import random
 from pyrogram import filters, Client, types as t
-from . import bot
+from . import bot as app 
 from . import app
 from Grabber import user_collection
 from pyrogram.errors import UserNotParticipant, ChatWriteForbidden
