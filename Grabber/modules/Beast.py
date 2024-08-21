@@ -1,12 +1,9 @@
 import random
 from pyrogram import filters, Client, types as t
-from . import app
+from . import user_collection, app
 from Grabber import user_collection  # Make sure to import the user_collection
-from telegram import Update
-from telegram.ext import CommandHandler, CallbackContext
 from pyrogram.types import Message  
 from datetime import datetime, timedelta
-from Grabber import application
 from html import escape
 
 beast_list = {
