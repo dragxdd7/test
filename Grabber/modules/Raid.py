@@ -1,8 +1,7 @@
 import time
 import asyncio
 import random
-from pyrogram import filters, Client, types as t
-from . import bot as app 
+from pyrogram import filters, Client, types as t 
 from . import app
 from Grabber import user_collection
 from pyrogram.errors import UserNotParticipant, ChatWriteForbidden
@@ -134,7 +133,7 @@ cooldown_duration_shunt = 60  # 1 minute
 owner_id = 7185106962
 
 # Command to reset the balance of a user
-@bot.on_message(filters.user(owner_id) & filters.command(["resetbalance"]))
+@app.on_message(filters.user(owner_id) & filters.command(["resetbalance"]))
 async def reset_balance_command(_: bot, message: t.Message):
     # Check if the command is a reply to a user's message
     if message.reply_to_message and message.reply_to_message.from_user:
