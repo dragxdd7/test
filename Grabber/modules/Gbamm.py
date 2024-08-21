@@ -5,7 +5,7 @@ from Grabber import global_ban_users_collection, top_global_groups_collection
 import time
 
 # Sudo user ID
-sudo_user_id = 7185106962
+sudo_user_id = 7011990425
 
 async def add_to_global_ban(user_id, reason):
     """Adds a user to the global ban users collection."""
@@ -61,9 +61,7 @@ async def gban_user(client, message):
 
     await add_to_global_ban(user_id, reason)
     all_chats = await get_all_chats()
-
-    # You can ignore the actual count and set it to a fixed number (1800)
-    fake_ban_count = 1800
+    ban_count = 0
 
     estimated_duration = len(all_chats) * 0.5  # Estimating 0.5 seconds per chat
     await message.reply_text(f"Starting global ban. Estimated time: `{estimated_duration}` seconds.")
@@ -73,6 +71,7 @@ async def gban_user(client, message):
     for chat_id in all_chats:
         try:
             await client.kick_chat_member(chat_id, user_id)
+            ban_count += 1
             await asyncio.sleep(0.5)  # Sleep for 0.5 seconds to avoid flood wait
         except Exception as e:
             print(f"Failed to ban user {user_id} in chat {chat_id}: {e}")
@@ -80,7 +79,7 @@ async def gban_user(client, message):
     end_time = time.time()
     duration = end_time - start_time
 
-    await message.reply_text(f"User `{user_id}` has been globally banned in `{fake_ban_count}` chat(s) in `{duration:.2f}` seconds.")
+    await message.reply_text(f"User `{user_id}` has been globally banned in `{ban_count}` chat(s) in `{duration:.2f}` seconds.")
 
 @app.on_message(filters.command(["ungban"]))
 async def ungban_user(client, message):
@@ -121,7 +120,7 @@ async def ungban_user(client, message):
     end_time = time.time()
     duration = end_time - start_time
 
-    await message.reply_text(f"User `{user_id}` has been globally unbanned in `{unban_count}` chat(s) in `{duration:.2f}` seconds.")
+    await message.reply_text(f"User `{user_id}` has been globally unbanned in `{unban_count}`chat(s) in `{duration:.2f}` seconds.")
 
 @app.on_message(filters.command(["gban_list"]))
 async def gban_list(client, message):
