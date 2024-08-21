@@ -170,13 +170,13 @@ async def setbeast_cmd(client: Client, message):
             if any(beast['id'] == beast_id for beast in user_data['beasts']):
                 # Set the selected beast as the user's main beast
                 await user_collection.update_one({'id': user_id}, {'$set': {'main_beast': beast_id}})
-                return await update.reply_text("Your main beast has been set successfully.")
+                return await message.reply_text("Your main beast has been set successfully.")
             else:
-                return await update.reply_text("You don't own a beast with that ID.")
+                return await message.reply_text("You don't own a beast with that ID.")
         else:
-            return await update.reply_text("Invalid command format. Use `/setbeast 1/the one you want to set in mein`.")
+            return await message.reply_text("Invalid command format. Use `/setbeast 1/the one you want to set in mein`.")
     else:
-        return await update.reply_text("You don't have any beasts. Buy a beast using `/beastshop`.")
+        return await message.reply_text("You don't have any beasts. Buy a beast using `/beastshop`.")
 
 @app.on_message(filters.command(["btop"]))
 async def top_beasts(_, message: Message):
