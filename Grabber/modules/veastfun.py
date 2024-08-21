@@ -124,7 +124,7 @@ async def showbeastdetails_cmd(_, update: Update):
     
     await update.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
 
-@bot.on_message(filters.command(["givebeast"]) & filters.user(6890857225))
+@bot.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
 async def givebeast_cmd(_: bot, update: t.Update):
     try:
         # Extract user_id and beast_id from the command
