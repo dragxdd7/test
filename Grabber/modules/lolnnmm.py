@@ -1,11 +1,13 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from datetime import datetime
+from datetime import datetime, timedelta
 from random import choice
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from . import user_collection, collection, app
 
 # Store active sales and their details
 active_sales = {}
+scheduler = AsyncIOScheduler()
 
 # Function to fetch or create user data
 async def get_user_data(user_id):
@@ -28,7 +30,7 @@ async def get_character_by_id(character_id):
         print(f"Error in get_character_by_id: {e}")
         return None
 
-@app.on_message(filters.command("sellwaifu"))
+@app.on_message(filters.command("sale"))
 async def sell_waifu(client: Client, message):
     user_id = message.from_user.id
     first_name = message.from_user.first_name
@@ -71,7 +73,6 @@ async def sell_waifu(client: Client, message):
                 f"Price: {price} gold\n"
                 f"(Use /sales <waifu_id> to view or purchase this waifu.)"
     )
-
 
 @app.on_callback_query(filters.regex(r"^waifu_buy_\d+_\w+$"))
 async def buy_waifu(client: Client, callback_query):
@@ -149,7 +150,6 @@ async def my_sales(client: Client, message):
 
     await message.reply_text(response)
 
-
 @app.on_message(filters.command("sales"))
 async def sales(client: Client, message):
     if len(message.command) == 2:
@@ -188,7 +188,6 @@ async def sales(client: Client, message):
         reply_markup=keyboard
     )
 
-
 @app.on_message(filters.command("randomsale"))
 async def random_sale(client: Client, message):
     if not active_sales:
@@ -210,3 +209,10 @@ async def random_sale(client: Client, message):
         f"**Price:** {price} gold\n\n"
         f"Use `/sales {character.get('id', '')}` to buy this waifu.",
     )
+
+# Automatically rotate the waifu in the random sale every 10 minutes
+def rotate_random_sale():
+    app.loop.create_task(random_sale(app, None))
+
+scheduler.add_job(rotate_random_sale, 'interval', minutes=10)
+scheduler.start()
