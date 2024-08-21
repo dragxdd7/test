@@ -1,6 +1,6 @@
 import random
 from pyrogram import filters, Client, types as t
-from . import bot as app
+from . import app
 from Grabber import user_collection  # Make sure to import the user_collection
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
@@ -31,13 +31,13 @@ async def get_user_data(user_id):
 
 cooldowns = {}
 
-@bot.on_message(filters.command(["beastshop"]))
+@app.on_message(filters.command(["beastshop"]))
 async def beastshop_cmd(_: bot, update: t.Update):
     # Display a list of available beasts and their prices
     beast_list_text = "\n".join([f"{beast_id}. {beast['name']} - 𝐑𝐚𝐜𝐞 : {beast['rarity']}, 𝐏𝐫𝐢𝐜𝐞 : Ŧ`{beast['price']}`" for beast_id, beast in beast_list.items()])
     return await update.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
 
-@bot.on_message(filters.command(["buybeast"]))
+@app.on_message(filters.command(["buybeast"]))
 async def buybeast_cmd(_: bot, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
@@ -68,7 +68,7 @@ async def buybeast_cmd(_: bot, update: t.Update):
 
     return await update.reply_photo(photo=beast_list[beast_id]['img_url'], caption=f"You have successfully purchased a {beast_list[beast_id]['name']}! Use /beast to see your new beast.")
 
-@bot.on_message(filters.command(["beast"]))
+@app.on_message(filters.command(["beast"]))
 async def showbeast_cmd(_: bot, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
@@ -99,7 +99,7 @@ from pyrogram import filters
 from pyrogram.types import Update
 from html import escape
 
-@bot.on_message(filters.command(["binfo"]))
+@app.on_message(filters.command(["binfo"]))
 async def showbeastdetails_cmd(_, update: Update):
     user_id, user_data = update.from_user.id, await get_user_data(update.from_user.id)
 
@@ -124,7 +124,7 @@ async def showbeastdetails_cmd(_, update: Update):
     
     await update.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
 
-@bot.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
+@app.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
 async def givebeast_cmd(_: bot, update: t.Update):
     try:
         # Extract user_id and beast_id from the command
@@ -151,7 +151,7 @@ async def givebeast_cmd(_: bot, update: t.Update):
         return await update.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
 
 # Command for the bot owner to delete all beasts of a user
-@bot.on_message(filters.command(["delbeast"]) & filters.user(6890857225))
+@app.on_message(filters.command(["delbeast"]) & filters.user(6890857225))
 async def deletebeasts_cmd(_: bot, update: t.Update):
     try:
         # Extract user_id from the command
@@ -171,7 +171,7 @@ async def deletebeasts_cmd(_: bot, update: t.Update):
     except ValueError:
         return await update.reply_text("Invalid command format. Use /delbeast <user_id>.")
 
-@bot.on_message(filters.command(["setbeast"]))
+@app.on_message(filters.command(["setbeast"]))
 async def setbeast_cmd(_: bot, update: t.Update):
     user_id = update.from_user.id
     user_data = await get_user_data(user_id)
@@ -194,7 +194,7 @@ async def setbeast_cmd(_: bot, update: t.Update):
     else:
         return await update.reply_text("You don't have any beasts. Buy a beast using `/beastshop`.")
 
-@bot.on_message(filters.command(["btop"]))
+@app.on_message(filters.command(["btop"]))
 async def top_beasts(_, message: Message):
     # Get the top 10 users with their respective number of beasts
     top_users = await user_collection.aggregate([
