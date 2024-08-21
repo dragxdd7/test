@@ -214,5 +214,6 @@ async def random_sale(client: Client, message):
 def rotate_random_sale():
     app.loop.create_task(random_sale(app, None))
 
-scheduler.add_job(rotate_random_sale, 'interval', minutes=10)
-scheduler.start()
+scheduler.add_job(rotate_random_sale, 'interval', minutes=10, timezone=timezone('UTC'))
+
+
