@@ -163,27 +163,32 @@ async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '�
         print(f"Error in get_unique_characters: {e}")
         return []
 
-# Updated pwaifu command
+
+
+# Claim command that handles daily claim
 @app.on_message(filters.command("claim"))
 async def pwaifu(client: Client, message):
-    chat_id = message.chat.id
-    first_name = message.from_user.first_name
     user_id = message.from_user.id
+    user_data = await get_user_data(user_id)
 
-    # Fetch user data
-    user_data = await user_collection.find_one({'id': user_id})
-    if not user_data or not user_data.get('pass'):
-        await message.reply_text(f"<b>{first_name}, you don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>", quote=True)
+    # Check if the user has a pass
+    if not user_data.get('pass'):
+        await message.reply_text("<b>You don't have a membership pass. Buy one to unlock extra rewards.\nDo /pass to buy.</b>", quote=True)
         return
 
-    # Check cooldown (1 claim per day)
-    now = datetime.now()
+    # Check if the user has already claimed today
+    now = datetime.utcnow()
     pass_details = user_data.get('pass_details', {})
-    
-    if pass_details.get('daily_claimed', False):
-        await message.reply_text("You have already claimed today. Please try again tomorrow.", quote=True)
-        return
-    
+    last_claim_date = pass_details.get('last_claim_date')
+
+    if last_claim_date:
+        # Ensure 24 hours have passed since the last claim
+        time_diff = now - last_claim_date
+        if time_diff < timedelta(hours=24):
+            remaining_time = timedelta(hours=24) - time_diff
+            await message.reply_text(f"<b>You have already claimed today. Please try again in {remaining_time}.</b>", quote=True)
+            return
+
     # Set last claim time
     pass_details['last_claim_date'] = now
     pass_details['daily_claimed'] = True
@@ -210,7 +215,7 @@ async def pwaifu(client: Client, message):
 
         img_urls = [character['img_url'] for character in unique_characters]
         captions = [
-            f"Congratulations {first_name}! You have received a new waifu for your harem 💕!\n"
+            f"Congratulations {message.from_user.first_name}! You have received a new waifu for your harem 💕!\n"
             f"Name: {character['name']}\n"
             f"Rarity: {character['rarity']}\n"
             f"Anime: {character['anime']}\n"
@@ -221,6 +226,8 @@ async def pwaifu(client: Client, message):
     except Exception as e:
         print(f"Error in pwaifu: {e}")
         await message.reply_text("An error occurred while processing your request.", quote=True)
+
+# Additional commands like pass_cmd, claim_weekly_cmd, and others remain unchanged.
 
 # Updated pbonus command
 @app.on_message(filters.command("pbonus"))
