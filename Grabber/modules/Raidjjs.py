@@ -127,14 +127,14 @@ async def shunt_command(client, message):
 # Set the cooldown duration for the shunt command (in seconds)
 cooldown_duration_shunt = 60  # 1 minute
 
-@app.on_message(filters.user(owner_id) & filters.command(["resetbalance"]))
+@app.on_message(filters.user(owner_id) & filters.command(["rgold"]))
 async def reset_balance_command(client, message: t.Message):
     # Check if the command is a reply to a user's message
     if message.reply_to_message and message.reply_to_message.from_user:
         user_id = message.reply_to_message.from_user.id
         # Reset balance for the specified user
         await user_collection.update_one({'id': user_id}, {'$set': {'gold': 0}})
-        await message.reply_text(f"Balance reset for user {user_id}.")
+        await message.reply_text(f"gold reset for user {user_id}.")
     else:
         await message.reply_text("Please reply to the user's message to reset their balance.")
 
