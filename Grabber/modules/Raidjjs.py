@@ -11,43 +11,42 @@ MUST_JOIN = "dragons_support"
 LOG_GROUP_CHAT_ID = -1002243796014  # Update with your actual group chat ID
 owner_id = 7185106962  # Replace with your actual Telegram user ID
 
-# Dictionary of dungeon sets with their images, captions, win chances, and text messages
 dungeon_sets = {
     "1": {
         "image_url": "https://te.legra.ph/file/400b73f9a6e48a227c7e5.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧙` ] 🧥🧹🧳 🧟‍♂️🧣.",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐅` ] 𝐑𝐚𝐧𝐤 𝐆𝐨𝐛𝐥𝐢𝐧 𝐃𝐮𝐧𝐠𝐞𝐨𝐧.",
         "win_chance": 80,
-        "loss_message": "You lost💔.\nAnd Goblin Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Goblin Fucked your Beast💀."
     },
     "2": {
         "image_url": "https://te.legra.ph/file/400b73f9a6e48a227c7e5.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧚` ] 🧥🧹🧳 🧟‍♂️🧣",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐄` ] 𝐑𝐚𝐧𝐤 𝐆𝐨𝐛𝐥𝐢𝐧 𝐃𝐮𝐧𝐠𝐞𝐨𝐧",
         "win_chance": 75,
-        "loss_message": "You lost💔.\nAnd Goblin Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Goblin Fucked your Beast💀."
     },
     "3": {
         "image_url": "https://te.legra.ph/file/cc4b24dc0f54bc79ea998.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧟` ] 🧥🧹🧳 🧛🧥🧪 🧟‍♂️🧣.",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐃` ] 𝐑𝐚𝐧𝐤 𝐖𝐨𝐥𝐟 𝐃𝐮𝐧𝐠𝐞𝐨𝐧.",
         "win_chance": 65,
-        "loss_message": "You lost💔.\nAnd Wolf Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Wolf Fucked your Beast💀."
     },
     "4": {
         "image_url": "https://te.legra.ph/file/59bdd9842b4c98b75e5d2.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧞` ] 🧥🧹🧳 🧚🧥🧠 🧛🧥🧪 🧟‍♂️🧣.",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐂` ] 𝐑𝐚𝐧𝐤 𝐒𝐧𝐨𝐰 𝐖𝐨𝐥𝐟 𝐃𝐮𝐧𝐠𝐞𝐨𝐧.",
         "win_chance": 45,
-        "loss_message": "You lost💔.\nAnd Snow Wolf Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Snow Wolf Fucked your Beast💀."
     },
     "5": {
         "image_url": "https://te.legra.ph/file/31ca2402a9309c3810a6b.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧟‍♂️` ] 🧥🧹🧳 🧥🧝🧞 🧫🧰🧪 🧟‍♂️🧣.",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐀` ] 𝐑𝐚𝐧𝐤 𝐑𝐞𝐝 𝐎𝐫𝐜 𝐃𝐮𝐧𝐠𝐞𝐨𝐧.",
         "win_chance": 5,
-        "loss_message": "You lost💔.\nAnd Orc Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Orc Fucked your Beast💀."
     },
     "6": {
         "image_url": "https://te.legra.ph/file/44df7f9ae15f9d543fec4.jpg",
-        "caption": "🧿🧨🧛‍♂️ [ `🧪` ] 🧥🧹🧳 🧛🧥🧞🧤 🧥🧰🧣",
+        "caption": "𝐘𝐨𝐮 𝐡𝐚𝐯𝐞 𝐟𝐨𝐮𝐧𝐝 𝐚𝐧 [ `𝐀` ] 𝐑𝐚𝐧𝐤 𝐋𝐢𝐜𝐡 𝐤𝐢𝐧𝐠 𝐃𝐮𝐧𝐠𝐞𝐨𝐧",
         "win_chance": 5,
-        "loss_message": "You lost💔.\nAnd Undead Fucked your Beast💔."
+        "loss_message": "You lost💀.\nAnd Undead Fucked your Beast💀."
     },
 }
 
