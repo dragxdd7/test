@@ -7,20 +7,20 @@ from datetime import datetime, timedelta
 from html import escape
 
 beast_list = {
-    1: {'name': '𝐋𝐮𝐜𝐲', 'price': 5000000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
-    2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 1000000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://telegra.ph/file/9272411ca2030556f307f.jpg'},
-    3: {'name': '𝐂𝐡𝐥𝐨𝐞', 'price': 7500000, 'rarity': '🦊 𝐅𝐨𝐱', 'power': 2000, 'img_url': 'https://telegra.ph/file/2195a9a99e5546b703eec.jpg'},
-    4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 10000000, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://telegra.ph/file/c8d50b241c388f5267754.jpg'},
-    5: {'name': '𝐒𝐢𝐨𝐧𝐢𝐚', 'price': 50000000, 'rarity': '🌱 𝐄𝐥𝐟', 'power': 50000, 'img_url': 'https://telegra.ph/file/3ea566fa921687519a656.jpg'},
-    6: {'name': '𝐅𝐫𝐞𝐝𝐚', 'price': 75000000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 100000, 'img_url': 'https://telegra.ph/file/fbf7dc5107190a3a875e8.jpg'},
-    7: {'name': '𝐂𝐚𝐥𝐚𝐭𝐡𝐢𝐞𝐥', 'price': 100000000, 'rarity': '🐉 𝐃𝐫𝐚𝐠𝐨𝐧', 'power': 200000, 'img_url': 'https://telegra.ph/file/0dbef2bf7ac6fc6f1c6c7.jpg'},
+    1: {'name': '𝐋𝐮𝐜𝐲', 'price': 30000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
+    2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 55000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://telegra.ph/file/9272411ca2030556f307f.jpg'},
+    3: {'name': '𝐂𝐡𝐥𝐨𝐞', 'price': 77999, 'rarity': '🦊 𝐅𝐨𝐱', 'power': 2000, 'img_url': 'https://telegra.ph/file/2195a9a99e5546b703eec.jpg'},
+    4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 14556, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://telegra.ph/file/c8d50b241c388f5267754.jpg'},
+    5: {'name': '𝐒𝐢𝐨𝐧𝐢𝐚', 'price': 34442, 'rarity': '🌱 𝐄𝐥𝐟', 'power': 50000, 'img_url': 'https://telegra.ph/file/3ea566fa921687519a656.jpg'},
+    6: {'name': '𝐅𝐫𝐞𝐝𝐚', 'price': 46888, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 100000, 'img_url': 'https://telegra.ph/file/fbf7dc5107190a3a875e8.jpg'},
+    7: {'name': '𝐂𝐚𝐥𝐚𝐭𝐡𝐢𝐞𝐥', 'price': 57000, 'rarity': '🐉 𝐃𝐫𝐚𝐠𝐨𝐧', 'power': 200000, 'img_url': 'https://telegra.ph/file/0dbef2bf7ac6fc6f1c6c7.jpg'},
     8: {'name': '𝐆𝐞𝐧𝐞𝐯𝐚', 'price': 250000, 'rarity': '🍃 𝐆𝐨𝐛𝐥𝐢𝐧', 'power': 1000, 'img_url': 'https://telegra.ph/file/bf56e18c0c139db684ea6.jpg'},
-    9: {'name': '𝐇𝐚𝐳𝐞𝐥', 'price': 60000000, 'rarity': '🍁 𝐎𝐧𝐢', 'power': 15000, 'img_url': 'https://te.legra.ph/file/2974a9dc120a1239643a2.jpg'},
-    10: {'name': '𝐂𝐨𝐫𝐚𝐥', 'price': 40000000, 'rarity': '🌳 𝐖𝐨𝐫𝐥𝐝 𝐓𝐫𝐞𝐞', 'power': 30000, 'img_url': 'https://telegra.ph/file/8c62f510ce1f99f951f96.jpg'},
-    11: {'name': '𝐁𝐫𝐢𝐚𝐫', 'price': 20000000, 'rarity': '🍂 𝐃𝐚𝐫𝐤 𝐄𝐥𝐟', 'power': 75000, 'img_url': 'https://telegra.ph/file/78d17d6f4cacbaa09459b.jpg'},
-    12: {'name': '𝐀𝐮𝐫𝐞𝐥𝐢𝐚', 'price': 80000000, 'rarity': '👹 𝐃𝐞𝐦𝐨𝐧', 'power': 100000, 'img_url': 'https://telegra.ph/file/b72e995608139bf525675.mp4'},
-    13: {'name': '𝐀𝐭𝐥𝐚𝐧𝐭𝐚', 'price': 150000000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 150000, 'img_url': 'https://telegra.ph/file/f1d702fb61c9f7f0444f9.jpg'},
-    14: {'name': '𝐍𝐞𝐥𝐥𝐢𝐞', 'price': 200000000, 'rarity': '🪽 𝐀𝐧𝐠𝐞𝐥', 'power': 200000, 'img_url': 'https://telegra.ph/file/39c9fb62bd8ba6d5ba12e.jpg'},
+    9: {'name': '𝐇𝐚𝐳𝐞𝐥', 'price': 160000, 'rarity': '🍁 𝐎𝐧𝐢', 'power': 15000, 'img_url': 'https://te.legra.ph/file/2974a9dc120a1239643a2.jpg'},
+    10: {'name': '𝐂𝐨𝐫𝐚𝐥', 'price': 150000, 'rarity': '🌳 𝐖𝐨𝐫𝐥𝐝 𝐓𝐫𝐞𝐞', 'power': 30000, 'img_url': 'https://telegra.ph/file/8c62f510ce1f99f951f96.jpg'},
+    11: {'name': '𝐁𝐫𝐢𝐚𝐫', 'price': 100000, 'rarity': '🍂 𝐃𝐚𝐫𝐤 𝐄𝐥𝐟', 'power': 75000, 'img_url': 'https://telegra.ph/file/78d17d6f4cacbaa09459b.jpg'},
+    12: {'name': '𝐀𝐮𝐫𝐞𝐥𝐢𝐚', 'price': 250000, 'rarity': '👹 𝐃𝐞𝐦𝐨𝐧', 'power': 100000, 'img_url': 'https://telegra.ph/file/b72e995608139bf525675.mp4'},
+    13: {'name': '𝐀𝐭𝐥𝐚𝐧𝐭𝐚', 'price': 35000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 150000, 'img_url': 'https://telegra.ph/file/f1d702fb61c9f7f0444f9.jpg'},
+    14: {'name': '𝐍𝐞𝐥𝐥𝐢𝐞', 'price': 500000, 'rarity': '🪽 𝐀𝐧𝐠𝐞𝐥', 'power': 200000, 'img_url': 'https://telegra.ph/file/39c9fb62bd8ba6d5ba12e.jpg'},
 }
 
 async def get_user_data(user_id):
