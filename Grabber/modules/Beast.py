@@ -109,51 +109,57 @@ async def showbeastdetails_cmd(client: Client, message: Message):
     await message.reply_text("You don't own that beast. Use `/binfo` to see your available beasts.")
 
 @app.on_message(filters.command(["givebeast"]) & filters.user(7185106962))
-async def givebeast_cmd(client: Client, message):
+async def givebeast_cmd(client: Client, message: Message):
     try:
-        #  user_id and beast_id from the command
-        _, user_id, beast_id = Message.text.split()
+        # Extract user_id and beast_id from the command
+        _, user_id, beast_id = message.text.split()
         user_id = int(user_id)
         beast_id = int(beast_id)
 
         # Check if the beast_id is valid
         if beast_id not in beast_list:
-            return await Message.reply_text("Invalid beast ID. Choose a valid beast ID.")
+            return await message.reply_text("Invalid beast ID. Choose a valid beast ID.")
 
         # Check if the user exists
         user_data = await get_user_data(user_id)
         if not user_data:
-            return await Message.reply_text("User not found.")
+            return await message.reply_text("User not found.")
 
         # Add the new beast to the user's list of beasts with rarity information
-        new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
+        new_beast = {
+            'id': beast_id, 
+            'name': beast_list[beast_id]['name'], 
+            'rarity': beast_list[beast_id]['rarity'], 
+            'img_url': beast_list[beast_id]['img_url'], 
+            'power': beast_list[beast_id]['power']
+        }
         await user_collection.update_one({'id': user_id}, {'$push': {'beasts': new_beast}})
 
-        return await Message.reply_text(f"Beast {beast_list[beast_id]['name']} has been successfully given to user {user_id}.")
+        return await message.reply_text(f"Beast {beast_list[beast_id]['name']} has been successfully given to user {user_id}.")
 
     except ValueError:
-        return await Message.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
+        return await message.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
 
 # Command for the bot owner to delete all beasts of a user
 @app.on_message(filters.command(["delbeast"]) & filters.user(7185106962))
-async def deletebeasts_cmd(client: Client, message):
+async def deletebeasts_cmd(client: Client, message: Message):
     try:
         # Extract user_id from the command
-        _, user_id = Message.text.split()
+        _, user_id = message.text.split()
         user_id = int(user_id)
 
         # Check if the user exists
         user_data = await get_user_data(user_id)
         if not user_data:
-            return await Message.reply_text("User not found.")
+            return await message.reply_text("User not found.")
 
         # Remove all beasts of the user
-        await user_collection.update_one({'id': user_id}, {'$unset': {'beasts': 1}})
+        await user_collection.update_one({'id': user_id}, {'$unset': {'beasts': ""}})
 
-        return await Message.reply_text(f"All beasts of user {user_id} have been deleted.")
+        return await message.reply_text(f"All beasts have been successfully deleted for user {user_id}.")
 
     except ValueError:
-        return await Message.reply_text("Invalid command format. Use /delbeast <user_id>.")
+        return await message.reply_text("Invalid command format. Use /delbeast <user_id>.")
 
 @app.on_message(filters.command(["setbeast"]))
 async def setbeast_cmd(client: Client, message):
