@@ -198,7 +198,7 @@ async def top_beasts(_, message: Message):
 
         # Select a random photo URL
         photo_urls = [
-            "https://te.legra.ph/file/a316aae0cc355b3e6a1c4.png",
+            "https://telegra.ph/file/1bb111469713fc09e9b4e.jpg",
             # Add more photo URLs as needed
         ]
         random_photo_url = random.choice(photo_urls)
