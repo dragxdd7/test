@@ -8,7 +8,7 @@ from html import escape
 
 beast_list = {
     1: {'name': '𝐋𝐮𝐜𝐲', 'price': 5000000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
-    2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 1000000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://te.legra.ph/file/a38d89fc6eb6b67066ea4.jpg'},
+    2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 1000000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://telegra.ph/file/9272411ca2030556f307f.jpg'},
     3: {'name': '𝐂𝐡𝐥𝐨𝐞', 'price': 7500000, 'rarity': '🦊 𝐅𝐨𝐱', 'power': 2000, 'img_url': 'https://te.legra.ph/file/359b56d65666f21f2eabf.jpg'},
     4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 10000000, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://te.legra.ph/file/90ceb0a1306a8ee34cf7f.png'},
     5: {'name': '𝐒𝐢𝐨𝐧𝐢𝐚', 'price': 50000000, 'rarity': '🌱 𝐄𝐥𝐟', 'power': 50000, 'img_url': 'https://te.legra.ph/file/57efcb1f726ef5b97c27b.jpg'},
