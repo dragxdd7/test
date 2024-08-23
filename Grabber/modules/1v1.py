@@ -6,7 +6,6 @@ import pyrogram.types as t
 async def get_user_data(user_id: int):
     return await user_collection.find_one({'id': user_id})
 
-# List of moves for each beast with their corresponding power
 beast_moves = {
     1: {"Claw Swipe": 15, "Pounce": 20, "Roar": 10, "Tail Whip": 12},
     2: {"Charge": 18, "Stomp": 22, "Moo": 8, "Headbutt": 16},
@@ -82,19 +81,23 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     user_beast = next(beast for beast in user_data['beasts'] if beast['id'] == user_data['main_beast'])
     opponent_beast = next(beast for beast in opponent_data['beasts'] if beast['id'] == opponent_data['main_beast'])
 
-    # Battle starts with both players selecting their moves
-    await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount)
+    # Initialize the battle with both players selecting their moves
+    await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, 100, 100)
 
-async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount):
+async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp):
     # Create inline buttons for user to select a move
     user_moves = beast_moves[user_beast['id']]
     buttons = [
-        [InlineKeyboardButton(move, callback_data=f"move_select:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}")]
+        [InlineKeyboardButton(move, callback_data=f"move_select:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}")]
         for move in user_moves.keys()
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     
-    await message.reply_text(f"{(await client.get_users(user_id)).first_name}, choose your move:", reply_markup=keyboard)
+    await message.edit_caption(
+        caption=f"⚔️ {user_beast['name']} (HP: {user_hp}) vs {opponent_beast['name']} (HP: {opponent_hp})\n\n"
+                f"{(await client.get_users(user_id)).first_name}, it's your turn! Choose your move:",
+        reply_markup=keyboard
+    )
 
 @app.on_callback_query(filters.regex(r"^move_select"))
 async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
@@ -105,33 +108,27 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     user_beast_id = int(data[4])
     opponent_beast_id = int(data[5])
     selected_move = data[6]
+    user_hp = int(data[7])
+    opponent_hp = int(data[8])
 
     user_beast = next(beast for beast in (await get_user_data(user_id))['beasts'] if beast['id'] == user_beast_id)
     opponent_beast = next(beast for beast in (await get_user_data(opponent_id))['beasts'] if beast['id'] == opponent_beast_id)
 
-    # If it's the first move selection, let the opponent choose their move
+    user_move_power = beast_moves[user_beast_id][selected_move]
+
+    # Switch to opponent's move selection
     if callback_query.from_user.id == user_id:
-        # Show opponent move selection
-        await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount)
+        await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount, user_hp, opponent_hp)
     else:
-        # Both moves selected, proceed with battle
-        opponent_move = selected_move
-        user_move = data[6]
+        opponent_move_power = beast_moves[opponent_beast_id][selected_move]
 
-        user_hp = 100
-        opponent_hp = 100
+        opponent_hp -= user_move_power
+        user_hp -= opponent_move_power
 
-        # Calculate damage based on move power
-        user_attack = beast_moves[user_beast_id][user_move]
-        opponent_attack = beast_moves[opponent_beast_id][opponent_move]
-
-        opponent_hp -= user_attack
-        user_hp -= opponent_attack
-
-        await callback_query.message.reply_text(
-            f"{user_beast['name']} used {user_move} causing {user_attack} damage!\n"
-            f"{opponent_beast['name']} used {opponent_move} causing {opponent_attack} damage!\n"
-            f"Remaining HP: {user_hp} vs {opponent_hp}"
+        await callback_query.message.edit_caption(
+            caption=f"⚔️ {user_beast['name']} used {selected_move} causing {user_move_power} damage!\n"
+                    f"{opponent_beast['name']} used {selected_move} causing {opponent_move_power} damage!\n\n"
+                    f"Remaining HP: {user_hp} vs {opponent_hp}"
         )
 
         if opponent_hp <= 0 or user_hp <= 0:
@@ -152,9 +149,9 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
                         f"Final HP: {max(user_hp, 0)} vs {max(opponent_hp, 0)}"
             )
         else:
-            # Show the next move selection
-            await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount)
+            await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp)
 
 @app.on_callback_query(filters.regex("cancel_1v1"))
 async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     await callback_query.message.edit_caption("⚠️ The 1v1 Beast Battle challenge has been canceled.")
+    
