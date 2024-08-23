@@ -1,7 +1,8 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 import random
 from . import user_collection, app
+import pyrogram.types as t
 
 # List of moves for each beast
 beast_moves = {
