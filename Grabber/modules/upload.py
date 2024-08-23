@@ -31,7 +31,7 @@ rarity_map = {
     10: "🍭 Cosplay"
 }
 
-@app.on_message(filters.command('upload') & sudo_filter)
+@app.on_message(filters.command('sexkjshs') & sudo_filter)
 async def upload(client: Client, message: Message):
     args = message.text.split(maxsplit=4)[1:]
     if len(args) != 4:
@@ -56,11 +56,7 @@ async def upload(client: Client, message: Message):
     anime = args[2].replace('-', ' ').title()
 
     try:
-        media_url = args[0]
-        # Detect if the URL is a video, image, or GIF
-        is_video = media_url.endswith(('.mp4', '.mkv'))
-        is_gif = media_url.endswith('.gif')
-        urllib.request.urlopen(media_url)
+        urllib.request.urlopen(args[0])
     except:
         await message.reply_text('Invalid URL.')
         return
@@ -75,7 +71,7 @@ async def upload(client: Client, message: Message):
     price = random.randint(60000, 80000)
 
     character = {
-        'media_url': media_url,
+        'img_url': args[0],
         'name': character_name,
         'anime': anime,
         'rarity': rarity,
@@ -83,56 +79,24 @@ async def upload(client: Client, message: Message):
         'id': id
     }
 
-    if is_video:
-        message_id = (await client.send_video(
-            chat_id=CHARA_CHANNEL_ID,
-            video=media_url,
-            caption=(
-                f'<b>Waifu Name:</b> {character_name}\n'
-                f'<b>Anime Name:</b> {anime}\n'
-                f'<b>Quality:</b> {rarity}\n'
-                f'<b>Price:</b> {price}\n'
-                f'<b>ID:</b> {id}\n'
-                f'Added by <a href="tg://user?id={message.from_user.id}">'
-                f'{message.from_user.first_name}</a>'
-            )
-    
-        )).message_id
-    elif is_gif:
-        message_id = (await client.send_animation(
-            chat_id=CHARA_CHANNEL_ID,
-            animation=media_url,
-            caption=(
-                f'<b>Waifu Name:</b> {character_name}\n'
-                f'<b>Anime Name:</b> {anime}\n'
-                f'<b>Quality:</b> {rarity}\n'
-                f'<b>Price:</b> {price}\n'
-                f'<b>ID:</b> {id}\n'
-                f'Added by <a href="tg://user?id={message.from_user.id}">'
-                f'{message.from_user.first_name}</a>'
-            )
-            
-        )).message_id
-    else:
-        message_id = (await client.send_photo(
-            chat_id=CHARA_CHANNEL_ID,
-            photo=media_url,
-            caption=(
-                f'<b>Waifu Name:</b> {character_name}\n'
-                f'<b>Anime Name:</b> {anime}\n'
-                f'<b>Quality:</b> {rarity}\n'
-                f'<b>Price:</b> {price}\n'
-                f'<b>ID:</b> {id}\n'
-                f'Added by <a href="tg://user?id={message.from_user.id}">'
-                f'{message.from_user.first_name}</a>'
-            )
-            
-        )).message_id
+    message_id = await client.send_photo(
+        chat_id=CHARA_CHANNEL_ID,
+        photo=args[0],
+        caption=(
+            f'<b>Waifu Name:</b> {character_name}\n'
+            f'<b>Anime Name:</b> {anime}\n'
+            f'<b>Quality:</b> {rarity}\n'
+            f'<b>Price:</b> {price}\n'
+            f'<b>ID:</b> {id}\n'
+            f'Added by <a href="tg://user?id={message.from_user.id}">'
+            f'{message.from_user.first_name}</a>'
+        ),
+        parse_mode='HTML'
+    ).message_id
 
     character['message_id'] = message_id
     await collection.insert_one(character)
     await message.reply_text('WAIFU ADDED....')
-
 
 @app.on_message(filters.command('delete') & sudo_filter)
 async def delete(client: Client, message: Message):
@@ -162,7 +126,6 @@ async def delete(client: Client, message: Message):
     else:
         await message.reply_text('Character not found in database.')
 
-
 @app.on_message(filters.command('update') & sudo_filter)
 async def update(client: Client, message: Message):
     args = message.text.split(maxsplit=3)[1:]
@@ -179,7 +142,7 @@ async def update(client: Client, message: Message):
         await message.reply_text('Character not found.')
         return
 
-    valid_fields = ['media_url', 'name', 'anime', 'rarity']
+    valid_fields = ['img_url', 'name', 'anime', 'rarity']
     if field not in valid_fields:
         await message.reply_text(f'Invalid field. Please use one of the following: {", ".join(valid_fields)}')
         return
@@ -209,7 +172,6 @@ async def update(client: Client, message: Message):
         await user_collection.bulk_write(bulk_operations)
 
     await message.reply_text('Update done in Database and all user collections.')
-
 
 @app.on_message(filters.command('r') & sudo_filter)
 async def update_rarity(client: Client, message: Message):
@@ -247,30 +209,89 @@ async def update_rarity(client: Client, message: Message):
     if bulk_operations:
         await user_collection.bulk_write(bulk_operations)
 
-    await message.reply_text('Update done in Database and all user collections.')
+    await message.reply_text('Rarity updated in Database and all user collections.')
 
+@app.on_message(filters.command('dr') & sudo_filter)
+async def delete_rarity(client: Client, message: Message):
+    args = message.text.split(maxsplit=1)[1:]
+    if len(args) != 1:
+        await message.reply_text('Incorrect format. Please use: /dr rarity')
+        return
 
-@app.on_message(filters.command('rearrange') & sudo_filter)
-async def rearrange_ids(client: Client, message: Message):
-    cursor = collection.find().sort([('id', 1)])
-    characters = await cursor.to_list(length=None)
+    rarity = args[0]
 
-    for i, character in enumerate(characters):
+    try:
+        rarity_value = rarity_map[int(rarity)]
+    except KeyError:
+        await message.reply_text('Invalid rarity. Please use a number between 1 and 10.')
+        return
+
+    characters = await collection.find({'rarity': rarity_value}).to_list(length=None)
+
+    if not characters:
+        await message.reply_text('No characters found with the specified rarity.')
+        return
+
+    character_ids = [character['id'] for character in characters]
+    message_ids = [character['message_id'] for character in characters]
+
+    await collection.delete_many({'rarity': rarity_value})
+
+    for message_id in message_ids:
+        try:
+            await client.delete_messages(chat_id=CHARA_CHANNEL_ID, message_ids=message_id)
+        except:
+            pass
+
+    bulk_operations = []
+    async for user in user_collection.find():
+        if 'characters' in user:
+            user['characters'] = [char for char in user['characters'] if char['id'] not in character_ids]
+            bulk_operations.append(
+                UpdateOne({'_id': user['_id']}, {'$set': {'characters': user['characters']}})
+            )
+
+    if bulk_operations:
+        await user_collection.bulk_write(bulk_operations)
+
+    await message.reply_text(f'All characters with rarity "{rarity_value}" have been removed from the database and user collections.')
+
+@app.on_message(filters.command('arrange') & sudo_filter)
+async def arrange_characters(client: Client, message: Message):
+    characters = await collection.find().sort('id', 1).to_list(length=None)
+    if not characters:
+        await message.reply_text('No characters found in the database.')
+        return
+
+    old_to_new_id_map = {}
+    new_id_counter = 1
+
+    bulk_operations = []
+    for character in characters:
         old_id = character['id']
-        new_id = str(i).zfill(2)
-        await collection.update_one({'_id': character['_id']}, {'$set': {'id': new_id}})
+        new_id = str(new_id_counter).zfill(2)
+        old_to_new_id_map[old_id] = new_id
 
-        bulk_operations = []
-        async for user in user_collection.find():
-            if 'characters' in user:
-                for char in user['characters']:
-                    if char['id'] == old_id:
-                        char['id'] = new_id
-                bulk_operations.append(
-                    UpdateOne({'_id': user['_id']}, {'$set': {'characters': user['characters']}})
-                )
+        if old_id != new_id:
+            bulk_operations.append(
+                UpdateOne({'_id': character['_id']}, {'$set': {'id': new_id}})
+            )
+        new_id_counter += 1
 
-        if bulk_operations:
-            await user_collection.bulk_write(bulk_operations)
+    if bulk_operations:
+        await collection.bulk_write(bulk_operations)
 
-    await message.reply_text('Character IDs have been rearranged.')
+    user_bulk_operations = []
+    async for user in user_collection.find():
+        if 'characters' in user:
+            for char in user['characters']:
+                if char['id'] in old_to_new_id_map:
+                    char['id'] = old_to_new_id_map[char['id']]
+            user_bulk_operations.append(
+                UpdateOne({'_id': user['_id']}, {'$set': {'characters': user['characters']}})
+            )
+
+    if user_bulk_operations:
+        await user_collection.bulk_write(user_bulk_operations)
+
+    await message.reply_text('Characters have been rearranged and all user collections updated.')
