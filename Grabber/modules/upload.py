@@ -30,7 +30,6 @@ rarity_map = {
     9: "🔮 Limited",
     10: "🍭 Cosplay"
 }
-
 @app.on_message(filters.command('sexkjshs') & sudo_filter)
 async def upload(client: Client, message: Message):
     args = message.text.split(maxsplit=4)[1:]
@@ -56,7 +55,11 @@ async def upload(client: Client, message: Message):
     anime = args[2].replace('-', ' ').title()
 
     try:
-        urllib.request.urlopen(args[0])
+        media_url = args[0]
+        # Detect if the URL is a video or image
+        is_video = media_url.endswith(('.mp4', '.mkv'))
+        is_gif = media_url.endswith('.gif')
+        urllib.request.urlopen(media_url)
     except:
         await message.reply_text('Invalid URL.')
         return
@@ -71,7 +74,7 @@ async def upload(client: Client, message: Message):
     price = random.randint(60000, 80000)
 
     character = {
-        'img_url': args[0],
+        'media_url': media_url,
         'name': character_name,
         'anime': anime,
         'rarity': rarity,
@@ -79,24 +82,56 @@ async def upload(client: Client, message: Message):
         'id': id
     }
 
-    message_id = await client.send_photo(
-        chat_id=CHARA_CHANNEL_ID,
-        photo=args[0],
-        caption=(
-            f'<b>Waifu Name:</b> {character_name}\n'
-            f'<b>Anime Name:</b> {anime}\n'
-            f'<b>Quality:</b> {rarity}\n'
-            f'<b>Price:</b> {price}\n'
-            f'<b>ID:</b> {id}\n'
-            f'Added by <a href="tg://user?id={message.from_user.id}">'
-            f'{message.from_user.first_name}</a>'
-        ),
-        parse_mode='HTML'
-    ).message_id
+    if is_video:
+        message_id = await client.send_video(
+            chat_id=CHARA_CHANNEL_ID,
+            video=media_url,
+            caption=(
+                f'<b>Waifu Name:</b> {character_name}\n'
+                f'<b>Anime Name:</b> {anime}\n'
+                f'<b>Quality:</b> {rarity}\n'
+                f'<b>Price:</b> {price}\n'
+                f'<b>ID:</b> {id}\n'
+                f'Added by <a href="tg://user?id={message.from_user.id}">'
+                f'{message.from_user.first_name}</a>'
+            ),
+            parse_mode='HTML'
+        ).message_id
+    elif is_gif:
+        message_id = await client.send_animation(
+            chat_id=CHARA_CHANNEL_ID,
+            animation=media_url,
+            caption=(
+                f'<b>Waifu Name:</b> {character_name}\n'
+                f'<b>Anime Name:</b> {anime}\n'
+                f'<b>Quality:</b> {rarity}\n'
+                f'<b>Price:</b> {price}\n'
+                f'<b>ID:</b> {id}\n'
+                f'Added by <a href="tg://user?id={message.from_user.id}">'
+                f'{message.from_user.first_name}</a>'
+            ),
+            parse_mode='HTML'
+        ).message_id
+    else:
+        message_id = await client.send_photo(
+            chat_id=CHARA_CHANNEL_ID,
+            photo=media_url,
+            caption=(
+                f'<b>Waifu Name:</b> {character_name}\n'
+                f'<b>Anime Name:</b> {anime}\n'
+                f'<b>Quality:</b> {rarity}\n'
+                f'<b>Price:</b> {price}\n'
+                f'<b>ID:</b> {id}\n'
+                f'Added by <a href="tg://user?id={message.from_user.id}">'
+                f'{message.from_user.first_name}</a>'
+            ),
+            parse_mode='HTML'
+        ).message_id
 
     character['message_id'] = message_id
     await collection.insert_one(character)
     await message.reply_text('WAIFU ADDED....')
+
 
 @app.on_message(filters.command('delete') & sudo_filter)
 async def delete(client: Client, message: Message):
