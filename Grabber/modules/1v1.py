@@ -4,6 +4,10 @@ import random
 from . import user_collection, app
 import pyrogram.types as t
 
+
+async def get_user_data(user_id: int):
+    return await user_collection.find_one({'id': user_id})
+    
 # List of moves for each beast
 beast_moves = {
     1: ["Claw Swipe", "Pounce", "Roar", "Tail Whip"],
