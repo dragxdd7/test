@@ -50,7 +50,7 @@ async def start_1v1_cmd(client: Client, message: Message):
 
         # Prepare inline buttons for accepting or canceling the battle
         accept_button = InlineKeyboardButton("Accept", callback_data=f"accept_1v1:{user_id}:{opponent_id}:{amount}")
-        cancel_button = InlineKeyboardButton("Cancel", callback_data="cancel_1v1")
+        cancel_button = InlineKeyboardButton("Cancel", callback_data=f"cancel_1v1:{user_id}:{opponent_id}")
         keyboard = InlineKeyboardMarkup([[accept_button, cancel_button]])
 
         await message.reply_photo(
@@ -70,6 +70,10 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
     user_id = int(data[1])
     opponent_id = int(data[2])
+
+    if callback_query.from_user.id != opponent_id:
+        return await callback_query.answer("You are not authorized to accept this challenge.", show_alert=True)
+
     amount = int(data[3])
 
     user_data = await get_user_data(user_id)
@@ -85,7 +89,6 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, 100, 100, "", "", 0, 0)
 
 async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
-    # Create inline buttons for user to select a move
     user_moves = beast_moves[user_beast['id']]
     buttons = [
         [InlineKeyboardButton(move, callback_data=f"move_select:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}") for move in row]
@@ -105,6 +108,12 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
     user_id = int(data[1])
     opponent_id = int(data[2])
+    selected_user = callback_query.from_user.id
+
+    # Ensure only the correct user can make a move
+    if selected_user != user_id and selected_user != opponent_id:
+        return await client.send_message(selected_user, "This is not your turn in the 1v1 battle.")
+
     amount = int(data[3])
     user_beast_id = int(data[4])
     opponent_beast_id = int(data[5])
@@ -119,14 +128,11 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     user_beast = next(beast for beast in (await get_user_data(user_id))['beasts'] if beast['id'] == user_beast_id)
     opponent_beast = next(beast for beast in (await get_user_data(opponent_id))['beasts'] if beast['id'] == opponent_beast_id)
 
-    user_move_power = beast_moves[user_beast_id][selected_move]
-
-    # Switch to opponent's move selection
-    if callback_query.from_user.id == user_id:
+    if selected_user == user_id:
+        user_move_power = beast_moves[user_beast_id][selected_move]
         await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount, user_hp, opponent_hp, selected_move, last_opponent_move, user_move_power, last_opponent_damage)
-    else:
+    elif selected_user == opponent_id:
         opponent_move_power = beast_moves[opponent_beast_id][selected_move]
-
         opponent_hp -= user_move_power
         user_hp -= opponent_move_power
 
@@ -140,7 +146,6 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
             winner = user_id if opponent_hp <= 0 else opponent_id
             loser = opponent_id if opponent_hp <= 0 else user_id
 
-            # Update balances
             await user_collection.update_one({'id': winner}, {'$inc': {'gold': amount}})
             await user_collection.update_one({'id': loser}, {'$inc': {'gold': -amount}})
 
@@ -156,6 +161,14 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
         else:
             await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, selected_move, last_user_damage, opponent_move_power)
 
-@app.on_callback_query(filters.regex("cancel_1v1"))
+@app.on_callback_query(filters.regex(r"^cancel_1v1"))
 async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
-    await callback_query.message.edit_caption("⚠️ The 1v1 Beast Battle challenge has been canceled.")
+    data = callback_query.data.split(":")
+    user_id = int(data[1])
+    opponent_id = int(data[2])
+
+    if callback_query.from_user.id not in [user_id, opponent_id]:
+        return await callback_query.answer("You are not authorized to cancel this challenge.", show_alert=True)
+
+    await callback_query.message.edit_caption("The 1v1 Beast Battle challenge was canceled.")
+                                            
