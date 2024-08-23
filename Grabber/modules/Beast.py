@@ -112,18 +112,18 @@ async def showbeastdetails_cmd(client: Client, message: Message):
 async def givebeast_cmd(client: Client, message):
     try:
         #  user_id and beast_id from the command
-        _, user_id, beast_id = update.text.split()
+        _, user_id, beast_id = Message.text.split()
         user_id = int(user_id)
         beast_id = int(beast_id)
 
         # Check if the beast_id is valid
         if beast_id not in beast_list:
-            return await update.reply_text("Invalid beast ID. Choose a valid beast ID.")
+            return await Message.reply_text("Invalid beast ID. Choose a valid beast ID.")
 
         # Check if the user exists
         user_data = await get_user_data(user_id)
         if not user_data:
-            return await update.reply_text("User not found.")
+            return await Message.reply_text("User not found.")
 
         # Add the new beast to the user's list of beasts with rarity information
         new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
@@ -139,13 +139,13 @@ async def givebeast_cmd(client: Client, message):
 async def deletebeasts_cmd(client: Client, message):
     try:
         # Extract user_id from the command
-        _, user_id = update.text.split()
+        _, user_id = Message.text.split()
         user_id = int(user_id)
 
         # Check if the user exists
         user_data = await get_user_data(user_id)
         if not user_data:
-            return await update.reply_text("User not found.")
+            return await Message.reply_text("User not found.")
 
         # Remove all beasts of the user
         await user_collection.update_one({'id': user_id}, {'$unset': {'beasts': 1}})
