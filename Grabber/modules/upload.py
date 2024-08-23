@@ -95,8 +95,8 @@ async def upload(client: Client, message: Message):
                 f'<b>ID:</b> {id}\n'
                 f'Added by <a href="tg://user?id={message.from_user.id}">'
                 f'{message.from_user.first_name}</a>'
-            ),
-            parse_mode='html'
+            )
+    
         )).message_id
     elif is_gif:
         message_id = (await client.send_animation(
@@ -110,8 +110,8 @@ async def upload(client: Client, message: Message):
                 f'<b>ID:</b> {id}\n'
                 f'Added by <a href="tg://user?id={message.from_user.id}">'
                 f'{message.from_user.first_name}</a>'
-            ),
-            parse_mode='html'
+            )
+            
         )).message_id
     else:
         message_id = (await client.send_photo(
@@ -125,8 +125,8 @@ async def upload(client: Client, message: Message):
                 f'<b>ID:</b> {id}\n'
                 f'Added by <a href="tg://user?id={message.from_user.id}">'
                 f'{message.from_user.first_name}</a>'
-            ),
-            parse_mode='html'
+            )
+            
         )).message_id
 
     character['message_id'] = message_id
