@@ -129,10 +129,10 @@ async def givebeast_cmd(client: Client, message):
         new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
         await user_collection.update_one({'id': user_id}, {'$push': {'beasts': new_beast}})
 
-        return await update.reply_text(f"Beast {beast_list[beast_id]['name']} has been successfully given to user {user_id}.")
+        return await Message.reply_text(f"Beast {beast_list[beast_id]['name']} has been successfully given to user {user_id}.")
 
     except ValueError:
-        return await update.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
+        return await Message.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
 
 # Command for the bot owner to delete all beasts of a user
 @app.on_message(filters.command(["delbeast"]) & filters.user(7185106962))
@@ -150,10 +150,10 @@ async def deletebeasts_cmd(client: Client, message):
         # Remove all beasts of the user
         await user_collection.update_one({'id': user_id}, {'$unset': {'beasts': 1}})
 
-        return await update.reply_text(f"All beasts of user {user_id} have been deleted.")
+        return await Message.reply_text(f"All beasts of user {user_id} have been deleted.")
 
     except ValueError:
-        return await update.reply_text("Invalid command format. Use /delbeast <user_id>.")
+        return await Message.reply_text("Invalid command format. Use /delbeast <user_id>.")
 
 @app.on_message(filters.command(["setbeast"]))
 async def setbeast_cmd(client: Client, message):
