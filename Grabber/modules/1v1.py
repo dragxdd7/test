@@ -1,6 +1,6 @@
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import random
-from . import user_collection
+from . import user_collection, app
 
 # List of moves for each beast
 beast_moves = {
