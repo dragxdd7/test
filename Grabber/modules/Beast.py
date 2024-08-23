@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from html import escape
 
 beast_list = {
-    1: {'name': '𝐋𝐮𝐜𝐲', 'price': 5000000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://te.legra.ph/file/da3a63b484c2be011d85a.jpg'},
+    1: {'name': '𝐋𝐮𝐜𝐲', 'price': 5000000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
     2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 1000000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://te.legra.ph/file/a38d89fc6eb6b67066ea4.jpg'},
     3: {'name': '𝐂𝐡𝐥𝐨𝐞', 'price': 7500000, 'rarity': '🦊 𝐅𝐨𝐱', 'power': 2000, 'img_url': 'https://te.legra.ph/file/359b56d65666f21f2eabf.jpg'},
     4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 10000000, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://te.legra.ph/file/90ceb0a1306a8ee34cf7f.png'},
@@ -18,7 +18,7 @@ beast_list = {
     9: {'name': '𝐇𝐚𝐳𝐞𝐥', 'price': 60000000, 'rarity': '🍁 𝐎𝐧𝐢', 'power': 15000, 'img_url': 'https://te.legra.ph/file/87ba232e727d802ebe69b.png'},
     10: {'name': '𝐂𝐨𝐫𝐚𝐥', 'price': 40000000, 'rarity': '🌳 𝐖𝐨𝐫𝐥𝐝 𝐓𝐫𝐞𝐞', 'power': 30000, 'img_url': 'https://te.legra.ph/file/2974a9dc120a1239643a2.jpg'},
     11: {'name': '𝐁𝐫𝐢𝐚𝐫', 'price': 20000000, 'rarity': '🍂 𝐃𝐚𝐫𝐤 𝐄𝐥𝐟', 'power': 75000, 'img_url': 'https://te.legra.ph/file/1c902b35c6bc40658bd44.png'},
-    12: {'name': '𝐀𝐮𝐫𝐞𝐥𝐢𝐚', 'price': 80000000, 'rarity': '👹 𝐃𝐞𝐦𝐨𝐧', 'power': 100000, 'img_url': 'https://te.legra.ph/file/1d7352c01ff9c0235e6ff.png'},
+    12: {'name': '𝐀𝐮𝐫𝐞𝐥𝐢𝐚', 'price': 80000000, 'rarity': '👹 𝐃𝐞𝐦𝐨𝐧', 'power': 100000, 'img_url': 'https://telegra.ph/file/b72e995608139bf525675.mp4'},
     13: {'name': '𝐀𝐭𝐥𝐚𝐧𝐭𝐚', 'price': 150000000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 150000, 'img_url': 'https://te.legra.ph/file/f32cefc258b5116283eef.png'},
     14: {'name': '𝐍𝐞𝐥𝐥𝐢𝐞', 'price': 200000000, 'rarity': '🪽 𝐀𝐧𝐠𝐞𝐥', 'power': 200000, 'img_url': 'https://te.legra.ph/file/23760a2dfdc9c99bda26f.png'},
 }
