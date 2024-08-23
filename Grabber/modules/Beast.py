@@ -17,7 +17,7 @@ beast_list = {
     8: {'name': '𝐆𝐞𝐧𝐞𝐯𝐚', 'price': 250000, 'rarity': '🍃 𝐆𝐨𝐛𝐥𝐢𝐧', 'power': 1000, 'img_url': 'https://te.legra.ph/file/e8fd10072222ee8a8a088.png'},
     9: {'name': '𝐇𝐚𝐳𝐞𝐥', 'price': 60000000, 'rarity': '🍁 𝐎𝐧𝐢', 'power': 15000, 'img_url': 'https://te.legra.ph/file/87ba232e727d802ebe69b.png'},
     10: {'name': '𝐂𝐨𝐫𝐚𝐥', 'price': 40000000, 'rarity': '🌳 𝐖𝐨𝐫𝐥𝐝 𝐓𝐫𝐞𝐞', 'power': 30000, 'img_url': 'https://te.legra.ph/file/2974a9dc120a1239643a2.jpg'},
-    11: {'name': '𝐁𝐫𝐢𝐚𝐫', 'price': 20000000, 'rarity': '🍂 𝐃𝐚𝐫𝐤 𝐄𝐥𝐟', 'power': 75000, 'img_url': 'https://te.legra.ph/file/1c902b35c6bc40658bd44.png'},
+    11: {'name': '𝐁𝐫𝐢𝐚𝐫', 'price': 20000000, 'rarity': '🍂 𝐃𝐚𝐫𝐤 𝐄𝐥𝐟', 'power': 75000, 'img_url': 'https://telegra.ph/file/78d17d6f4cacbaa09459b.jpg'},
     12: {'name': '𝐀𝐮𝐫𝐞𝐥𝐢𝐚', 'price': 80000000, 'rarity': '👹 𝐃𝐞𝐦𝐨𝐧', 'power': 100000, 'img_url': 'https://telegra.ph/file/b72e995608139bf525675.mp4'},
     13: {'name': '𝐀𝐭𝐥𝐚𝐧𝐭𝐚', 'price': 150000000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 150000, 'img_url': 'https://te.legra.ph/file/f32cefc258b5116283eef.png'},
     14: {'name': '𝐍𝐞𝐥𝐥𝐢𝐞', 'price': 200000000, 'rarity': '🪽 𝐀𝐧𝐠𝐞𝐥', 'power': 200000, 'img_url': 'https://te.legra.ph/file/23760a2dfdc9c99bda26f.png'},
