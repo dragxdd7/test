@@ -135,7 +135,7 @@ async def givebeast_cmd(client: Client, message):
         return await update.reply_text("Invalid command format. Use /givebeast <user_id> <beast_id>.")
 
 # Command for the bot owner to delete all beasts of a user
-@app.on_message(filters.command(["delbeast"]) & filters.user(6890857225))
+@app.on_message(filters.command(["delbeast"]) & filters.user(7185106962))
 async def deletebeasts_cmd(client: Client, message):
     try:
         # Extract user_id from the command
