@@ -10,7 +10,7 @@ beast_list = {
     1: {'name': '𝐋𝐮𝐜𝐲', 'price': 5000000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
     2: {'name': '𝐌𝐨𝐥𝐥𝐲', 'price': 1000000, 'rarity': '🐮 𝐂𝐨𝐰', 'power': 1000, 'img_url': 'https://telegra.ph/file/9272411ca2030556f307f.jpg'},
     3: {'name': '𝐂𝐡𝐥𝐨𝐞', 'price': 7500000, 'rarity': '🦊 𝐅𝐨𝐱', 'power': 2000, 'img_url': 'https://telegra.ph/file/2195a9a99e5546b703eec.jpg'},
-    4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 10000000, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://te.legra.ph/file/90ceb0a1306a8ee34cf7f.png'},
+    4: {'name': '𝐊𝐢𝐫𝐛𝐲', 'price': 10000000, 'rarity': '🐰 𝐁𝐮𝐧𝐧𝐲', 'power': 1000, 'img_url': 'https://telegra.ph/file/c8d50b241c388f5267754.jpg'},
     5: {'name': '𝐒𝐢𝐨𝐧𝐢𝐚', 'price': 50000000, 'rarity': '🌱 𝐄𝐥𝐟', 'power': 50000, 'img_url': 'https://te.legra.ph/file/57efcb1f726ef5b97c27b.jpg'},
     6: {'name': '𝐅𝐫𝐞𝐝𝐚', 'price': 75000000, 'rarity': '🍑 𝐒𝐮𝐜𝐂𝐮𝐜𝐮𝐬', 'power': 100000, 'img_url': 'https://te.legra.ph/file/221a012bac35527c81924.png'},
     7: {'name': '𝐂𝐚𝐥𝐚𝐭𝐡𝐢𝐞𝐥', 'price': 100000000, 'rarity': '🐉 𝐃𝐫𝐚𝐠𝐨𝐧', 'power': 200000, 'img_url': 'https://te.legra.ph/file/471cb23e1dffd9bd11137.jpg'},
