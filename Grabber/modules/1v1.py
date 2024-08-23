@@ -1,28 +1,27 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-import random
 from . import user_collection, app
 import pyrogram.types as t
 
 async def get_user_data(user_id: int):
     return await user_collection.find_one({'id': user_id})
-    
-# List of moves for each beast
+
+# List of moves for each beast with their corresponding power
 beast_moves = {
-    1: ["Claw Swipe", "Pounce", "Roar", "Tail Whip"],
-    2: ["Charge", "Stomp", "Moo", "Headbutt"],
-    3: ["Sneak Attack", "Bite", "Howl", "Prowl"],
-    4: ["Jump Kick", "Spin Attack", "Thump", "Nuzzle"],
-    5: ["Leaf Storm", "Vine Whip", "Nature's Wrath", "Elven Arrow"],
-    6: ["Fireball", "Shadow Strike", "Seduce", "Demon Claw"],
-    7: ["Dragon Breath", "Tail Lash", "Wing Buffet", "Roar of the Dragon"],
-    8: ["Goblin Punch", "Creeping Strike", "Vanish", "Goblin Dance"],
-    9: ["Oni Slam", "Mystic Blast", "Oni Rush", "War Cry"],
-    10: ["Tree Slam", "Root Bind", "Photosynthesis", "World Tree Crush"],
-    11: ["Shadow Strike", "Dark Pulse", "Elf Slash", "Darkness Cloak"],
-    12: ["Hellfire", "Demonic Slash", "Infernal Rage", "Soul Drain"],
-    13: ["Succubus Kiss", "Dark Temptation", "Nightmare Touch", "Doom's Embrace"],
-    14: ["Divine Strike", "Holy Light", "Angel's Blessing", "Heaven's Wrath"],
+    1: {"Claw Swipe": 15, "Pounce": 20, "Roar": 10, "Tail Whip": 12},
+    2: {"Charge": 18, "Stomp": 22, "Moo": 8, "Headbutt": 16},
+    3: {"Sneak Attack": 20, "Bite": 25, "Howl": 5, "Prowl": 12},
+    4: {"Jump Kick": 17, "Spin Attack": 22, "Thump": 15, "Nuzzle": 10},
+    5: {"Leaf Storm": 20, "Vine Whip": 18, "Nature's Wrath": 22, "Elven Arrow": 16},
+    6: {"Fireball": 25, "Shadow Strike": 20, "Seduce": 10, "Demon Claw": 18},
+    7: {"Dragon Breath": 22, "Tail Lash": 18, "Wing Buffet": 16, "Roar of the Dragon": 10},
+    8: {"Goblin Punch": 15, "Creeping Strike": 20, "Vanish": 8, "Goblin Dance": 12},
+    9: {"Oni Slam": 22, "Mystic Blast": 25, "Oni Rush": 18, "War Cry": 10},
+    10: {"Tree Slam": 20, "Root Bind": 18, "Photosynthesis": 10, "World Tree Crush": 25},
+    11: {"Shadow Strike": 20, "Dark Pulse": 18, "Elf Slash": 22, "Darkness Cloak": 10},
+    12: {"Hellfire": 25, "Demonic Slash": 22, "Infernal Rage": 20, "Soul Drain": 18},
+    13: {"Succubus Kiss": 18, "Dark Temptation": 20, "Nightmare Touch": 22, "Doom's Embrace": 25},
+    14: {"Divine Strike": 22, "Holy Light": 20, "Angel's Blessing": 18, "Heaven's Wrath": 25},
 }
 
 @app.on_message(filters.command("1v1"))
@@ -83,17 +82,48 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     user_beast = next(beast for beast in user_data['beasts'] if beast['id'] == user_data['main_beast'])
     opponent_beast = next(beast for beast in opponent_data['beasts'] if beast['id'] == opponent_data['main_beast'])
 
-    # Battle logic with beast moves
-    user_hp = 100
-    opponent_hp = 100
+    # Battle starts with both players selecting their moves
+    await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount)
 
-    while user_hp > 0 and opponent_hp > 0:
-        # Each beast performs a random move
-        user_move = random.choice(beast_moves[user_beast['id']])
-        opponent_move = random.choice(beast_moves[opponent_beast['id']])
+async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount):
+    # Create inline buttons for user to select a move
+    user_moves = beast_moves[user_beast['id']]
+    buttons = [
+        [InlineKeyboardButton(move, callback_data=f"move_select:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}")]
+        for move in user_moves.keys()
+    ]
+    keyboard = InlineKeyboardMarkup(buttons)
+    
+    await message.reply_text(f"{(await client.get_users(user_id)).first_name}, choose your move:", reply_markup=keyboard)
 
-        user_attack = user_beast['power'] + random.randint(10, 20)
-        opponent_attack = opponent_beast['power'] + random.randint(10, 20)
+@app.on_callback_query(filters.regex(r"^move_select"))
+async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
+    data = callback_query.data.split(":")
+    user_id = int(data[1])
+    opponent_id = int(data[2])
+    amount = int(data[3])
+    user_beast_id = int(data[4])
+    opponent_beast_id = int(data[5])
+    selected_move = data[6]
+
+    user_beast = next(beast for beast in (await get_user_data(user_id))['beasts'] if beast['id'] == user_beast_id)
+    opponent_beast = next(beast for beast in (await get_user_data(opponent_id))['beasts'] if beast['id'] == opponent_beast_id)
+
+    # If it's the first move selection, let the opponent choose their move
+    if callback_query.from_user.id == user_id:
+        # Show opponent move selection
+        await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount)
+    else:
+        # Both moves selected, proceed with battle
+        opponent_move = selected_move
+        user_move = data[6]
+
+        user_hp = 100
+        opponent_hp = 100
+
+        # Calculate damage based on move power
+        user_attack = beast_moves[user_beast_id][user_move]
+        opponent_attack = beast_moves[opponent_beast_id][opponent_move]
 
         opponent_hp -= user_attack
         user_hp -= opponent_attack
@@ -104,28 +134,26 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
             f"Remaining HP: {user_hp} vs {opponent_hp}"
         )
 
-        if opponent_hp <= 0:
-            winner = user_id
-            loser = opponent_id
-            break
-        elif user_hp <= 0:
-            winner = opponent_id
-            loser = user_id
-            break
+        if opponent_hp <= 0 or user_hp <= 0:
+            winner = user_id if opponent_hp <= 0 else opponent_id
+            loser = opponent_id if opponent_hp <= 0 else user_id
 
-    # Update balances
-    await user_collection.update_one({'id': winner}, {'$inc': {'gold': amount}})
-    await user_collection.update_one({'id': loser}, {'$inc': {'gold': -amount}})
+            # Update balances
+            await user_collection.update_one({'id': winner}, {'$inc': {'gold': amount}})
+            await user_collection.update_one({'id': loser}, {'$inc': {'gold': -amount}})
 
-    winner_name = (await client.get_users(winner)).first_name
-    loser_name = (await client.get_users(loser)).first_name
+            winner_name = (await client.get_users(winner)).first_name
+            loser_name = (await client.get_users(loser)).first_name
 
-    await callback_query.message.edit_caption(
-        caption=f"🏆 **{winner_name}** wins the 1v1 Beast Battle!\n\n"
-                f"🎉 {winner_name} earned Ŧ{amount}!\n"
-                f"💔 {loser_name} lost Ŧ{amount}.\n\n"
-                f"Final HP: {max(user_hp, 0)} vs {max(opponent_hp, 0)}"
-    )
+            await callback_query.message.edit_caption(
+                caption=f"🏆 **{winner_name}** wins the 1v1 Beast Battle!\n\n"
+                        f"🎉 {winner_name} earned Ŧ{amount}!\n"
+                        f"💔 {loser_name} lost Ŧ{amount}.\n\n"
+                        f"Final HP: {max(user_hp, 0)} vs {max(opponent_hp, 0)}"
+            )
+        else:
+            # Show the next move selection
+            await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount)
 
 @app.on_callback_query(filters.regex("cancel_1v1"))
 async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
