@@ -109,9 +109,9 @@ async def shunt_command(client, message):
         # Check if the user wins
         if random.randint(1, 100) <= win_chance:
             # User wins, award balance
-            balance_to_award = random.randint(50, 150)
+            balance_to_award = random.randint(10, 150)
             await user_collection.update_one({'id': user_id}, {'$inc': {'gold': balance_to_award}})
-            await message.reply_text(f"You won the fight! You got a balance of {balance_to_award}.")
+            await message.reply_text(f"You won the fight! You got a gold of {balance_to_award}.")
         else:
             # User loses
             await message.reply_text(loss_message)
