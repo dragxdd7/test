@@ -99,16 +99,18 @@ def create_hp_bar(hp, max_hp=100):
 
 async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
     user_moves = beast_moves[user_beast['id']]
-    buttons = [
-        [
-            InlineKeyboardButton(
-                move, 
-                callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move[0:3]}:{user_hp}:{opponent_hp}:{last_user_move[0:3]}:{last_opponent_move[0:3]}:{last_user_damage}:{last_opponent_damage}"
-            )
-            for move in row
-        ]
-        for row in zip(*[iter(user_moves.keys())]*2)  # Arrange moves in a 2x2 grid
+    # In the show_move_selection function
+buttons = [
+    [
+        InlineKeyboardButton(
+            move, 
+            callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}"
+        )
+        for move in row
     ]
+    for row in zip(*[iter(user_moves.keys())]*2)  
+]
+
     keyboard = InlineKeyboardMarkup(buttons)
 
     user_hp_bar = create_hp_bar(user_hp)
@@ -144,7 +146,7 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     amount = int(data[3])
     user_beast_id = int(data[4])
     opponent_beast_id = int(data[5])
-    selected_move = data[6]
+    selected_move = data[6]  
     user_hp = int(data[7])
     opponent_hp = int(data[8])
     last_user_move = data[9]
@@ -157,7 +159,7 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
 
     # Handle the move selection logic
     if selected_user == user_id:
-        damage = user_moves[selected_move]
+        damage = user_moves[selected_move]  # Now this will correctly fetch the damage
         opponent_hp = max(0, opponent_hp - damage)
         last_user_move = selected_move
         last_user_damage = damage
@@ -167,7 +169,7 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
         else:
             await show_move_selection(client, callback_query.message, user_id, user_beast_id, opponent_id, opponent_beast_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage)
     else:
-        damage = opponent_moves[selected_move]
+        damage = opponent_moves[selected_move]  # Now this will correctly fetch the damage
         user_hp = max(0, user_hp - damage)
         last_opponent_move = selected_move
         last_opponent_damage = damage
