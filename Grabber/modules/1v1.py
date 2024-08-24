@@ -88,6 +88,12 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     # Initialize the battle with both players selecting their moves
     await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, 100, 100, "", "", 0, 0)
 
+def create_hp_bar(hp, max_hp=100):
+    bar_length = 10
+    filled_length = int(bar_length * hp // max_hp)
+    bar = '█' * filled_length + '-' * (bar_length - filled_length)
+    return f"[{bar}] {hp}/{max_hp} HP"
+
 async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
     user_moves = beast_moves[user_beast['id']]
     buttons = [
@@ -95,13 +101,26 @@ async def show_move_selection(client, message, user_id, user_beast, opponent_id,
         for row in zip(*[iter(user_moves.keys())]*2)  # Arrange moves in a 2x2 grid
     ]
     keyboard = InlineKeyboardMarkup(buttons)
-    
-    await message.edit_caption(
-        caption=f"⚔️ {user_beast['name']} (HP: {user_hp}) vs {opponent_beast['name']} (HP: {opponent_hp})\n\n"
-                f"🛡️ Last Moves: {last_user_move} (Damage: {last_user_damage}) vs {last_opponent_move} (Damage: {last_opponent_damage})\n\n"
-                f"{(await client.get_users(user_id)).first_name}, it's your turn! Choose your move:",
-        reply_markup=keyboard
+
+    user_hp_bar = create_hp_bar(user_hp)
+    opponent_hp_bar = create_hp_bar(opponent_hp)
+
+    caption_text = (
+        f"⚔️ {user_beast['name']} {user_hp_bar}\n"
+        f"vs\n"
+        f"{opponent_beast['name']} {opponent_hp_bar}\n\n"
+        f"🛡️ Last Moves: {last_user_move} (Damage: {last_user_damage}) vs {last_opponent_move} (Damage: {last_opponent_damage})\n\n"
+        f"{(await client.get_users(user_id)).first_name}, it's your turn! Choose your move:"
     )
+
+    try:
+        if message.caption:
+            await message.edit_caption(caption=caption_text, reply_markup=keyboard)
+        else:
+            await message.edit_text(text=caption_text, reply_markup=keyboard)
+    except Exception as e:
+        await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
+
 
 @app.on_callback_query(filters.regex(r"^move_select"))
 async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
