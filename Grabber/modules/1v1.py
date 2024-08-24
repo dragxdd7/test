@@ -99,18 +99,16 @@ def create_hp_bar(hp, max_hp=100):
 
 async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
     user_moves = beast_moves[user_beast['id']]
-    # In the show_move_selection function
-buttons = [
-    [
-        InlineKeyboardButton(
-            move, 
-            callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}"
-        )
-        for move in row
+    buttons = [
+        [
+            InlineKeyboardButton(
+                move, 
+                callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}"
+            )
+            for move in row
+        ]
+        for row in zip(*[iter(user_moves.keys())]*2)  
     ]
-    for row in zip(*[iter(user_moves.keys())]*2)  
-]
-
     keyboard = InlineKeyboardMarkup(buttons)
 
     user_hp_bar = create_hp_bar(user_hp)
