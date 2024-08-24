@@ -129,8 +129,7 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     opponent_id = int(data[2])
     selected_user = callback_query.from_user.id
 
-    # Ensure only the correct user can make a move
-    if selected_user != user_id and selected_user != opponent_id:
+        if selected_user != user_id and selected_user != opponent_id:
         return await client.send_message(selected_user, "This is not your turn in the 1v1 battle.")
 
     amount = int(data[3])
@@ -144,54 +143,64 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     last_user_damage = int(data[11])
     last_opponent_damage = int(data[12])
 
-    user_beast = next(beast for beast in (await get_user_data(user_id))['beasts'] if beast['id'] == user_beast_id)
-    opponent_beast = next(beast for beast in (await get_user_data(opponent_id))['beasts'] if beast['id'] == opponent_beast_id)
+    user_moves = beast_moves[user_beast_id]
+    opponent_moves = beast_moves[opponent_beast_id]
 
+    # Handle the move selection logic
     if selected_user == user_id:
-        user_move_power = beast_moves[user_beast_id][selected_move]
-        await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount, user_hp, opponent_hp, selected_move, last_opponent_move, user_move_power, last_opponent_damage)
-    elif selected_user == opponent_id:
-        # Ensure user_move_power is carried from the previous state
-        user_move_power = last_user_damage  # Use the previous move's damage
+        damage = user_moves[selected_move]
+        opponent_hp = max(0, opponent_hp - damage)
+        last_user_move = selected_move
+        last_user_damage = damage
 
-        opponent_move_power = beast_moves[opponent_beast_id][selected_move]
-        opponent_hp -= user_move_power
-        user_hp -= opponent_move_power
-
-        await callback_query.message.edit_caption(
-            caption=f"⚔️ {user_beast['name']} used {last_user_move} causing {user_move_power} damage!\n"
-                    f"{opponent_beast['name']} used {selected_move} causing {opponent_move_power} damage!\n\n"
-                    f"Remaining HP: {user_hp} vs {opponent_hp}"
-        )
-
-        if opponent_hp <= 0 or user_hp <= 0:
-            winner = user_id if opponent_hp <= 0 else opponent_id
-            loser = opponent_id if opponent_hp <= 0 else user_id
-
-            await user_collection.update_one({'id': winner}, {'$inc': {'gold': amount}})
-            await user_collection.update_one({'id': loser}, {'$inc': {'gold': -amount}})
-
-            winner_name = (await client.get_users(winner)).first_name
-            loser_name = (await client.get_users(loser)).first_name
-
-            await callback_query.message.edit_caption(
-                caption=f"🏆 **{winner_name}** wins the 1v1 Beast Battle!\n\n"
-                        f"🎉 {winner_name} earned Ŧ{amount}!\n"
-                        f"💔 {loser_name} lost Ŧ{amount}.\n\n"
-                        f"Final HP: {max(user_hp, 0)} vs {max(opponent_hp, 0)}"
-            )
+        if opponent_hp == 0:
+            await end_battle(client, callback_query.message, user_id, opponent_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage, user_win=True)
         else:
-            await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, selected_move, last_user_damage, opponent_move_power)
+            await show_move_selection(client, callback_query.message, user_id, user_beast_id, opponent_id, opponent_beast_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage)
+    else:
+        damage = opponent_moves[selected_move]
+        user_hp = max(0, user_hp - damage)
+        last_opponent_move = selected_move
+        last_opponent_damage = damage
 
+        if user_hp == 0:
+            await end_battle(client, callback_query.message, user_id, opponent_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage, user_win=False)
+        else:
+            await show_move_selection(client, callback_query.message, user_id, user_beast_id, opponent_id, opponent_beast_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage)
 
+async def end_battle(client, message, user_id, opponent_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage, user_win=True):
+    winner_id = user_id if user_win else opponent_id
+    loser_id = opponent_id if user_win else user_id
+    winner_hp = user_hp if user_win else opponent_hp
+    loser_hp = opponent_hp if user_win else user_hp
+
+    winner_user = await get_user_data(winner_id)
+    loser_user = await get_user_data(loser_id)
+
+    winner_hp_bar = create_hp_bar(winner_hp)
+    loser_hp_bar = create_hp_bar(loser_hp)
+
+    # Update the user data in the database
+    await user_collection.update_one({"id": winner_id}, {"$inc": {"gold": amount}})
+    await user_collection.update_one({"id": loser_id}, {"$inc": {"gold": -amount}})
+
+    caption_text = (
+        f"🏆 {winner_user['name']} won the 1v1 Beast Battle!\n\n"
+        f"💥 {winner_user['beasts'][0]['name']} {winner_hp_bar}\n"
+        f"💀 {loser_user['beasts'][0]['name']} {loser_hp_bar}\n\n"
+        f"🪙 {winner_user['name']} wins Ŧ{amount}!"
+    )
+
+    await message.edit_caption(caption_text)
+
+    
 @app.on_callback_query(filters.regex(r"^cancel_1v1"))
 async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
     user_id = int(data[1])
     opponent_id = int(data[2])
 
-    if callback_query.from_user.id not in [user_id, opponent_id]:
+    if callback_query.from_user.id != user_id:
         return await callback_query.answer("You are not authorized to cancel this challenge.", show_alert=True)
 
-    await callback_query.message.edit_caption("The 1v1 Beast Battle challenge was canceled.")
-                                            
+    await callback_query.message.edit_caption("⚔️ The 1v1 Beast Battle challenge has been canceled.")
