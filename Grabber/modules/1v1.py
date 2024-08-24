@@ -132,12 +132,15 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
         user_move_power = beast_moves[user_beast_id][selected_move]
         await show_move_selection(client, callback_query.message, opponent_id, opponent_beast, user_id, user_beast, amount, user_hp, opponent_hp, selected_move, last_opponent_move, user_move_power, last_opponent_damage)
     elif selected_user == opponent_id:
+        # Ensure user_move_power is carried from the previous state
+        user_move_power = last_user_damage  # Use the previous move's damage
+
         opponent_move_power = beast_moves[opponent_beast_id][selected_move]
         opponent_hp -= user_move_power
         user_hp -= opponent_move_power
 
         await callback_query.message.edit_caption(
-            caption=f"⚔️ {user_beast['name']} used {last_user_move} causing {last_user_damage} damage!\n"
+            caption=f"⚔️ {user_beast['name']} used {last_user_move} causing {user_move_power} damage!\n"
                     f"{opponent_beast['name']} used {selected_move} causing {opponent_move_power} damage!\n\n"
                     f"Remaining HP: {user_hp} vs {opponent_hp}"
         )
@@ -160,6 +163,7 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
             )
         else:
             await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, selected_move, last_user_damage, opponent_move_power)
+
 
 @app.on_callback_query(filters.regex(r"^cancel_1v1"))
 async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
