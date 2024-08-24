@@ -129,7 +129,8 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     opponent_id = int(data[2])
     selected_user = callback_query.from_user.id
 
-        if selected_user != user_id and selected_user != opponent_id:
+    
+    if selected_user != user_id and selected_user != opponent_id:
         return await client.send_message(selected_user, "This is not your turn in the 1v1 battle.")
 
     amount = int(data[3])
