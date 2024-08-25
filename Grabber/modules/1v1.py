@@ -132,13 +132,13 @@ async def show_move_selection(client, message, user_id, user_beast, opponent_id,
     )
 
     try:
-    if message.caption and message.caption != caption_text:
-        await message.edit_caption(caption=caption_text, reply_markup=keyboard)
-    elif message.text and message.text != caption_text:
-        await message.edit_text(text=caption_text, reply_markup=keyboard)
-except Exception as e:
-    await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
-    
+        if message.caption and message.caption != caption_text:
+            await message.edit_caption(caption=caption_text, reply_markup=keyboard)
+        elif message.text and message.text != caption_text:
+            await message.edit_text(text=caption_text, reply_markup=keyboard)
+    except Exception as e:
+        await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
+
 @app.on_callback_query(filters.regex(r"^mvs"))
 async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
