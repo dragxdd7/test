@@ -94,8 +94,8 @@ async def accept_1v1_callback(client: Client, callback_query: t.CallbackQuery):
     except StopIteration:
         return await callback_query.message.edit_text("Error retrieving beast data for one or both users.")
 
-    # Initialize the battle with both players selecting their moves
-    await show_move_selection(client, callback_query.message, user_id, user_beast, opponent_id, opponent_beast, amount, 100, 100, "", "", 0, 0)
+    # Pass the beast IDs to the show_move_selection function
+    await show_move_selection(client, callback_query.message, user_id, user_beast['id'], opponent_id, opponent_beast['id'], amount, 100, 100, "", "", 0, 0)
 
 def create_hp_bar(hp, max_hp=100):
     bar_length = 10
@@ -103,7 +103,9 @@ def create_hp_bar(hp, max_hp=100):
     bar = '█' * filled_length + '-' * (bar_length - filled_length)
     return f"[{bar}] {hp}/{max_hp} HP"
 
+# Update show_move_selection function to accept beast IDs instead of beast dicts
 async def show_move_selection(client, message, user_id, user_beast_id, opponent_id, opponent_beast_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
+    # Use beast IDs directly to fetch moves
     user_moves = beast_moves.get(user_beast_id)
     if not user_moves:
         return await message.edit_text("Error retrieving moves for your beast.")
@@ -116,7 +118,7 @@ async def show_move_selection(client, message, user_id, user_beast_id, opponent_
             )
             for move in row
         ]
-        for row in zip(*[iter(user_moves.keys())]*2)  
+        for row in zip(*[iter(user_moves.keys())]*2)
     ]
     keyboard = InlineKeyboardMarkup(buttons)
 
@@ -138,6 +140,7 @@ async def show_move_selection(client, message, user_id, user_beast_id, opponent_
             await message.edit_text(text=caption_text, reply_markup=keyboard)
     except Exception as e:
         await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
+
 
 
 @app.on_callback_query(filters.regex(r"^mvs"))
