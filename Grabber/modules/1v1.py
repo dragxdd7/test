@@ -103,8 +103,8 @@ def create_hp_bar(hp, max_hp=100):
     bar = '█' * filled_length + '-' * (bar_length - filled_length)
     return f"[{bar}] {hp}/{max_hp} HP"
 
-async def show_move_selection(client, message, user_id, user_beast, opponent_id, opponent_beast, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
-    user_moves = beast_moves.get(user_beast['id'])
+async def show_move_selection(client, message, user_id, user_beast_id, opponent_id, opponent_beast_id, amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage):
+    user_moves = beast_moves.get(user_beast_id)
     if not user_moves:
         return await message.edit_text("Error retrieving moves for your beast.")
     
@@ -112,7 +112,7 @@ async def show_move_selection(client, message, user_id, user_beast, opponent_id,
         [
             InlineKeyboardButton(
                 move, 
-                callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast['id']}:{opponent_beast['id']}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}"
+                callback_data=f"mvs:{user_id}:{opponent_id}:{amount}:{user_beast_id}:{opponent_beast_id}:{move}:{user_hp}:{opponent_hp}:{last_user_move}:{last_opponent_move}:{last_user_damage}:{last_opponent_damage}"
             )
             for move in row
         ]
@@ -124,9 +124,9 @@ async def show_move_selection(client, message, user_id, user_beast, opponent_id,
     opponent_hp_bar = create_hp_bar(opponent_hp)
 
     caption_text = (
-        f"⚔️ {user_beast['name']} {user_hp_bar}\n"
+        f"⚔️ Beast {user_beast_id} {user_hp_bar}\n"
         f"vs\n"
-        f"{opponent_beast['name']} {opponent_hp_bar}\n\n"
+        f"Beast {opponent_beast_id} {opponent_hp_bar}\n\n"
         f"🛡️ Last Moves: {last_user_move} (Damage: {last_user_damage}) vs {last_opponent_move} (Damage: {last_opponent_damage})\n\n"
         f"{(await client.get_users(user_id)).first_name}, it's your turn! Choose your move:"
     )
@@ -138,6 +138,7 @@ async def show_move_selection(client, message, user_id, user_beast, opponent_id,
             await message.edit_text(text=caption_text, reply_markup=keyboard)
     except Exception as e:
         await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
+
 
 @app.on_callback_query(filters.regex(r"^mvs"))
 async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
