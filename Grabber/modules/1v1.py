@@ -220,3 +220,18 @@ async def move_selection_callback(client: Client, callback_query: t.CallbackQuer
             user_damage,
             opponent_damage
         )
+
+
+@app.on_callback_query(filters.regex(r"^c1v1"))
+async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
+    data = callback_query.data.split(":")
+    user_id = int(data[1])
+    opponent_id = int(data[2])
+
+    if callback_query.from_user.id not in {user_id, opponent_id}:
+        return await callback_query.answer("You are not authorized to cancel this challenge.", show_alert=True)
+
+    await callback_query.message.edit_caption(
+        caption=f"❌ The 1v1 Beast Battle challenge between {(await client.get_users(user_id)).first_name} and {(await client.get_users(opponent_id)).first_name} has been canceled.",
+        reply_markup=None
+        )
