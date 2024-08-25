@@ -141,6 +141,7 @@ async def show_move_selection(client, message, user_id, user_beast_id, opponent_
     except Exception as e:
         await client.send_message(user_id, f"Error editing message: {str(e)}")
 
+# Updated move_selection_callback function
 @app.on_callback_query(filters.regex(r"^mvs:"))
 async def move_selection_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
@@ -165,11 +166,26 @@ async def move_selection_callback(client: Client, callback_query: t.CallbackQuer
         return await callback_query.message.edit_text("The opponent no longer exists in the database.")
 
     opponent_moves = beast_moves.get(opponent_beast_id)
-    opponent_move = random.choice(list(opponent_moves.keys()))
-    opponent_damage = opponent_moves[opponent_move]
+    if not opponent_moves:
+        return await callback_query.message.edit_text("Error retrieving moves for your opponent's beast.")
 
-    user_damage = beast_moves[user_beast_id][user_move]
+    # Determine if user's move fails
+    user_move_fails = random.random() < 0.10  # 10% chance
+    if user_move_fails:
+        user_damage = 0
+    else:
+        user_damage = beast_moves[user_beast_id][user_move]
 
+    # Determine if opponent's move fails
+    opponent_move_fails = random.random() < 0.10  # 10% chance
+    if opponent_move_fails:
+        opponent_move = random.choice(list(opponent_moves.keys()))
+        opponent_damage = 0
+    else:
+        opponent_move = random.choice(list(opponent_moves.keys()))
+        opponent_damage = opponent_moves[opponent_move]
+
+    # Update HP based on damage
     opponent_hp -= user_damage
     user_hp -= opponent_damage
 
