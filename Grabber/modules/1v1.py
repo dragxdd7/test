@@ -139,20 +139,13 @@ async def show_move_selection(client, message, user_id, user_beast_id, opponent_
         elif message.text and message.text != caption_text:
             await message.edit_text(text=caption_text, reply_markup=keyboard)
     except Exception as e:
-        await client.send_message(user_id, f"Error editing the message caption: {str(e)}")
+        await client.send_message(user_id, f"Error editing message: {str(e)}")
 
-
-
-@app.on_callback_query(filters.regex(r"^mvs"))
-async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
+@app.on_callback_query(filters.regex(r"^mvs:"))
+async def move_selection_callback(client: Client, callback_query: t.CallbackQuery):
     data = callback_query.data.split(":")
     user_id = int(data[1])
     opponent_id = int(data[2])
-    selected_user = callback_query.from_user.id
-
-    if selected_user != user_id and selected_user != opponent_id:
-        return await client.send_message(selected_user, "This is not your turn in the 1v1 battle.")
-
     amount = int(data[3])
     user_beast_id = int(data[4])
     opponent_beast_id = int(data[5])
@@ -164,71 +157,50 @@ async def move_select_callback(client: Client, callback_query: t.CallbackQuery):
     last_user_damage = int(data[11])
     last_opponent_damage = int(data[12])
 
-    if selected_user == user_id:
-        user_moves = beast_moves[user_beast_id]
-        user_damage = user_moves[user_move]
+    if callback_query.from_user.id != user_id:
+        return await callback_query.answer("It's not your turn!", show_alert=True)
 
-        if last_opponent_move:
-            opponent_moves = beast_moves[opponent_beast_id]
-            opponent_damage = opponent_moves[last_opponent_move]
+    opponent_data = await get_user_data(opponent_id)
+    if not opponent_data:
+        return await callback_query.message.edit_text("The opponent no longer exists in the database.")
 
-            user_hp -= last_opponent_damage
-            opponent_hp -= last_user_damage
+    opponent_moves = beast_moves.get(opponent_beast_id)
+    opponent_move = random.choice(list(opponent_moves.keys()))
+    opponent_damage = opponent_moves[opponent_move]
 
-        last_user_move = user_move
-        last_user_damage = user_damage
+    user_damage = beast_moves[user_beast_id][user_move]
 
-    if selected_user == opponent_id:
-        opponent_moves = beast_moves[opponent_beast_id]
-        opponent_move = user_move
-        opponent_damage = opponent_moves[opponent_move]
+    opponent_hp -= user_damage
+    user_hp -= opponent_damage
 
-        if last_user_move:
-            user_moves = beast_moves[user_beast_id]
-            user_damage = user_moves[last_user_move]
+    if opponent_hp <= 0 or user_hp <= 0:
+        winner = "You" if opponent_hp <= 0 else "Your opponent"
+        loser = "your opponent" if opponent_hp <= 0 else "you"
+        winner_id = user_id if opponent_hp <= 0 else opponent_id
+        loser_id = opponent_id if opponent_hp <= 0 else user_id
 
-            user_hp -= last_opponent_damage
-            opponent_hp -= last_user_damage
+        await user_collection.update_one({"id": winner_id}, {"$inc": {"gold": amount}})
+        await user_collection.update_one({"id": loser_id}, {"$inc": {"gold": -amount}})
 
-        last_opponent_move = opponent_move
-        last_opponent_damage = opponent_damage
-
-    if user_hp <= 0 or opponent_hp <= 0:
-        winner = None
-        if user_hp > opponent_hp:
-            winner = user_id
-        elif opponent_hp > user_hp:
-            winner = opponent_id
-
-        if winner:
-            await callback_query.message.edit_caption(
-                caption=f"🎉 {(await client.get_users(winner)).first_name} wins the battle!\n\n"
-                        f"{(await client.get_users(user_id)).first_name}'s {beast_moves[user_beast_id]} HP: {user_hp}\n"
-                        f"{(await client.get_users(opponent_id)).first_name}'s {beast_moves[opponent_beast_id]} HP: {opponent_hp}\n\n"
-                        f"💰 Prize: Ŧ{amount}",
-                reply_markup=None
-            )
-        else:
-            await callback_query.message.edit_caption(
-                caption="🤝 It's a draw!\n\n"
-                        f"{(await client.get_users(user_id)).first_name}'s {beast_moves[user_beast_id]} HP: {user_hp}\n"
-                        f"{(await client.get_users(opponent_id)).first_name}'s {beast_moves[opponent_beast_id]} HP: {opponent_hp}\n\n"
-                        f"💰 Bet returned: Ŧ{amount}",
-                reply_markup=None
-            )
+        await callback_query.message.edit_caption(
+            caption=f"🔥 {winner} won the 1v1 Beast Battle!\n💰 {winner} received Ŧ{amount}\n😢 {loser} lost Ŧ{amount}\n\n"
+                    f"{create_hp_bar(user_hp)} vs {create_hp_bar(opponent_hp)}\n\n"
+                    f"🏆 Congratulations!",
+            reply_markup=None
+        )
     else:
-        await show_move_selection(client, callback_query.message, user_id, beast_moves[user_beast_id], opponent_id, beast_moves[opponent_beast_id], amount, user_hp, opponent_hp, last_user_move, last_opponent_move, last_user_damage, last_opponent_damage)
-
-@app.on_callback_query(filters.regex(r"^c1v1"))
-async def cancel_1v1_callback(client: Client, callback_query: t.CallbackQuery):
-    data = callback_query.data.split(":")
-    user_id = int(data[1])
-    opponent_id = int(data[2])
-
-    if callback_query.from_user.id not in {user_id, opponent_id}:
-        return await callback_query.answer("You are not authorized to cancel this challenge.", show_alert=True)
-
-    await callback_query.message.edit_caption(
-        caption=f"❌ The 1v1 Beast Battle challenge between {(await client.get_users(user_id)).first_name} and {(await client.get_users(opponent_id)).first_name} has been canceled.",
-        reply_markup=None
-    )
+        await show_move_selection(
+            client,
+            callback_query.message,
+            opponent_id,
+            opponent_beast_id,
+            user_id,
+            user_beast_id,
+            amount,
+            opponent_hp,
+            user_hp,
+            user_move,
+            opponent_move,
+            user_damage,
+            opponent_damage
+        )
