@@ -150,19 +150,21 @@ async def stats(client, message):
 @app.on_message(filters.regex("Plans"))
 async def show_plans(client, message):
     user = await users_collection.find_one({"user_id": message.from_user.id})
-    if user and user['plan'] == "premium":
-        days_left = int((user['premium_expiry'] - time.time()) / 86400)  # Calculate days left
-        await message.reply(
-            f"You are a Premium user with {days_left} days left.\n"
-            f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})"
-        )
-    else:
-        await message.reply(
-            f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
-            ])
-        )
+    if user:
+        premium_expiry = user.get('premium_expiry')  # Use get() to avoid KeyError
+        if user['plan'] == "premium" and premium_expiry:
+            days_left = int((premium_expiry - time.time()) / 86400)  # Calculate days left
+            await message.reply(
+                f"You are a Premium user with {days_left} days left.\n"
+                f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})"
+            )
+        else:
+            await message.reply(
+                f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
+                ])
+            )
 
 @app.on_message(filters.command("pgive") & filters.user(SUDO_USER_ID))
 async def give_premium(client, message):
@@ -187,21 +189,6 @@ async def daily_check(client, message):
 
     for user in users:
         expiry_time = user.get("premium_expiry")
-        if expiry_time and expiry_time - current_time <= 604800:  # Check if within a week (7 days)
+        if expiry_time and expiry_time - current_time <= 604800:  # 7 days in seconds
             days_left = int((expiry_time - current_time) / 86400)
-            await client.send_message(
-                user["user_id"],
-                f"Your Premium Plan will expire in {days_left} days. Consider renewing to avoid interruptions.",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Renew Premium Plan", callback_data="buy_premium")]
-                ])
-            )
-        if expiry_time and current_time >= expiry_time:
-            await users_collection.update_one({"user_id": user["user_id"]}, {"$set": {"plan": "free", "premium_expiry": None}})
-            await client.send_message(
-                user["user_id"],
-                "Your Premium Plan has expired. You are now on the free plan. Buy premium to regain unlimited access.",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
-                ])
-            )
+            await client.send_message(user["user_id"], f"Your Premium plan expires in {days_left} days. Please renew to continue enjoying premium features.")
