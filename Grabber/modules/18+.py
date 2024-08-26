@@ -2,7 +2,7 @@ import random
 import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
-from . import users_collection, videos_collection, app
+from Grabber import users_collection, videos_collection, app
 
 
 
