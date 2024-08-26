@@ -1,5 +1,6 @@
 import random
 import time
+from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
 from Grabber import users_collection, videos_collection
@@ -18,7 +19,14 @@ async def start(client, message):
     user = await users_collection.find_one({"user_id": user_id})
     
     if not user:
-        await users_collection.insert_one({"user_id": user_id, "plan": "free", "daily_usage": 0, "last_reset": time.time()})
+        # Set up new user with free plan and track their plan expiry
+        await users_collection.insert_one({
+            "user_id": user_id,
+            "plan": "free",
+            "daily_usage": 0,
+            "last_reset": time.time(),
+            "premium_expiry": None  # Track premium expiry
+        })
     
     keyboard = ReplyKeyboardMarkup([
         [KeyboardButton("Plans"), KeyboardButton("Get Video")],
@@ -44,6 +52,7 @@ async def get_video(client, message):
     
     daily_limit = PREMIUM_PLAN_LIMIT if user['plan'] == "premium" else FREE_PLAN_LIMIT
     
+    # Check if 24 hours have passed to reset usage
     if time.time() - user['last_reset'] >= 86400:  # 24 hours in seconds
         await users_collection.update_one({"user_id": user_id}, {"$set": {"daily_usage": 0, "last_reset": time.time()}})
     
@@ -74,14 +83,18 @@ async def upload_video(client, message):
 
 @app.on_callback_query(filters.regex("buy_premium"))
 async def buy_premium(client, callback_query):
-    await callback_query.message.reply_photo(
-        QR_CODE_IMAGE,
-        caption=f"To buy the premium plan (₹{PREMIUM_PLAN_COST}), send payment to UPI ID: {UPI_ID}. After payment, send the screenshot here.",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Done Payment", callback_data="done_payment")],
-            [InlineKeyboardButton("Cancel", callback_data="cancel_payment")]
-        ])
-    )
+    user = await users_collection.find_one({"user_id": callback_query.from_user.id})
+    if user and user['plan'] == "premium":
+        await callback_query.answer("You already have the premium plan!", show_alert=True)
+    else:
+        await callback_query.message.reply_photo(
+            QR_CODE_IMAGE,
+            caption=f"To buy the premium plan (₹{PREMIUM_PLAN_COST}), send payment to UPI ID: {UPI_ID}. After payment, send the screenshot here.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Done Payment", callback_data="done_payment")],
+                [InlineKeyboardButton("Cancel", callback_data="cancel_payment")]
+            ])
+        )
 
 @app.on_callback_query(filters.regex("done_payment"))
 async def done_payment(client, callback_query):
@@ -108,7 +121,11 @@ async def handle_screenshot(client, message: Message):
 @app.on_callback_query(filters.regex(r"admin_confirm_(\d+)"))
 async def admin_confirm(client, callback_query):
     user_id = int(callback_query.data.split("_")[-1])
-    await users_collection.update_one({"user_id": user_id}, {"$set": {"plan": "premium"}})
+    expiry_date = datetime.now() + timedelta(days=7)
+    await users_collection.update_one(
+        {"user_id": user_id},
+        {"$set": {"plan": "premium", "premium_expiry": expiry_date.timestamp()}}
+    )
     await client.send_message(user_id, "Your payment is confirmed, and your plan has been upgraded to Premium.")
     await callback_query.message.reply("Payment confirmed and user upgraded to Premium.")
 
@@ -132,12 +149,20 @@ async def stats(client, message):
 
 @app.on_message(filters.regex("Plans"))
 async def show_plans(client, message):
-    await message.reply(
-        f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
-        ])
-    )
+    user = await users_collection.find_one({"user_id": message.from_user.id})
+    if user and user['plan'] == "premium":
+        days_left = int((user['premium_expiry'] - time.time()) / 86400)  # Calculate days left
+        await message.reply(
+            f"You are a Premium user with {days_left} days left.\n"
+            f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})"
+        )
+    else:
+        await message.reply(
+            f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
+            ])
+        )
 
 @app.on_message(filters.command("pgive") & filters.user(SUDO_USER_ID))
 async def give_premium(client, message):
@@ -146,6 +171,37 @@ async def give_premium(client, message):
         return
 
     target_user_id = int(message.command[1])
-    await users_collection.update_one({"user_id": target_user_id}, {"$set": {"plan": "premium"}})
+    expiry_date = datetime.now() + timedelta(days=7)
+    await users_collection.update_one(
+        {"user_id": target_user_id},
+        {"$set": {"plan": "premium", "premium_expiry": expiry_date.timestamp()}}
+    )
     await message.reply(f"Premium access granted to user ID {target_user_id}.")
     await client.send_message(target_user_id, "You have been granted Premium access by the admin.")
+
+# Add a daily check to notify users when premium expires
+@app.on_message(filters.command("pcheck"))
+async def daily_check(client, message):
+    users = await users_collection.find({"plan": "premium"}).to_list(length=None)
+    current_time = time.time()
+
+    for user in users:
+        expiry_time = user.get("premium_expiry")
+        if expiry_time and expiry_time - current_time <= 604800:  # Check if within a week (7 days)
+            days_left = int((expiry_time - current_time) / 86400)
+            await client.send_message(
+                user["user_id"],
+                f"Your Premium Plan will expire in {days_left} days. Consider renewing to avoid interruptions.",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Renew Premium Plan", callback_data="buy_premium")]
+                ])
+            )
+        if expiry_time and current_time >= expiry_time:
+            await users_collection.update_one({"user_id": user["user_id"]}, {"$set": {"plan": "free", "premium_expiry": None}})
+            await client.send_message(
+                user["user_id"],
+                "Your Premium Plan has expired. You are now on the free plan. Buy premium to regain unlimited access.",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
+                ])
+            )
