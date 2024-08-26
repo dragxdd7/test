@@ -24,10 +24,17 @@ async def start(client, message):
         [KeyboardButton("Plans"), KeyboardButton("Get Video")],
     ], resize_keyboard=True)
     
-    await message.reply("Welcome to the pick pron 18+ paid bot!", reply_markup=keyboard)
+    await message.reply(
+        "Welcome to the 18+ pick pron paid bot! ⚠️ Note: This bot is intended for adult male users only. Proceed if you are 18+. Commands work in private chat only.",
+        reply_markup=keyboard
+    )
 
 @app.on_message(filters.command("getvideo") | filters.regex("Get Video"))
 async def get_video(client, message):
+    if not message.chat.type == "private":  # Check if command is used in private chat
+        await message.reply("This command can only be used in the bot’s private chat.")
+        return
+
     user_id = message.from_user.id
     user = await users_collection.find_one({"user_id": user_id})
     
@@ -56,7 +63,7 @@ async def get_video(client, message):
         else:
             await message.reply("You have reached your daily limit for today. Come back tomorrow!")
 
-@app.on_message(filters.command("upload") & filters.user(SUDO_USER_ID))
+@app.on_message(filters.command("supload") & filters.user(SUDO_USER_ID))
 async def upload_video(client, message):
     if message.reply_to_message and message.reply_to_message.video:
         file_id = message.reply_to_message.video.file_id
