@@ -5,17 +5,13 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyb
 from Grabber import users_collection, videos_collection
 from . import app
 
-
-SUDO_USER_ID = 72818182  # Replace with your sudo user ID
-
-# Constants
+SUDO_USER_ID = 72818182  # Replace with your actual sudo user ID
 FREE_PLAN_LIMIT = 10
 PREMIUM_PLAN_LIMIT = 8000
 PREMIUM_PLAN_COST = 60
 UPI_ID = "8288181@omni"
 QR_CODE_IMAGE = "path_to_qr_code_image.jpg"  # Add your QR code image path here
 
-# Start Command
 @app.on_message(filters.command("tstart"))
 async def start(client, message):
     user_id = message.from_user.id
@@ -30,7 +26,6 @@ async def start(client, message):
     
     await message.reply("Welcome to the pick pron 18+ paid bot!", reply_markup=keyboard)
 
-# Get Video Command
 @app.on_message(filters.command("getvideo") | filters.regex("Get Video"))
 async def get_video(client, message):
     user_id = message.from_user.id
@@ -42,7 +37,6 @@ async def get_video(client, message):
     
     daily_limit = PREMIUM_PLAN_LIMIT if user['plan'] == "premium" else FREE_PLAN_LIMIT
     
-    # Reset daily usage if it's a new day
     if time.time() - user['last_reset'] >= 86400:  # 24 hours in seconds
         await users_collection.update_one({"user_id": user_id}, {"$set": {"daily_usage": 0, "last_reset": time.time()}})
     
@@ -62,7 +56,6 @@ async def get_video(client, message):
         else:
             await message.reply("You have reached your daily limit for today. Come back tomorrow!")
 
-# Upload Video Command (Sudo Users Only)
 @app.on_message(filters.command("upload") & filters.user(SUDO_USER_ID))
 async def upload_video(client, message):
     if message.reply_to_message and message.reply_to_message.video:
@@ -72,7 +65,6 @@ async def upload_video(client, message):
     else:
         await message.reply("Please reply to a video to upload.")
 
-# Handle Premium Plan Purchase
 @app.on_callback_query(filters.regex("buy_premium"))
 async def buy_premium(client, callback_query):
     await callback_query.message.reply_photo(
@@ -119,7 +111,6 @@ async def admin_cancel(client, callback_query):
     await client.send_message(user_id, "Your payment was not confirmed. Please try again or contact support.")
     await callback_query.message.reply("Payment canceled.")
 
-# Stats Command (Sudo Users Only)
 @app.on_message(filters.command("stats") & filters.user(SUDO_USER_ID))
 async def stats(client, message):
     total_videos = await videos_collection.count_documents({})
@@ -132,7 +123,6 @@ async def stats(client, message):
         f"Free Plan Users: {free_users}"
     )
 
-# Show Plans Command
 @app.on_message(filters.regex("Plans"))
 async def show_plans(client, message):
     await message.reply(
@@ -141,5 +131,3 @@ async def show_plans(client, message):
             [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
         ])
     )
-
-
