@@ -2,7 +2,6 @@ import random
 import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
-from pymongo import MongoClient
 from . import users_collection, videos_collection, app
 
 
@@ -18,7 +17,7 @@ UPI_ID = "8288181@omni"
 QR_CODE_IMAGE = "path_to_qr_code_image.jpg"  # Add your QR code image path here
 
 # Start Command
-@app.on_message(filters.command("start"))
+@app.on_message(filters.command("tstart"))
 def start(client, message):
     user_id = message.from_user.id
     user = users_collection.find_one({"user_id": user_id})
