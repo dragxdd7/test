@@ -78,13 +78,13 @@ async def buy_premium(client, callback_query):
         QR_CODE_IMAGE,
         caption=f"To buy the premium plan (₹{PREMIUM_PLAN_COST}), send payment to UPI ID: {UPI_ID}. After payment, send the screenshot here.",
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Confirm Payment", callback_data="confirm_payment")],
+            [InlineKeyboardButton("Done Payment", callback_data="done_payment")],
             [InlineKeyboardButton("Cancel", callback_data="cancel_payment")]
         ])
     )
 
-@app.on_callback_query(filters.regex("confirm_payment"))
-async def confirm_payment(client, callback_query):
+@app.on_callback_query(filters.regex("done_payment"))
+async def done_payment(client, callback_query):
     user_id = callback_query.from_user.id
     await callback_query.message.reply("Please send your payment screenshot here.")
     
@@ -138,3 +138,14 @@ async def show_plans(client, message):
             [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
         ])
     )
+
+@app.on_message(filters.command("pgive") & filters.user(SUDO_USER_ID))
+async def give_premium(client, message):
+    if len(message.command) < 2:
+        await message.reply("Usage: /givepremium <user_id>")
+        return
+
+    target_user_id = int(message.command[1])
+    await users_collection.update_one({"user_id": target_user_id}, {"$set": {"plan": "premium"}})
+    await message.reply(f"Premium access granted to user ID {target_user_id}.")
+    await client.send_message(target_user_id, "You have been granted Premium access by the admin.")
