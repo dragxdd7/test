@@ -5,12 +5,12 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyb
 from Grabber import users_collection, videos_collection
 from . import app
 
-SUDO_USER_ID = 72818182  # Replace with your actual sudo user ID
+SUDO_USER_ID = 7185106962  # Replace with your actual sudo user ID
 FREE_PLAN_LIMIT = 10
 PREMIUM_PLAN_LIMIT = 8000
 PREMIUM_PLAN_COST = 60
-UPI_ID = "8288181@omni"
-QR_CODE_IMAGE = "path_to_qr_code_image.jpg"  # Add your QR code image path here
+UPI_ID = "828878181@omni"
+QR_CODE_IMAGE = "https://telegra.ph/file/5c7b85cb39b2702c49816.jpg"  # Add your QR code image path here
 
 @app.on_message(filters.command("tstart"))
 async def start(client, message):
