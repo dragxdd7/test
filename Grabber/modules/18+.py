@@ -2,8 +2,8 @@ import random
 import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
-from Grabber import users_collection, videos_collection, app
-
+from Grabber import users_collection, videos_collection
+from . import app
 
 
 SUDO_USER_ID = 72818182  # Replace with your sudo user ID
