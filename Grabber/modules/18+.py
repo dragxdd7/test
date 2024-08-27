@@ -146,25 +146,36 @@ async def stats(client, message):
         f"Premium Users: {premium_users}\n"
         f"Free Plan Users: {free_users}"
     )
-
+    
 @app.on_message(filters.regex("Plans"))
 async def show_plans(client, message):
     user = await users_collection.find_one({"user_id": message.from_user.id})
     if user:
-        premium_expiry = user.get('premium_expiry')  # Use get() to avoid KeyError
+        premium_expiry = user.get('premium_expiry')
+        daily_limit = PREMIUM_PLAN_LIMIT if user['plan'] == "premium" else FREE_PLAN_LIMIT
+        videos_remaining = daily_limit - user['daily_usage']
+        
         if user['plan'] == "premium" and premium_expiry:
             days_left = int((premium_expiry - time.time()) / 86400)  # Calculate days left
             await message.reply(
-                f"You are a Premium user with {days_left} days left.\n"
-                f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})"
+                f"🟢 **Premium User**\n\n"
+                f"🔄 Daily Limit: {PREMIUM_PLAN_LIMIT} videos/day\n"
+                f"📊 Videos Watched Today: {user['daily_usage']}\n"
+                f"🕒 Videos Remaining Today: {videos_remaining}\n"
+                f"⏳ Premium Expires In: {days_left} days"
             )
         else:
             await message.reply(
-                f"Free Plan: {FREE_PLAN_LIMIT} videos/day\nPremium Plan: {PREMIUM_PLAN_LIMIT} videos/day (₹{PREMIUM_PLAN_COST})",
+                f"⚪ **Free Plan**\n\n"
+                f"🔄 Daily Limit: {FREE_PLAN_LIMIT} videos/day\n"
+                f"📊 Videos Watched Today: {user['daily_usage']}\n"
+                f"🕒 Videos Remaining Today: {videos_remaining}\n\n"
+                f"Upgrade to Premium for ₹{PREMIUM_PLAN_COST} and enjoy {PREMIUM_PLAN_LIMIT} videos/day!",
                 reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton("Buy Premium Plan", callback_data="buy_premium")]
                 ])
             )
+
 
 @app.on_message(filters.command("pgive") & filters.user(SUDO_USER_ID))
 async def give_premium(client, message):
