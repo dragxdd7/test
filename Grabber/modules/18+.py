@@ -6,7 +6,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyb
 from Grabber import users_collection, videos_collection
 from . import app
 
-SUDO_USER_ID = 7185106962  # Replace with your actual sudo user ID
+SUDO_USER_ID = 7185106962  
 FREE_PLAN_LIMIT = 10
 PREMIUM_PLAN_LIMIT = 8000
 PREMIUM_PLAN_COST = 60
@@ -37,12 +37,8 @@ async def start(client, message):
         reply_markup=keyboard
     )
 
-@app.on_message(filters.command("getvideo") | filters.regex("Get Video"))
+@app.on_message(filters.command("getvideo") | filters.regex("Get Video") & filters.private)
 async def get_video(client, message):
-    if not message.chat.type == "private":  # Check if command is used in private chat
-        await message.reply("This command can only be used in the bot’s private chat.")
-        return
-
     user_id = message.from_user.id
     user = await users_collection.find_one({"user_id": user_id})
     
@@ -192,7 +188,6 @@ async def give_premium(client, message):
     await message.reply(f"Premium access granted to user ID {target_user_id}.")
     await client.send_message(target_user_id, "You have been granted Premium access by the admin.")
 
-# Add a daily check to notify users when premium expires
 @app.on_message(filters.command("pcheck"))
 async def daily_check(client, message):
     users = await users_collection.find({"plan": "premium"}).to_list(length=None)
