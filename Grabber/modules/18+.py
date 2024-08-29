@@ -56,8 +56,13 @@ async def get_video(client, message):
         video = await videos_collection.aggregate([{"$sample": {"size": 1}}]).to_list(length=1)
         if video:
             video_file_id = video[0]['file_id']
-            video_message = await client.get_messages(chat_id='me', message_ids=video_file_id)
-            await message.reply_video(video_message.video.file_id)
+            
+            # Ensure the video_file_id is an integer
+            if isinstance(video_file_id, str) and video_file_id.isdigit():
+                video_file_id = int(video_file_id)
+
+            video_message = await client.get_messages(chat_id='me', message_ids=[video_file_id])
+            await message.reply_video(video_message[0].video.file_id)
             await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
     else:
         if user['plan'] == "free":
@@ -200,7 +205,7 @@ async def daily_check(client, message):
             days_left = int((expiry_time - current_time) / 86400)
             await client.send_message(user["user_id"], f"Your Premium plan expires in {days_left} days. Please renew to continue enjoying premium features.")
 
-@app.on_message(filters.command("reset_premium") & filters.user(SUDO_USER_ID))
+@app.on_message(filters.command("rp") & filters.user(SUDO_USER_ID))
 async def reset_premium(client, message):
     if len(message.command) < 2:
         await message.reply("Usage: /reset_premium <user_id>")
