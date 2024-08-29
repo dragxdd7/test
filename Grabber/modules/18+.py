@@ -58,12 +58,17 @@ async def get_video(client, message):
             video_file_id = video[0]['file_id']
 
             try:
-                # Fetch the message directly using the file ID stored in MongoDB
-                video_message = await client.get_messages(chat_id='me', message_ids=[int(video_file_id)])
-                await message.reply_video(video_message[0].video.file_id)
+                # Download the video file
+                file_path = await client.download_media(video_file_id)
+                
+                # Send the downloaded video
+                await message.reply_video(video=file_path)
                 
                 # Update the user's daily usage
                 await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
+                
+                # Clean up by removing the downloaded file
+                os.remove(file_path)
             except Exception as e:
                 await message.reply(f"An error occurred while fetching the video: {str(e)}")
         else:
