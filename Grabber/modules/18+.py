@@ -10,7 +10,7 @@ SUDO_USER_ID = 7185106962
 FREE_PLAN_LIMIT = 10
 PREMIUM_PLAN_LIMIT = 8000
 PREMIUM_PLAN_COST = 60
-UPI_ID = "828878181@omni"
+UPI_ID = "8288781871@omni"
 QR_CODE_IMAGE = "https://telegra.ph/file/5c7b85cb39b2702c49816.jpg"  # Add your QR code image path here
 
 @app.on_message(filters.command("tstart"))
@@ -133,7 +133,7 @@ async def admin_cancel(client, callback_query):
     await client.send_message(user_id, "Your payment was not confirmed. Please try again or contact support.")
     await callback_query.message.reply("Payment canceled.")
 
-@app.on_message(filters.command("stats") & filters.user(SUDO_USER_ID))
+@app.on_message(filters.command("tstats") & filters.user(SUDO_USER_ID))
 async def stats(client, message):
     total_videos = await videos_collection.count_documents({})
     premium_users = await users_collection.count_documents({"plan": "premium"})
