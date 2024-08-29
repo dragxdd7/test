@@ -39,10 +39,6 @@ async def start(client, message):
 
 @app.on_message(filters.command("getvideo") | filters.regex("Get Video") & filters.private)
 async def get_video(client, message):
-    if message.from_user is None:
-        await message.reply("This command cannot be used in this context.")
-        return
-    
     user_id = message.from_user.id
     user = await users_collection.find_one({"user_id": user_id})
     
@@ -52,7 +48,8 @@ async def get_video(client, message):
     
     daily_limit = PREMIUM_PLAN_LIMIT if user['plan'] == "premium" else FREE_PLAN_LIMIT
     
-    if time.time() - user['last_reset'] >= 86400:
+    # Check if 24 hours have passed to reset usage
+    if time.time() - user['last_reset'] >= 86400:  # 24 hours in seconds
         await users_collection.update_one({"user_id": user_id}, {"$set": {"daily_usage": 0, "last_reset": time.time()}})
     
     if user['daily_usage'] < daily_limit:
@@ -60,15 +57,17 @@ async def get_video(client, message):
         if video:
             video_file_id = video[0]['file_id']
             
-            if isinstance(video_file_id, str) and video_file_id.isdigit():
-                video_file_id = int(video_file_id)
-
+            # Convert video_file_id to integer if it's a string
             try:
-                video_message = await client.get_messages(chat_id='me', message_ids=[video_file_id])
-                await message.reply_video(video_message[0].video.file_id)
-                await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
-            except Exception as e:
-                await message.reply(f"An error occurred: {e}")
+                video_file_id = int(video_file_id)
+            except ValueError:
+                await message.reply("Error: Invalid video file ID.")
+                return
+
+            # Fetch the message using the integer video_file_id
+            video_message = await client.get_messages(chat_id='me', message_ids=[video_file_id])
+            await message.reply_video(video_message[0].video.file_id)
+            await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
     else:
         if user['plan'] == "free":
             await message.reply(
