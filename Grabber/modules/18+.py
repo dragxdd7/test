@@ -56,18 +56,18 @@ async def get_video(client, message):
         video = await videos_collection.aggregate([{"$sample": {"size": 1}}]).to_list(length=1)
         if video:
             video_file_id = video[0]['file_id']
-            
-            # Convert video_file_id to integer if it's a string
-            try:
-                video_file_id = int(video_file_id)
-            except ValueError:
-                await message.reply("Error: Invalid video file ID.")
-                return
 
-            # Fetch the message using the integer video_file_id
-            video_message = await client.get_messages(chat_id='me', message_ids=[video_file_id])
-            await message.reply_video(video_message[0].video.file_id)
-            await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
+            try:
+                # Fetch the message directly using the file ID stored in MongoDB
+                video_message = await client.get_messages(chat_id='me', message_ids=[int(video_file_id)])
+                await message.reply_video(video_message[0].video.file_id)
+                
+                # Update the user's daily usage
+                await users_collection.update_one({"user_id": user_id}, {"$inc": {"daily_usage": 1}})
+            except Exception as e:
+                await message.reply(f"An error occurred while fetching the video: {str(e)}")
+        else:
+            await message.reply("No video found in the collection.")
     else:
         if user['plan'] == "free":
             await message.reply(
