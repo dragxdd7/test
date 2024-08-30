@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
+from PIL import Image, ImageDraw, ImageFont
 from Grabber import users_collection, videos_collection
 from . import app
 
@@ -33,7 +34,7 @@ async def start(client, message):
     ], resize_keyboard=True)
     
     await message.reply(
-        "Welcome to the 18+ pick pron paid bot! ⚠️ Note: This bot is intended for adult male users only. Proceed if you are 18+. Commands work in private chat only.",
+        "Welcome to the super short fun bot! Enjoy a variety of videos and more. Commands work in private chat only.",
         reply_markup=keyboard
     )
 
@@ -200,29 +201,25 @@ async def give_premium(client, message):
         {"user_id": target_user_id},
         {"$set": {"plan": "premium", "premium_expiry": expiry_date.timestamp()}}
     )
-    await message.reply(f"Premium access granted to user ID {target_user_id}.")
-    await client.send_message(target_user_id, "You have been granted Premium access by the admin.")
+    await message.reply(f"Premium granted to user ID {target_user_id}.")
 
-@app.on_message(filters.command("pcheck"))
-async def daily_check(client, message):
-    users = await users_collection.find({"plan": "premium"}).to_list(length=None)
-    current_time = time.time()
-
-    for user in users:
-        expiry_time = user.get("premium_expiry")
-        if expiry_time and expiry_time - current_time <= 604800:  # 7 days in seconds
-            days_left = int((expiry_time - current_time) / 86400)
-            await client.send_message(user["user_id"], f"Your Premium plan expires in {days_left} days. Please renew to continue enjoying premium features.")
-
-@app.on_message(filters.command("rp") & filters.user(SUDO_USER_ID))
-async def reset_premium(client, message):
-    if len(message.command) < 2:
-        await message.reply("Usage: /reset_premium <user_id>")
-        return
-
-    target_user_id = int(message.command[1])
-    await users_collection.update_one(
-        {"user_id": target_user_id},
-        {"$set": {"plan": "free", "premium_expiry": None}}
-    )
-    await message.reply(f"Premium access has been removed for user ID {target_user_id}.")
+# Example function to generate image using Pillow
+@app.on_message(filters.command("tgen"))
+async def generate_image(client, message):
+    user_text = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else "Hello, World!"
+    
+    img = Image.new('RGB', (500, 300), color=(73, 109, 137))
+    d = ImageDraw.Draw(img)
+    
+    # Choose a font (add path to a font file on your server)
+    font = ImageFont.truetype("arial.ttf", 40)
+    
+    # Draw the text on the image
+    d.text((10, 150), user_text, fill=(255, 255, 0), font=font)
+    
+    # Save the image or send directly
+    img_path = "/tmp/generated_image.png"
+    img.save(img_path)
+    
+    await client.send_photo(message.chat.id, img_path, caption="Here's your generated image!")
+    os.remove(img_path)
