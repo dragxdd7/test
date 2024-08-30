@@ -14,7 +14,7 @@ PREMIUM_PLAN_COST = 60
 UPI_ID = "8288781871@omni"
 QR_CODE_IMAGE = "https://telegra.ph/file/5c7b85cb39b2702c49816.jpg"  # Add your QR code image path here
 
-@app.on_message(filters.command("tstart"))
+@app.on_message(filters.command("tstart")) & (filters.private)
 async def start(client, message):
     user_id = message.from_user.id
     user = await users_collection.find_one({"user_id": user_id})
