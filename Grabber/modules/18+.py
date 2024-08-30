@@ -203,23 +203,3 @@ async def give_premium(client, message):
     )
     await message.reply(f"Premium granted to user ID {target_user_id}.")
 
-# Example function to generate image using Pillow
-@app.on_message(filters.command("tgen"))
-async def generate_image(client, message):
-    user_text = message.text.split(maxsplit=1)[1] if len(message.command) > 1 else "Hello, World!"
-    
-    img = Image.new('RGB', (500, 300), color=(73, 109, 137))
-    d = ImageDraw.Draw(img)
-    
-    # Choose a font (add path to a font file on your server)
-    font = ImageFont.truetype("arial.ttf", 40)
-    
-    # Draw the text on the image
-    d.text((10, 150), user_text, fill=(255, 255, 0), font=font)
-    
-    # Save the image or send directly
-    img_path = "/tmp/generated_image.png"
-    img.save(img_path)
-    
-    await client.send_photo(message.chat.id, img_path, caption="Here's your generated image!")
-    os.remove(img_path)
