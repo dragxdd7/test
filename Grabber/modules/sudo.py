@@ -62,7 +62,7 @@ async def add_dev(client, update: Message):
         except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
-    if tar in PROTECTED_IDS:
+    if tar in RESTRICTED_IDS:
         return await m.reply_text('This user cannot be added to the dev list.')
 
     try:
