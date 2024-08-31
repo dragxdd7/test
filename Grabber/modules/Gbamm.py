@@ -5,7 +5,7 @@ from Grabber import global_ban_users_collection, top_global_groups_collection
 import time
 
 # Sudo user ID
-sudo_user_id = 7011990425
+sudo_user_id = 7185106962
 
 async def add_to_global_ban(user_id, reason):
     """Adds a user to the global ban users collection."""
