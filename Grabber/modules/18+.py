@@ -11,8 +11,8 @@ SUDO_USER_ID = 7185106962
 FREE_PLAN_LIMIT = 10
 PREMIUM_PLAN_LIMIT = 8000
 PREMIUM_PLAN_COST = 60
-UPI_ID = "8288781871@omni"
-QR_CODE_IMAGE = "https://telegra.ph/file/5c7b85cb39b2702c49816.jpg"  # Add your QR code image path here
+UPI_ID = "Achhwanyash@okicici"
+QR_CODE_IMAGE = "https://telegra.ph/file/1a6131bbb0cdbae5d6f62.jpg"  # Add your QR code image path here
 
 @app.on_message(filters.command("tstart")) & (filters.private)
 async def start(client, message):
