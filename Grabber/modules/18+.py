@@ -60,12 +60,6 @@ async def get_video(client, message):
 
             try:
                
-             await client.send_video(
-                    chat_id=message.chat.id,
-                    video=video_file_id,
-                    supports_streaming=True
-                )   
-                
                 # Download the video file
                 file_path = await client.download_media(video_file_id)
                 
