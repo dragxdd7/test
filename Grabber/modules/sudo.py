@@ -6,7 +6,7 @@ from . import app, dev_filter, sudo_filter
 sudb = db.sudo
 devb = db.dev
 
-PROTECTED_IDS = {6893383681, 7011990425}
+RESTRICTED_IDS = {6893383681, 7011990425}
 
 @app.on_message(filters.command("addsudo") & dev_filter)
 async def add_sudo(client, update: Message):
@@ -19,7 +19,7 @@ async def add_sudo(client, update: Message):
         except Exception:
             return await m.reply_text('Either reply to a user or provide an ID.')
 
-    if tar in PROTECTED_IDS:
+    if tar in RESTRICTED_IDS:
         return await m.reply_text('This user cannot be added to the sudo list.')
 
     if await sudb.find_one({'user_id': tar}):
