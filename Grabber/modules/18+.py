@@ -1,9 +1,9 @@
 import random
 import time
+import os
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, Message
-from PIL import Image, ImageDraw, ImageFont
 from Grabber import users_collection, videos_collection
 from . import app
 
