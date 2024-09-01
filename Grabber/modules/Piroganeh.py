@@ -1,8 +1,8 @@
 import random
 import os
 from PIL import Image, ImageDraw, ImageFont
-from telegram import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update, InputMediaPhoto
-from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, Filters, MessageHandler
+from telegram import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update, Filters, InputMediaPhoto
+from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler, MessageHandler
 from pymongo import MongoClient
 from Grabber import user_collection, collection, application 
 
