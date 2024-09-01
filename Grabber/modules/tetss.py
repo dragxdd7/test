@@ -97,6 +97,11 @@ async def handle_confirmation(update: Update, context: CallbackContext):
     data = query.data.split('_')
     action, user_id, target_id, bet_amount = data[0], int(data[1]), int(data[2]), int(data[3])
     
+    # Check if the game is already confirmed and in progress
+    if context.user_data.get('user_game') is not None:
+        await query.answer("The game is already in progress. Complete it first!", show_alert=True)
+        return
+
     if action == "cancel":
         await user_collection.update_one({'id': user_id}, {'$inc': {'gold': bet_amount}})
         await user_collection.update_one({'id': target_id}, {'$inc': {'gold': bet_amount}})
