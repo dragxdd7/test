@@ -96,16 +96,25 @@ async def handle_confirmation(update: Update, context: CallbackContext):
 
     data = query.data.split('_')
     action, user_id, target_id, bet_amount = data[0], int(data[1]), int(data[2]), int(data[3])
-    
-    if action == "cancel":
+
+    # Ensure only the tagged user can confirm or cancel
+    if query.from_user.id != target_id:
+        await query.answer("Only the challenged user can confirm or cancel the game!", show_alert=True)
+        return
+
+    # Restrict confirmation to happen only once
+    if action == "confirm":
+        if 'user_game' in context.user_data:
+            await query.answer("This game has already been confirmed!", show_alert=True)
+            return
+
+        # Proceed with the game setup
+        context.user_data['user_game'] = {'user_id': user_id, 'target_id': target_id, 'board': init_board(), 'turn': user_id, 'bet_amount': bet_amount}
+        await start_actual_user_game(query, context)
+    elif action == "cancel":
         await user_collection.update_one({'id': user_id}, {'$inc': {'gold': bet_amount}})
         await user_collection.update_one({'id': target_id}, {'$inc': {'gold': bet_amount}})
         await query.message.reply_text("Game canceled and bet refunded.")
-        return
-
-    # Proceed with the game setup
-    context.user_data['user_game'] = {'user_id': user_id, 'target_id': target_id, 'board': init_board(), 'turn': user_id, 'bet_amount': bet_amount}
-    await start_actual_user_game(query, context)
 
 async def start_actual_user_game(query, context):
     game = context.user_data.get('user_game', {})
