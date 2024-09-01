@@ -6,6 +6,7 @@ from telegram.ext import Application, CallbackContext, CallbackQueryHandler, Com
 from pymongo import MongoClient
 from Grabber import user_collection, collection, application 
 
+# Constants
 EMPTY, USER, BOT = " ", "X", "O"
 BACKGROUND_PATH = "Images/blue.jpg"
 FONT_PATH = "Fonts/font.ttf"
@@ -128,7 +129,7 @@ async def start_actual_user_game(query, context):
     reply_markup = IKM(buttons)
 
     with open(img_path, 'rb') as img_file:
-        await query.message.reply_photo(photo=img_file, caption=f"It's {turn}'s turn!", reply_markup=reply_markup)
+        await query.message.reply_photo(photo=img_file, caption=f"It's {query.from_user.first_name}'s turn!", reply_markup=reply_markup)
     os.remove(img_path)
 
 async def handle_user_move(update: Update, context: CallbackContext):
