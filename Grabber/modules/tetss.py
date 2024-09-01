@@ -2,10 +2,11 @@ import random
 import os
 from PIL import Image, ImageDraw, ImageFont
 from telegram import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update, InputMediaPhoto
-from telegram.ext import  CallbackContext, CallbackQueryHandler, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CallbackContext, CallbackQueryHandler, CommandHandler
 from pymongo import MongoClient
-from Grabber import user_collection, collection, application 
+from Grabber import user_collection, collection, application
 
+# Constants
 EMPTY, USER, BOT = " ", "X", "O"
 BACKGROUND_PATH = "Images/blue.jpg"
 FONT_PATH = "Fonts/font.ttf"
@@ -44,9 +45,6 @@ def check_winner(board, player):
         if all(board[r][c] == player for r, c in condition):
             return True
     return False
-
-def get_empty_positions(board):
-    return [(r, c) for r in range(3) for c in range(3) if board[r][c] == EMPTY]
 
 async def start_user_to_user_game(update: Update, context: CallbackContext):
     if not update.message.reply_to_message:
@@ -96,16 +94,25 @@ async def handle_confirmation(update: Update, context: CallbackContext):
 
     data = query.data.split('_')
     action, user_id, target_id, bet_amount = data[0], int(data[1]), int(data[2]), int(data[3])
-    
-    if action == "cancel":
+
+    # Ensure only the tagged user can confirm or cancel
+    if query.from_user.id != target_id:
+        await query.answer("Only the challenged user can confirm or cancel the game!", show_alert=True)
+        return
+
+    if action == "confirm":
+        # Check if the game is already confirmed
+        if 'user_game' in context.user_data:
+            await query.answer("This game has already been confirmed!", show_alert=True)
+            return
+
+        # Proceed with the game setup
+        context.user_data['user_game'] = {'user_id': user_id, 'target_id': target_id, 'board': init_board(), 'turn': user_id, 'bet_amount': bet_amount}
+        await start_actual_user_game(query, context)
+    elif action == "cancel":
         await user_collection.update_one({'id': user_id}, {'$inc': {'gold': bet_amount}})
         await user_collection.update_one({'id': target_id}, {'$inc': {'gold': bet_amount}})
         await query.message.reply_text("Game canceled and bet refunded.")
-        return
-
-    # Proceed with the game setup
-    context.user_data['user_game'] = {'user_id': user_id, 'target_id': target_id, 'board': init_board(), 'turn': user_id, 'bet_amount': bet_amount}
-    await start_actual_user_game(query, context)
 
 async def start_actual_user_game(query, context):
     game = context.user_data.get('user_game', {})
@@ -119,7 +126,7 @@ async def start_actual_user_game(query, context):
     reply_markup = IKM(buttons)
 
     with open(img_path, 'rb') as img_file:
-        await query.message.reply_photo(photo=img_file, caption=f"It's {turn}'s turn!", reply_markup=reply_markup)
+        await query.message.reply_photo(photo=img_file, caption=f"It's {query.from_user.first_name}'s turn!", reply_markup=reply_markup)
     os.remove(img_path)
 
 async def handle_user_move(update: Update, context: CallbackContext):
@@ -164,6 +171,7 @@ async def handle_user_move(update: Update, context: CallbackContext):
         await query.edit_message_reply_markup(reply_markup)
     os.remove(img_path)
 
-application.add_handler(CommandHandler('challenge', start_user_to_user_game))
+# Handlers for the commands and callbacks
+application.add_handler(CommandHandler('aja', start_user_to_user_game))
 application.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(confirm|cancel)_'))
 application.add_handler(CallbackQueryHandler(handle_user_move, pattern='^usermove_'))
