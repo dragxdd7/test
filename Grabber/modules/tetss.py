@@ -2,7 +2,7 @@ import random
 import os
 from PIL import Image, ImageDraw, ImageFont
 from telegram import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB, Update, InputMediaPhoto
-from telegram.ext import Application, CallbackContext, CallbackQueryHandler, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CallbackContext, CallbackQueryHandler, CommandHandler
 from pymongo import MongoClient
 from Grabber import user_collection, collection, application 
 
@@ -173,6 +173,7 @@ async def handle_user_move(update: Update, context: CallbackContext):
         await query.edit_message_reply_markup(reply_markup)
     os.remove(img_path)
 
+# Handlers for the commands and callbacks
 application.add_handler(CommandHandler('aja', start_user_to_user_game))
 application.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(confirm|cancel)_'))
 application.add_handler(CallbackQueryHandler(handle_user_move, pattern='^usermove_'))
