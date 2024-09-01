@@ -164,6 +164,6 @@ async def handle_user_move(update: Update, context: CallbackContext):
         await query.edit_message_reply_markup(reply_markup)
     os.remove(img_path)
 
-application.add_handler(CommandHandler('challenge', start_user_to_user_game))
+application.add_handler(CommandHandler('aja', start_user_to_user_game))
 application.add_handler(CallbackQueryHandler(handle_confirmation, pattern='^(confirm|cancel)_'))
 application.add_handler(CallbackQueryHandler(handle_user_move, pattern='^usermove_'))
