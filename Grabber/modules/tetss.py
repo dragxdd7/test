@@ -37,8 +37,8 @@ def draw_board(board):
 def check_winner(board, player):
     win_conditions = [
         [(0, 0), (0, 1), (0, 2)], [(1, 0), (1, 1), (1, 2)], [(2, 0), (2, 1), (2, 2)],
-        [(0, 0), (1, 0), (2, 0)], [(0, 1), (1, 1), (2, 1)],
-        [(0, 2), (1, 2), (2, 2)], [(0, 0), (1, 1), (2, 2)], [(0, 2), (1, 1), (2, 0)]
+        [(0, 0), (1, 0), (2, 0)], [(0, 1), (1, 1), (2, 1)], [(0, 2), (1, 1), (2, 2)],
+        [(0, 0), (1, 1), (2, 2)], [(0, 2), (1, 1), (2, 0)]
     ]
     for condition in win_conditions:
         if all(board[r][c] == player for r, c in condition):
@@ -96,17 +96,7 @@ async def handle_confirmation(update: Update, context: CallbackContext):
 
     data = query.data.split('_')
     action, user_id, target_id, bet_amount = data[0], int(data[1]), int(data[2]), int(data[3])
-
-    # Ensure only the tagged user can confirm the game
-    if query.from_user.id != target_id:
-        await query.answer("You don't have permission to confirm this game!", show_alert=True)
-        return
-
-    # Check if the game is already confirmed and in progress
-    if context.user_data.get('user_game') is not None:
-        await query.answer("The game is already in progress. Complete it first!", show_alert=True)
-        return
-
+    
     if action == "cancel":
         await user_collection.update_one({'id': user_id}, {'$inc': {'gold': bet_amount}})
         await user_collection.update_one({'id': target_id}, {'$inc': {'gold': bet_amount}})
