@@ -1,14 +1,13 @@
 import asyncio
 from pyrogram import filters
-from . import app
-from Grabber import global_ban_users_collection, top_global_groups_collection
+from Grabber import Grabberu as app
+from Grabber import gban as global_ban_users_collection, top_global_groups_collection
 import time
+from . import dev_filter, capsify
 
-# Sudo user ID
-sudo_user_id = 7185106962
+gban_watcher = 69
 
 async def add_to_global_ban(user_id, reason):
-    """Adds a user to the global ban users collection."""
     await global_ban_users_collection.update_one(
         {'_id': user_id},
         {'$set': {'reason': reason}},
@@ -16,16 +15,13 @@ async def add_to_global_ban(user_id, reason):
     )
 
 async def remove_from_global_ban(user_id):
-    """Removes a user from the global ban users collection."""
     await global_ban_users_collection.delete_one({"_id": user_id})
 
 async def is_user_globally_banned(user_id):
-    """Checks if a user is in the global ban users collection."""
     user = await global_ban_users_collection.find_one({"_id": user_id})
     return bool(user)
 
 async def fetch_globally_banned_users():
-    """Fetches all users from the global ban users collection."""
     banned_users = []
     async for user in global_ban_users_collection.find({}):
         user_id = user.get('_id')
@@ -35,17 +31,12 @@ async def fetch_globally_banned_users():
     return banned_users
 
 async def get_all_chats():
-    """Fetches all chat IDs where the bot is added."""
     return await top_global_groups_collection.distinct("group_id")
 
-@app.on_message(filters.command(["gban"]))
+@app.on_message(filters.command(["gban"]) & dev_filter)
 async def gban_user(client, message):
-    if message.from_user.id != sudo_user_id:
-        await message.reply_text("You are not authorized to use this command.")
-        return
-
     if len(message.command) < 2 and not message.reply_to_message:
-        await message.reply_text("Usage: `/gban <reason>`.")
+        await message.reply_text(capsify("Usage: `/gban <reason>`."))
         return
 
     if message.reply_to_message:
@@ -56,15 +47,15 @@ async def gban_user(client, message):
             user_id = int(message.command[1])
             reason = " ".join(message.command[2:]) if len(message.command) > 2 else "No reason provided"
         except ValueError:
-            await message.reply_text("Invalid user ID. Please provide a valid user ID.")
+            await message.reply_text(capsify("Invalid user ID. Please provide a valid user ID."))
             return
 
     await add_to_global_ban(user_id, reason)
     all_chats = await get_all_chats()
     ban_count = 0
 
-    estimated_duration = len(all_chats) * 0.5  # Estimating 0.5 seconds per chat
-    await message.reply_text(f"Starting global ban. Estimated time: `{estimated_duration}` seconds.")
+    estimated_duration = len(all_chats) * 0.5
+    await message.reply_text(capsify(f"Starting global ban. Estimated time: `{estimated_duration}` seconds."))
 
     start_time = time.time()
 
@@ -72,23 +63,19 @@ async def gban_user(client, message):
         try:
             await client.kick_chat_member(chat_id, user_id)
             ban_count += 1
-            await asyncio.sleep(0.5)  # Sleep for 0.5 seconds to avoid flood wait
+            await asyncio.sleep(0.5)
         except Exception as e:
             print(f"Failed to ban user {user_id} in chat {chat_id}: {e}")
 
     end_time = time.time()
     duration = end_time - start_time
 
-    await message.reply_text(f"User `{user_id}` has been globally banned in `{ban_count}` chat(s) in `{duration:.2f}` seconds.")
+    await message.reply_text(capsify(f"User `{user_id}` has been globally banned in `{ban_count}` chat(s) in `{duration:.2f}` seconds."))
 
-@app.on_message(filters.command(["ungban"]))
+@app.on_message(filters.command(["ungban"]) & dev_filter)
 async def ungban_user(client, message):
-    if message.from_user.id != sudo_user_id:
-        await message.reply_text("You are not authorized to use this command.")
-        return
-
     if len(message.command) < 2 and not message.reply_to_message:
-        await message.reply_text("Usage: `/ungban id`.")
+        await message.reply_text(capsify("Usage: `/ungban id`."))
         return
 
     if message.reply_to_message:
@@ -97,15 +84,15 @@ async def ungban_user(client, message):
         try:
             user_id = int(message.command[1])
         except ValueError:
-            await message.reply_text("Invalid user ID. Please provide a valid user ID.")
+            await message.reply_text(capsify("Invalid user ID. Please provide a valid user ID."))
             return
 
     await remove_from_global_ban(user_id)
     all_chats = await get_all_chats()
     unban_count = 0
 
-    estimated_duration = len(all_chats) * 0.5  # Estimating 0.5 seconds per chat
-    await message.reply_text(f"Starting global unban. Estimated time: `{estimated_duration}` seconds.")
+    estimated_duration = len(all_chats) * 0.5
+    await message.reply_text(capsify(f"Starting global unban. Estimated time: `{estimated_duration}` seconds."))
 
     start_time = time.time()
 
@@ -113,28 +100,34 @@ async def ungban_user(client, message):
         try:
             await client.unban_chat_member(chat_id, user_id)
             unban_count += 1
-            await asyncio.sleep(0.5)  # Sleep for 0.5 seconds to avoid flood wait
+            await asyncio.sleep(0.5)
         except Exception as e:
             print(f"Failed to unban user {user_id} in chat {chat_id}: {e}")
 
     end_time = time.time()
     duration = end_time - start_time
 
-    await message.reply_text(f"User `{user_id}` has been globally unbanned in `{unban_count}`chat(s) in `{duration:.2f}` seconds.")
+    await message.reply_text(capsify(f"User `{user_id}` has been globally unbanned in `{unban_count}` chat(s) in `{duration:.2f}` seconds."))
 
-@app.on_message(filters.command(["gban_list"]))
+@app.on_message(filters.command(["gbanlist"]) & dev_filter)
 async def gban_list(client, message):
-    if message.from_user.id != sudo_user_id:
-        await message.reply_text("You are not authorized to use this command.")
-        return
-
     banned_users = await fetch_globally_banned_users()
     if not banned_users:
-        await message.reply_text("No users are globally banned.")
+        await message.reply_text(capsify("No users are globally banned."))
         return
 
     response_text = "Globally Banned Users:\n\n"
     for user in banned_users:
         response_text += f"User ID: `{user['user_id']}`, Reason: `{user['reason']}`\n"
 
-    await message.reply_text(response_text)
+    await message.reply_text(capsify(response_text))
+
+@app.on_message(filters.group, group=gban_watcher)
+async def check_global_ban(client, message):
+    user_id = message.from_user.id
+    if await is_user_globally_banned(user_id):
+        try:
+            await client.kick_chat_member(message.chat.id, user_id)
+            await message.reply_text(capsify(f"User `{user_id}` is globally banned and has been removed from this chat."))
+        except Exception as e:
+            print(f"Failed to ban globally banned user {user_id} in chat {message.chat.id}: {e}")
