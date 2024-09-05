@@ -37,7 +37,7 @@ def generate_random_math_equation_image() -> bytes:
     img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
 
-    return img_byte_arr.read(), answer
+    return img_byte_arr.getvalue(), answer
 
 async def get_sudo_user_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
@@ -61,7 +61,7 @@ async def set_message_limit(client, message):
     except (IndexError, ValueError):
         await message.reply_text(capsify("Please provide a valid message limit (integer)."))
 
-@app.on_message(filters.group ,group=delta_watcher)
+@app.on_message(filters.group, group=delta_watcher)
 async def delta(client, message):
     chat_id = message.chat.id
 
