@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 from pytz import timezone
 from . import collection, user_collection, app, capsify
+from .watchers import scrabble_watcher
 
 active_scrabbles = {}
 MAX_ATTEMPTS = 5
@@ -81,7 +82,7 @@ async def scrabble(client, message: Message):
         f"⏳ Use /xscrabble to terminate the game."
     )
 
-@app.on_message(~filters.me, group=1)
+@app.on_message(~filters.me, group=scrabble_watcher)
 async def check_answer(client, message: Message):
     if message.from_user is None:
         return
