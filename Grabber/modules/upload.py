@@ -295,4 +295,3 @@ async def arrange_characters(client: Client, message: Message):
         await user_collection.bulk_write(user_bulk_operations)
 
     await message.reply_text('Characters have been rearranged and all user collections updated.')
-

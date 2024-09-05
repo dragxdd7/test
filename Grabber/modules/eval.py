@@ -149,7 +149,7 @@ async def show_time(client, callback_query):
 async def close_message(client, callback_query):
     await callback_query.message.delete()
 
-@Client.on_message(filters.command("sh") & dev_filter)
+@app.on_message(filters.command("sh") & dev_filter)
 async def shell_command(_, m):
     if len(m.text.split()) == 1:
         return await m.reply("Give me a command to execute.")

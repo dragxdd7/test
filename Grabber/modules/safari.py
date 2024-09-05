@@ -60,7 +60,26 @@ async def save_safari_user(user_id):
         {'$set': user_data},
         upsert=True
     )
-  
+
+async def safe_edit_message(callback_query, new_text=None, new_markup=None):
+    try:
+        current_text = callback_query.message.text or callback_query.message.caption
+        if current_text == new_text and callback_query.message.reply_markup == new_markup:
+            logger.info("Attempted to edit message with the same content. No edit performed.")
+            return
+
+        if callback_query.message.text:
+            await callback_query.message.edit_text(text=new_text, reply_markup=new_markup)
+        elif callback_query.message.caption:
+            await callback_query.message.edit_caption(caption=new_text, reply_markup=new_markup)
+        else:
+            logger.warning("No text or caption to edit in the message.")
+
+    except pyrogram.errors.exceptions.bad_request_400.MessageNotModified as e:
+        logger.warning(f"MessageNotModified: {e}. No change in content or markup.")
+    except Exception as e:
+        logger.error(f"Error in safe_edit_message: {e}")
+
 async def enter_safari(update: Update, context: CallbackContext):
     message = update.message
     user_id = message.from_user.id
@@ -185,7 +204,7 @@ async def hunt(update: Update, context: CallbackContext):
 async def typing_animation(callback_query, text):
     try:
         # 10% chance to get 3 dots
-        if random.random() < 0.40:
+        if random.random() < 0.25:
             duration = 3
         else:
             duration = random.choice([1, 2])
@@ -297,9 +316,6 @@ async def engage(callback_query):
 
         if user_id in current_hunts and current_hunts[user_id] == waifu_id:
             waifu = sessions[waifu_id]
-            waifu_name = waifu['name']
-            waifu_img_url = waifu['img_url']
-
             text = f"Choose your action:"
             keyboard = InlineKeyboardMarkup(
                 [
@@ -309,8 +325,7 @@ async def engage(callback_query):
                     ]
                 ]
             )
-            await callback_query.message.edit_caption(caption=text, reply_markup=keyboard)
-            await callback_query.answer()
+            await safe_edit_message(callback_query, new_text=text, new_markup=keyboard)
 
             current_engagements[user_id] = waifu_id
 
@@ -319,6 +334,7 @@ async def engage(callback_query):
 
     except Exception as e:
         print(f"Error handling engage: {e}")
+
 
 async def hunt_callback_query(update: Update, context: CallbackContext):
     callback_query = update.callback_query
@@ -362,7 +378,26 @@ async def dc_command(update: Update, context: CallbackContext):
     except Exception as e:
         print(f"Error resetting safari cooldown for user {replied_user_id}: {e}")
         await update.message.reply_text("An error occurred while resetting the tour cooldown. Please try again later.")
-        
+
+# Add the following function to handle the /soja command
+async def reset_hunt(update: Update, context: CallbackContext):
+    message = update.message
+    user_id = message.from_user.id
+
+    if user_id not in safari_users:
+        await message.reply_text("You are not in the safari zone! Use /ptour to enter.")
+        return
+
+    if user_id in current_hunts:
+        del current_hunts[user_id]
+    
+    if user_id in current_engagements:
+        del current_engagements[user_id]
+
+    await message.reply_text("Your current hunt has been reset. You can now explore again!")
+
+# Add the handler for the /soja command
+application.add_handler(CommandHandler("soja", reset_hunt))
 application.add_handler(CommandHandler("dc", dc_command))
 application.add_handler(CommandHandler("ptour", enter_safari))
 application.add_handler(CommandHandler("exit", exit_safari))

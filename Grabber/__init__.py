@@ -27,7 +27,7 @@ LOGGER = logging.getLogger(__name__)
 
 OWNER_ID = "7185106962"
 GROUP_ID = "-1002225496870"
-TOKEN = "6942284208:AAGwbMDHbqehCYlS1KrnGHle6-ePfDLkF5g"
+TOKEN = "6942284208:AAF_r__A_RR_5gozDHBy_VaD_YP0fuTvM9U"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
     "https://graph.org/file/f10bec6ec695bba69037d.jpg",
@@ -60,3 +60,7 @@ guild = db["guild_team"]
 gban = db["gban"]
 clan_collection = db['clans']
 join_requests_collection = db['join_requests']
+global_ban_users_collection = db['global_ban_users']
+top_global_groups_collection = db['top_global_groups']
+users_collection = db['users']
+videos_collection = db['videos']
