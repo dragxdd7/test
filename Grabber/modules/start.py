@@ -1,4 +1,5 @@
 import random
+import time
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Update
 
@@ -21,8 +22,7 @@ async def start(client, message: Update):
         await collection.insert_one({"_id": user_id, "first_name": first_name, "username": username})
         await client.send_message(
             chat_id=GROUP_ID,
-            text=f"<a href='tg://user?id={user_id}'>{first_name}</a> STARTED THE BOT",
-            parse_mode='HTML'
+            text=f"#new_user\nName: {first_name}\nId: {user_id}"
         )
     else:
         if user_data['first_name'] != first_name or user_data['username'] != username:
@@ -46,7 +46,7 @@ async def start(client, message: Update):
         reply_markup = InlineKeyboardMarkup(keyboard)
         photo_url = random.choice(PHOTO_URL)
 
-        await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=caption, reply_markup=reply_markup, parse_mode='markdown')
+        await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=caption, reply_markup=reply_markup)
 
     else:
         photo_url = random.choice(PHOTO_URL)
@@ -93,7 +93,7 @@ async def button(client, callback_query: CallbackQuery):
         help_keyboard = [[InlineKeyboardButton(capsify("BACK"), callback_data='back')]]
         reply_markup = InlineKeyboardMarkup(help_keyboard)
 
-        await client.edit_message_caption(chat_id=query.message.chat.id, message_id=query.message.message_id, caption=help_text, reply_markup=reply_markup, parse_mode='markdown')
+        await client.edit_message_caption(chat_id=query.message.chat.id, message_id=query.message.message_id, caption=help_text, reply_markup=reply_markup)
 
     elif query.data == 'back':
         await query.message.delete()
@@ -108,5 +108,4 @@ async def button(client, callback_query: CallbackQuery):
         ]
         reply_markup = InlineKeyboardMarkup(credits_keyboard)
 
-        await client.edit_message_caption(chat_id=query.message.chat.id, message_id=query.message.message_id, caption=credits_text, reply_markup=reply_markup, parse_mode='markdown')
-
+        await client.edit_message_caption(chat_id=query.message.chat.id, message_id=query.message.message_id, caption=credits_text, reply_markup=reply_markup)
