@@ -42,7 +42,7 @@ async def get_sudo_user_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
     return [user['user_id'] for user in sudo_users]
 
-@app.on_message(filters.command("stime") &)
+@app.on_message(filters.command("stime"))
 @sudocmd
 async def set_message_limit(client, message):
     sudo_user_ids = await get_sudo_user_ids()
