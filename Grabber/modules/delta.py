@@ -1,11 +1,11 @@
-from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from telegram.ext import CommandHandler, CallbackContext
-from PIL import Image, ImageDraw, ImageFont
 import random
 import io
+from PIL import Image, ImageDraw, ImageFont
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 
-from Grabber import application, user_collection, collection
-from . import add, deduct, show, abank, dbank, sbank, sudb, capsify
+from Grabber import app, user_collection, collection
+from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudocmd
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
@@ -42,25 +42,28 @@ async def get_sudo_user_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
     return [user['user_id'] for user in sudo_users]
 
-async def set_message_limit(update: Update, context: CallbackContext):
+@app.on_message(filters.command("stime") &)
+@sudocmd
+async def set_message_limit(client, message):
     sudo_user_ids = await get_sudo_user_ids()
-    user_id = update.effective_user.id
+    user_id = message.from_user.id
     if user_id not in sudo_user_ids:
-        await update.message.reply_text(capsify("Only sudo users can set the message limit!"))
+        await message.reply_text(capsify("Only sudo users can set the message limit!"))
         return
     try:
-        limit = int(context.args[0])
+        limit = int(message.command[1])
         if limit <= 0:
-            await update.message.reply_text(capsify("Message limit must be a positive integer!"))
+            await message.reply_text(capsify("Message limit must be a positive integer!"))
             return
 
-        group_message_counts[update.effective_chat.id] = {'count': 0, 'limit': limit}
-        await update.message.reply_text(capsify(f"Message limit set to {limit}. Now spawning math equations every {limit} messages!"))
+        group_message_counts[message.chat.id] = {'count': 0, 'limit': limit}
+        await message.reply_text(capsify(f"Message limit set to {limit}. Now spawning math equations every {limit} messages!"))
     except (IndexError, ValueError):
-        await update.message.reply_text(capsify("Please provide a valid message limit (integer)."))
+        await message.reply_text(capsify("Please provide a valid message limit (integer)."))
 
-async def delta(update: Update, context: CallbackContext):
-    chat_id = update.effective_chat.id
+@app.on_message(filters.group ,group=delta_watcher)
+async def delta(client, message):
+    chat_id = message.chat.id
 
     if chat_id in group_message_counts:
         group_message_counts[chat_id]['count'] += 1
@@ -83,27 +86,25 @@ async def delta(update: Update, context: CallbackContext):
 
         reply_markup = IKM([[keyboard[0][0], keyboard[1][0]], [keyboard[2][0], keyboard[3][0]]])
 
-        await context.bot.send_photo(chat_id=chat_id, photo=image_bytes, caption=capsify("Solve the math equation!"), reply_markup=reply_markup)
+        await client.send_photo(chat_id=chat_id, photo=image_bytes, caption=capsify("Solve the math equation!"), reply_markup=reply_markup)
 
-async def sumu(update: Update, context: CallbackContext):
-    query = update.callback_query
-    user_id = query.from_user.id
-    user_name = query.from_user.first_name
-    chat_id = query.message.chat_id
+@app.on_callback_query(filters.regex('correct|incorrect'))
+async def sumu(client, callback_query):
+    user_id = callback_query.from_user.id
+    user_name = callback_query.from_user.first_name
+    chat_id = callback_query.message.chat.id
 
     if chat_id in math_questions:
-        if query.data == 'correct':
+        if callback_query.data == 'correct':
             reward_amount = random.randint(20000, 40000)
-            await query.answer(capsify(f"Correct! You earned {reward_amount} 🔖"), show_alert=True)
+            await callback_query.answer(capsify(f"Correct! You earned {reward_amount} 🔖"), show_alert=True)
 
             await add(user_id, reward_amount)
             new_caption = capsify(f"Solve the math equation!\n\n{user_name} solved it correctly and earned {reward_amount} 🔖")
         else:
-            await query.answer(capsify("Incorrect! Try again later."), show_alert=True)
+            await callback_query.answer(capsify("Incorrect! Try again later."), show_alert=True)
             new_caption = capsify(f"Solve the math equation!\n\n{user_name} attempted but was incorrect.")
 
         del math_questions[chat_id]
 
-        await query.message.edit_caption(caption=new_caption, reply_markup=None)
-
-application.add_handler(CommandHandler('stime', set_message_limit, block=False))
+        await callback_query.message.edit_caption(caption=new_caption, reply_markup=None)
