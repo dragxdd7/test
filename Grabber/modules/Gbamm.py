@@ -4,8 +4,7 @@ from Grabber import Grabberu as app
 from Grabber import gban as global_ban_users_collection, top_global_groups_collection
 import time
 from . import dev_filter, capsify
-
-gban_watcher = 69
+from .watchers import gban_watcher
 
 async def add_to_global_ban(user_id, reason):
     await global_ban_users_collection.update_one(
