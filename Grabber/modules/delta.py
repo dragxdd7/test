@@ -86,7 +86,15 @@ async def delta(client, message):
 
         reply_markup = IKM([[keyboard[0][0], keyboard[1][0]], [keyboard[2][0], keyboard[3][0]]])
 
-        await client.send_photo(chat_id=chat_id, photo=image_bytes, caption=capsify("Solve the math equation!"), reply_markup=reply_markup)
+        # Use BytesIO as the file object
+        img_byte_arr = io.BytesIO(image_bytes)
+
+        await client.send_photo(
+            chat_id=chat_id,
+            photo=img_byte_arr,
+            caption=capsify("Solve the math equation!"),
+            reply_markup=reply_markup
+        )
 
 @app.on_callback_query(filters.regex('correct|incorrect'))
 async def sumu(client, callback_query):
