@@ -1,9 +1,8 @@
 from pyrogram import Client, filters
 import asyncio
-from . import db, collection, user_collection, app
+from . import db, collection, user_collection, app, dev_filter
 
-DEV_LIST = [7185106962]
-
+destroyed_users = {}
 
 async def add_all_characters_for_user(user_id):
     user = await user_collection.find_one({'id': user_id})
@@ -27,12 +26,11 @@ async def add_all_characters_for_user(user_id):
     else:
         return f"User with ID {user_id} not found."
 
-@app.on_message(filters.command(["add"]) & filters.user(DEV_LIST))
+@app.on_message(filters.command(["add"]) & dev_filter)
 async def add_characters_command(client, message):
     user_id_to_add_characters_for = message.from_user.id
     result_message = await add_all_characters_for_user(user_id_to_add_characters_for)
     await message.reply_text(result_message)
-
 
 async def kill_character(receiver_id, character_id):
     character = await collection.find_one({'id': character_id})
@@ -51,7 +49,7 @@ async def kill_character(receiver_id, character_id):
     else:
         raise ValueError("Character not found.")
 
-@app.on_message(filters.command(["kill"]) & filters.reply & filters.user(DEV_LIST))
+@app.on_message(filters.command(["kill"]) & filters.reply & dev_filter)
 async def remove_character_command(client, message):
     try:
         character_id = str(message.text.split()[1])
@@ -65,7 +63,6 @@ async def remove_character_command(client, message):
     except Exception as e:
         print(f"Error in remove_character_command: {e}")
         await message.reply_text("An error occurred while processing the command.")
-destroyed_users = {}
 
 async def remove_all_characters_for_user(user_id):
     user = await user_collection.find_one({'id': user_id})
@@ -93,7 +90,7 @@ async def restore_user_data(user_id):
     else:
         return f"No data to restore for user {user_id}"
 
-@app.on_message(filters.command(["destroy"]) & filters.user(DEV_LIST))
+@app.on_message(filters.command(["destroy"]) & dev_filter)
 async def remove_characters_command(client, message):
     if len(message.command) == 2:
         try:
@@ -105,7 +102,7 @@ async def remove_characters_command(client, message):
     else:
         await message.reply_text("Use like this: /destroy {id} to destroy data")
 
-@app.on_message(filters.command(["restore"]) & filters.user(DEV_LIST))
+@app.on_message(filters.command(["restore"]) & dev_filter)
 async def restore_characters_command(client, message):
     if len(message.command) == 2:
         try:
