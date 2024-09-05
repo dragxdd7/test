@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 
-from Grabber import app, user_collection, collection
+from Grabber import user_collection, collection
 from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudocmd
 
 BG_IMAGE_PATH = "Images/blue.jpg"
