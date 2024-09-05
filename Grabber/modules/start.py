@@ -47,7 +47,6 @@ async def start(client, message: Update):
         photo_url = random.choice(PHOTO_URL)
 
         await client.send_photo(chat_id=message.chat.id, photo=photo_url, caption=caption, reply_markup=reply_markup)
-
     else:
         photo_url = random.choice(PHOTO_URL)
         keyboard = [
@@ -94,7 +93,7 @@ async def button(client, callback_query: CallbackQuery):
         reply_markup = InlineKeyboardMarkup(help_keyboard)
 
         await client.edit_message_caption(chat_id=query.message.chat.id, message_id=query.message.message_id, caption=help_text, reply_markup=reply_markup)
-
+    
     elif query.data == 'back':
         await query.message.delete()
         await start(client, query.message)
