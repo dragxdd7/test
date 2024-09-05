@@ -6,7 +6,6 @@ from Grabber.utils.button import button_click as bc
 from .harem import harem_callback as hc
 from .info import check
 from .ptb_store import sales_list_callback
-from .start import button
 from .sgift import confirm_gift, cancel_gift
 from .trade import confirm_trade, cancel_trade
 from .rps import rps_button 
@@ -26,8 +25,6 @@ async def cbq(update: Update, context: CallbackContext):
         await check(update, context)
     elif data.startswith('saleslist:close'):
         await sales_list_callback(update, context)
-    elif data.startswith(('help', 'back')):
-        await button(update, context)
     elif data.startswith('cancel_gift'):
         await cancel_gift(update, context)
     elif data.startswith('confirm_trade'):
