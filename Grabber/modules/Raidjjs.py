@@ -2,14 +2,14 @@ import time
 import asyncio
 import random
 from pyrogram import filters, Client, types as t
-from pyrogram.errors import UserNotParticipant, ChatWriteForbidden
+from pyrogram.errors import UserNotParticipant
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from motor.motor_asyncio import AsyncIOMotorClient
-from . import user_collection, app
+from . import user_collection, app, dev_filter
 
 MUST_JOIN = "dragons_support"
-LOG_GROUP_CHAT_ID = -1002243796014  # Update with your actual group chat ID
-owner_id = 7185106962  # Replace with your actual Telegram user ID
+LOG_GROUP_CHAT_ID = -1002243796014
+cooldown_duration_shunt = 60
 
 dungeon_sets = {
     "1": {
@@ -50,7 +50,6 @@ dungeon_sets = {
     },
 }
 
-# Define a dictionary to store the last time each user executed the shunt command
 last_usage_time_shunt = {}
 user_last_command_times = {}
 
@@ -64,10 +63,9 @@ async def shunt_command(client, message):
 
     if user_id in user_last_command_times and current_time - user_last_command_times[user_id] < 5:
         return await message.reply_text("You are sending commands too quickly. Please wait for a moment.")
-    
+
     user_last_command_times[user_id] = current_time
 
-    # Log the usage of the command
     await send_log(f"Command shunt used by user `{user_id}`")
 
     try:
@@ -77,7 +75,6 @@ async def shunt_command(client, message):
             if remaining_time > 0:
                 return await message.reply_text(f"You're on cooldown. Please wait {int(remaining_time)} seconds before using this command again.")
 
-        # Check if the user has joined the MUST_JOIN group/channel
         try:
             await app.get_chat_member(MUST_JOIN, user_id)
         except UserNotParticipant:
@@ -88,53 +85,37 @@ async def shunt_command(client, message):
                 disable_web_page_preview=True
             )
 
-        # Retrieve user data
         user_data = await user_collection.find_one({'id': user_id}, projection={'beasts': 1})
         if not user_data or not user_data.get('beasts'):
             return await message.reply_text("You need a beast to hunt. Acquire a beast first using /beastshop.")
 
-        # Proceed with dungeon logic
         dungeon_set = random.choice(list(dungeon_sets.values()))
         image_url = dungeon_set["image_url"]
         caption = dungeon_set["caption"]
         win_chance = dungeon_set["win_chance"]
         loss_message = dungeon_set["loss_message"]
 
-        # Send the image with the corresponding caption
         await message.reply_photo(photo=image_url, caption=caption)
-
-        # Wait for 1 second before sending the message
         await asyncio.sleep(1)
 
-        # Check if the user wins
         if random.randint(1, 100) <= win_chance:
-            # User wins, award balance
             balance_to_award = random.randint(10, 150)
             await user_collection.update_one({'id': user_id}, {'$inc': {'gold': balance_to_award}})
             await message.reply_text(f"You won the fight! You got a gold of {balance_to_award}.")
         else:
-            # User loses
             await message.reply_text(loss_message)
 
-        # Update the last usage time for the user
         last_usage_time_shunt[user_id] = current_time
 
     except Exception as e:
-        # Log any exceptions that occur
         await send_log(f"Error occurred in shunt_command: {e}")
         await message.reply_text("An error occurred while processing your request. Please try again later.")
 
-# Set the cooldown duration for the shunt command (in seconds)
-cooldown_duration_shunt = 60  # 1 minute
-
-@app.on_message(filters.user(owner_id) & filters.command(["rgold"]))
+@app.on_message(filters.command(["rgold"]) & dev_filter)
 async def reset_balance_command(client, message: t.Message):
-    # Check if the command is a reply to a user's message
     if message.reply_to_message and message.reply_to_message.from_user:
         user_id = message.reply_to_message.from_user.id
-        # Reset balance for the specified user
         await user_collection.update_one({'id': user_id}, {'$set': {'gold': 0}})
-        await message.reply_text(f"gold reset for user {user_id}.")
+        await message.reply_text(f"Gold reset for user {user_id}.")
     else:
         await message.reply_text("Please reply to the user's message to reset their balance.")
-
