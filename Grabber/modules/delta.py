@@ -5,7 +5,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 
 from Grabber import user_collection, collection
-from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudocmd
+from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudo_filter
 from .watchers import delta_watcher
 
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -43,8 +43,7 @@ async def get_sudo_user_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
     return [user['user_id'] for user in sudo_users]
 
-@app.on_message(filters.command("stime"))
-@sudocmd
+@app.on_message(filters.command("stime") & sudo_filter)
 async def set_message_limit(client, message):
     sudo_user_ids = await get_sudo_user_ids()
     user_id = message.from_user.id
