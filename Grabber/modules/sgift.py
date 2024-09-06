@@ -97,10 +97,10 @@ async def confirm_gift(client, query):
         })
 
     success_message = (
-        f"🎁 **Gifted Successfully**\n\n"
-        f"**Character:** {character['name']}\n"
-        f"**From:** {character['anime']}\n"
-        f"**ID:** {character['id']}"
+        f"🎁 Gifted Successfully\n\n"
+        f"Character: {character['name']}\n"
+        f"From: {character['anime']}\n"
+        f"ID: {character['id']}"
     )
 
     await query.message.edit_text(success_message)
