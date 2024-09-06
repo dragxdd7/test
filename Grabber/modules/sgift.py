@@ -23,11 +23,11 @@ async def gift(client, message):
 
     sender = await user_collection.find_one({'id': sender_id})
 
-    if not sender:
+    if not sender or not sender.get('characters'):
         await message.reply_text("You do not have any characters.")
         return
 
-    character = next((char for char in sender.get('characters', []) if char.get('id') == character_id), None)
+    character = next((char for char in sender['characters'] if char.get('id') == character_id), None)
 
     if not character:
         await message.reply_text(f"You do not have a character with ID {character_id}!")
@@ -71,18 +71,11 @@ async def confirm_gift(client, query):
         return
 
     sender = await user_collection.find_one({'id': sender_id})
-    if not sender:
+    if not sender or not any(char['id'] == character['id'] for char in sender.get('characters', [])):
         await query.answer("You no longer have this character!", show_alert=True)
         return
 
-    sender_characters = sender.get('characters', [])
-    sender_character_index = next((i for i, char in enumerate(sender_characters) if char['id'] == character['id']), None)
-
-    if sender_character_index is None:
-        await query.answer("You do not have this character anymore!", show_alert=True)
-        return
-
-    sender_characters.pop(sender_character_index)
+    sender_characters = [char for char in sender.get('characters', []) if char['id'] != character['id']]
     await user_collection.update_one({'id': sender_id}, {'$set': {'characters': sender_characters}})
 
     receiver = await user_collection.find_one({'id': receiver_id})
