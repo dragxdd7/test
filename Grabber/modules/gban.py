@@ -1,36 +1,10 @@
 import asyncio
 from pyrogram import filters
-from Grabber import Grabberu as app
-from Grabber import gban as global_ban_users_collection, top_global_groups_collection
+from Grabber.utils.gban import add_to_global_ban, remove_from_global_ban, fetch_globally_banned_users, get_all_chats
+from Grabber.utils.gban import is_user_globally_banned
 import time
-from . import dev_filter, capsify
+from . import dev_filter, capsify, app
 from .watchers import gban_watcher
-
-async def add_to_global_ban(user_id, reason):
-    await global_ban_users_collection.update_one(
-        {'_id': user_id},
-        {'$set': {'reason': reason}},
-        upsert=True
-    )
-
-async def remove_from_global_ban(user_id):
-    await global_ban_users_collection.delete_one({"_id": user_id})
-
-async def is_user_globally_banned(user_id):
-    user = await global_ban_users_collection.find_one({"_id": user_id})
-    return bool(user)
-
-async def fetch_globally_banned_users():
-    banned_users = []
-    async for user in global_ban_users_collection.find({}):
-        user_id = user.get('_id')
-        reason = user.get('reason')
-        if user_id:
-            banned_users.append({"user_id": user_id, "reason": reason})
-    return banned_users
-
-async def get_all_chats():
-    return await top_global_groups_collection.distinct("group_id")
 
 @app.on_message(filters.command(["gban"]) & dev_filter)
 async def gban_user(client, message):
