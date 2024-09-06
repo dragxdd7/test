@@ -1,7 +1,6 @@
 import asyncio
 from pyrogram import filters
-from Grabber.utils.gban import add_to_global_ban, remove_from_global_ban, fetch_globally_banned_users, get_all_chats
-from Grabber.utils.gban import is_user_globally_banned
+from Grabber.utils.gban import add_to_global_ban, remove_from_global_ban, fetch_globally_banned_users, get_all_chats, is_user_globally_banned
 import time
 from . import dev_filter, capsify, app
 from .watchers import gban_watcher
