@@ -1,8 +1,7 @@
 import uuid
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from Grabber import user_collection
-from utils.helpers import capsify
+from . import capsify, user_collection, app
 
 pending_gifts = {}
 
