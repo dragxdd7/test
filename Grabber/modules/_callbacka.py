@@ -27,14 +27,14 @@ async def cbq(update: Update, context: CallbackContext):
         await check(update, context)
     elif data.startswith('saleslist:close'):
         await sales_list_callback(update, context)
-    """elif data.startswith('cancel_gift'):
-        await cancel_gift(update, context)"""
+    #elif data.startswith('cancel_gift'):
+        #await cancel_gift(update, context)
     elif data.startswith('confirm_trade'):
         await confirm_trade(update, context)
     elif data.startswith('cancel_trade'):
         await cancel_trade(update, context)
-    """elif data.startswith('confirm_gift'):
-        await confirm_gift(update, context)"""
+    #elif data.startswith('confirm_gift'):
+        #await confirm_gift(update, context)
     elif data in ('rock', 'paper', 'scissors', 'play_again'):
         await rps_button(update, context)
         
