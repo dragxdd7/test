@@ -96,6 +96,9 @@ async def gban_list(client, message):
 
 @app.on_message(filters.group, group=gban_watcher)
 async def check_global_ban(client, message):
+    if not message.from_user:
+        return  # Skip non-user messages
+
     user_id = message.from_user.id
     if await is_user_globally_banned(user_id):
         try:
