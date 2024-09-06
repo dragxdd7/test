@@ -1,6 +1,7 @@
+from pyrogram import filters
 from . import db, collection, user_collection, app, dev_filter, capsify
 
-@app.on_message(dev_filter & app.command("transfer"))
+@app.on_message(dev_filter & filters.command("transfer"))
 async def transfer(_, message):
     args = message.text.split()[1:]
     if len(args) != 2:
