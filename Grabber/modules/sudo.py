@@ -110,8 +110,8 @@ async def sudo_list(client, message: Message):
         response_text = f'Total sudos: {len(user_list)}\n\n' + '\n'.join(user_list)
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close")]])
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
-    except Exception:
-        await message.reply_text(capsify('Error fetching sudo list.'))
+    except Exception as e:
+        await message.reply_text(capsify(f'Error fetching sudo list: {str(e)}'))
 
 @app.on_message(filters.command("devlist") & sudo_filter)
 async def dev_list(client, message: Message):
@@ -134,8 +134,8 @@ async def dev_list(client, message: Message):
         response_text = f'Total developers: {len(user_list)}\n\n' + '\n'.join(user_list)
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close")]])
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
-    except Exception:
-        await message.reply_text(capsify('Error fetching developer list.'))
+    except Exception as e:
+        await message.reply_text(capsify(f'Error fetching developer list: {str(e)}'))
 
 @app.on_callback_query(filters.regex("close"))
 async def close_callback(client, callback_query):
