@@ -47,6 +47,7 @@ api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
 
 application = Application.builder().token(TOKEN).build()
 Grabberu = Client("Grabber", api_id, api_hash, bot_token=TOKEN)
+app = Grabberu
 client = AsyncIOMotorClient(mongo_url)
 db = client['Character_catcher']
 collection = db['anime_characters']
