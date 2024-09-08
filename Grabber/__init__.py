@@ -46,7 +46,7 @@ api_id = 20457610
 api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
 
 application = Application.builder().token(TOKEN).build()
-Grabber = Client(
+Grabberu = Client(
     "Grabber",
     api_id=api_id,
     api_hash=api_hash,
