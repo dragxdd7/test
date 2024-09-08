@@ -62,12 +62,12 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         else:
             if query:
                 regex = re.compile(query, re.IGNORECASE)
-                all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
+                all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
                 else:
-                    all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1}).to_list(length=None)
+                    all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
                     all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
@@ -97,28 +97,32 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
 
+            price = character.get('price', 'Unknown')  # Get the price, default to 'Unknown'
+
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
                 user_anime_characters = sum(1 for c in user.get('characters', []) if c['anime'] == character['anime'])
                 user_id_str = str(user.get('id', 'unknown'))
                 user_first_name = user.get('first_name', user_id_str)
                 caption = (
-                    f"Character from {user_first_name}'s collection:\n\n"
-                    f"Name: {character['name']} (x{user_character_count})\n"
-                    f"Anime: {character['anime']} ({user_anime_characters}/{anime_characters})\n"
-                    f"Rarity: {character.get('rarity', '')}\n"
-                    f"ID: {character['id']}"
+                    f"{capsify('Character from')} {capsify(user_first_name)}'s {capsify('collection')}:\n\n"
+                    f"{capsify('Name')}: {character['name']} (x{user_character_count})\n"
+                    f"{capsify('Anime')}: {character['anime']} ({user_anime_characters}/{anime_characters})\n"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}\n"
+                    f"{capsify('ID')}: {character['id']}"
                 )
             else:
                 caption = (
-                    f"Character details:\n\n"
-                    f"Name: {character['name']}\n"
-                    f"Anime: {character['anime']}\n"
-                    f"ID: {character['id']}\n"
-                    f"Rarity: {character.get('rarity', '')}"
+                    f"{capsify('Character details')}:\n\n"
+                    f"{capsify('Name')}: {character['name']}\n"
+                    f"{capsify('Anime')}: {character['anime']}\n"
+                    f"{capsify('ID')}: {character['id']}\n"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}"
                 )
 
-            keyboard = [[IKB("How many I have ❓", callback_data=f"check_{character['id']}")]]
+            keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
             reply_markup = IKM(keyboard)
 
             results.append(
@@ -146,4 +150,4 @@ async def check(update: Update, context: CallbackContext) -> None:
     characters = user_data.get('characters', [])
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
-    await query.answer(f"You have {quantity} of this character.", show_alert=True)
+    await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
