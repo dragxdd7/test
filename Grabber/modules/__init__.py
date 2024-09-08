@@ -41,6 +41,10 @@ async def acapsify(text: str) -> str:
 async def get_character(id: int):
     return await collection.find_one({'id': id})
 
+async def get_character_ids() -> list:
+    all_characters = await collection.find({}).to_list(length=None)
+    return [x['id'] for x in all_characters]
+
 async def get_price(character_id: int):
     character = await collection.find_one({'id': character_id})
     if character and 'price' in character:
