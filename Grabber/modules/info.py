@@ -17,7 +17,7 @@ async def details(update: Update, context: CallbackContext) -> None:
         global_count = await user_collection.count_documents({'characters.id': character['id']})
 
         rarity = character.get('rarity', None)
-        price = character.get('price', None)  # Fetch price from the character document
+        price = character.get('price', None)  
 
         caption = (
             f"{capsify('Character Details')}\n"
