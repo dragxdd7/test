@@ -3,7 +3,7 @@ import logging
 import sys
 import time
 import random 
-from Grabber import user_collection , application, db, collection, clan_collection , Grabberu ,clan_collection, join_requests_collection
+from Grabber import user_collection , collection ,application, db, collection, clan_collection , Grabberu ,clan_collection, join_requests_collection
 from functools import wraps
 from telegram import Update
 from Grabber.utils import * 
@@ -41,15 +41,18 @@ async def acapsify(text: str) -> str:
 async def get_character(id: int):
     return await collection.find_one({'id': id})
 
+async def get_price(character_id: int):
+    character = await collection.find_one({'id': character_id})
+    if character and 'price' in character:
+        return character['price']
+    else:
+        raise ValueError(f"Price not found for character with ID {character_id}")
+
 async def get_image_and_caption(id: int):
     char = await get_character(id)
-    price = random.randint(60000, 90000)
+    price = await get_price(id)
     form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
     return char['img_url'], capsify(form.format(char['name'], char['anime'], char['id'], price))
-
-async def get_character_ids() -> list:
-    all_characters = await collection.find({}).to_list(length=None)
-    return [x['id'] for x in all_characters]
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
