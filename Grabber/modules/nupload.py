@@ -5,7 +5,7 @@ import random
 from . import sudo_filter, app
 from Grabber import collection, db, CHARA_CHANNEL_ID
 
-app = Client("my_bot", timeout=120)
+
 
 async def get_next_sequence_number(sequence_name):
     sequence_collection = db.sequences
