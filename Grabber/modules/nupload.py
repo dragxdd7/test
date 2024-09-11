@@ -34,7 +34,7 @@ rarity_map = {
 
 @app.on_message(filters.command('upload') & sudo_filter)
 async def upload(client: Client, message: Message):
-    if not message.reply_to_message or not piture:
+    if not message.reply_to_message or not message.reply_to_message.photo:
         await message.reply_text("Please reply to an image with the caption in the format: 'Name - Name Here\nAnime - Anime Here\nRarity - Number'")
         return
 
@@ -73,9 +73,9 @@ async def upload(client: Client, message: Message):
         )
     )
 
-    # Save the character details in MongoDB
+    
     character = {
-        'img_url': sent_message.photo.file_id,  # Store file_id instead of telegraph URL
+        'img_url': sent_message.photo.file_id,  # Store file_id instead of Telegraph URL
         'name': character_name,
         'anime': anime,
         'rarity': rarity,
