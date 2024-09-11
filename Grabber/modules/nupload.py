@@ -1,13 +1,10 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
-from telegraph import Telegraph
 import random
 from . import sudo_filter, app
 from Grabber import collection, db, CHARA_CHANNEL_ID
 
-telegraph = Telegraph()
-telegraph.create_account(short_name='telegraph')
 
 async def get_next_sequence_number(sequence_name):
     sequence_collection = db.sequences
@@ -20,6 +17,7 @@ async def get_next_sequence_number(sequence_name):
         await sequence_collection.insert_one({'_id': sequence_name, 'sequence_value': 0})
         return 0
     return sequence_document['sequence_value']
+
 
 rarity_map = {
     1: "🟢 Common",
@@ -36,7 +34,7 @@ rarity_map = {
 
 @app.on_message(filters.command('upload') & sudo_filter)
 async def upload(client: Client, message: Message):
-    if not message.reply_to_message or not message.reply_to_message.photo or not message.reply_to_message.caption:
+    if not message.reply_to_message or not piture:
         await message.reply_text("Please reply to an image with the caption in the format: 'Name - Name Here\nAnime - Anime Here\nRarity - Number'")
         return
 
@@ -54,25 +52,17 @@ async def upload(client: Client, message: Message):
         await message.reply_text("Invalid format or rarity. Please use the format: 'Name - Name Here\nAnime - Anime Here\nRarity - Number' and ensure rarity is a number between 1 and 10.")
         return
 
+    
     photo = await client.download_media(message.reply_to_message.photo)
-    response = telegraph.upload_file(photo)
-    img_url = f"https://telegra.ph{response[0]['src']}"
 
+    
     id = str(await get_next_sequence_number('character_id')).zfill(2)
     price = random.randint(60000, 80000)
 
-    character = {
-        'img_url': img_url,
-        'name': character_name,
-        'anime': anime,
-        'rarity': rarity,
-        'price': price,
-        'id': id
-    }
-
+    
     sent_message = await client.send_photo(
         chat_id=CHARA_CHANNEL_ID,
-        photo=img_url,
+        photo=photo,
         caption=(
             f'Waifu Name: {character_name}\n'
             f'Anime Name: {anime}\n'
@@ -83,7 +73,16 @@ async def upload(client: Client, message: Message):
         )
     )
 
-    character['message_id'] = sent_message.id
+    # Save the character details in MongoDB
+    character = {
+        'img_url': sent_message.photo.file_id,  # Store file_id instead of telegraph URL
+        'name': character_name,
+        'anime': anime,
+        'rarity': rarity,
+        'price': price,
+        'id': id,
+        'message_id': sent_message.id
+    }
+
     await collection.insert_one(character)
     await message.reply_text('WAIFU ADDED....')
-
