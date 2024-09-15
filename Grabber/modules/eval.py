@@ -23,11 +23,6 @@ def namespace_of(chat_id, message, bot):
         }
     return namespaces[chat_id]
 
-def log_input(message):
-    user = message.from_user.id
-    chat = message.chat.id
-    print(f"IN: {message.text} (user={user}, chat={chat})")
-
 async def send(code, output, bot, message, time_taken=None):
     if output is None:
         output = "No output returned."
@@ -40,7 +35,7 @@ async def send(code, output, bot, message, time_taken=None):
             ]
         ]
     )
-    
+
     if len(output) > 2000:
         with io.BytesIO(str.encode(output)) as out_file:
             out_file.name = "output.txt"
@@ -54,7 +49,6 @@ async def send(code, output, bot, message, time_taken=None):
         message_text = (
             f"**CODE**\n```\n{code}\n```\n\n**OUTPUT**\n```\n{output}\n```"
         )
-        print(f"OUT: '{output}'")
         await bot.send_message(
             chat_id=message.chat.id,
             text=message_text,
@@ -83,7 +77,6 @@ def cleanup_code(code):
     return code.strip("` \n")
 
 async def do(func, client, message):
-    log_input(message)
     content = message.text.split(" ", 1)[-1]
     body = cleanup_code(content)
     env = namespace_of(message.chat.id, message, client)
@@ -134,7 +127,6 @@ async def do(func, client, message):
 
 @app.on_message(filters.command("clearlocals") & dev_filter)
 async def clear(client, message):
-    log_input(message)
     global namespaces
     if message.chat.id in namespaces:
         del namespaces[message.chat.id]
