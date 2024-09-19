@@ -12,14 +12,15 @@ from . import app, dev_filter
 
 namespaces = {}
 
-def namespace_of(chat_id, message, bot):
+def namespace_of(chat_id, message, bot, app):
     if chat_id not in namespaces:
         namespaces[chat_id] = {
             "__builtins__": globals()["__builtins__"],
             "bot": bot,
-            "message": message,
+            "m": message,
             "from_user": message.from_user,
             "chat": message.chat,
+            "_": app,
         }
     return namespaces[chat_id]
 
