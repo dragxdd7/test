@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from . import collection, user_collection, sudo_filter, dev_filter, app
+from . import collection, user_collection, dev_filter, app
 
 LOG_CHAT_ID = -1002220682772 
 
@@ -30,7 +30,7 @@ async def give_character(receiver_id, character_id):
     else:
         raise ValueError("Character not found.")
 
-@app.on_message(filters.command(["give"]) & sudo_filter)
+@app.on_message(filters.command(["give"]) & dev_filter)
 async def give_character_command(client, message):
     if not message.reply_to_message:
         await message.reply_text("You need to reply to a user's message to give a character!")
@@ -109,7 +109,7 @@ async def kill_character(receiver_id, character_id):
     else:
         raise ValueError("Character not found.")
 
-@app.on_message(filters.command(["kill"]) & sudo_filter)
+@app.on_message(filters.command(["kill"]) & dev_filter)
 async def remove_character_command(client, message):
     try:
         args = message.text.split()
