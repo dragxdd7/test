@@ -71,3 +71,5 @@ global_ban_users_collection = db['global_ban_users']
 top_global_groups_collection = db['top_global_groups']
 users_collection = db['users']
 videos_collection = db['videos']
+sales_collection = db['sales']
+
