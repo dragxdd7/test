@@ -32,7 +32,7 @@ async def edit_or_reply(msg: Message, **kwargs):
 
 @Client.on_message(
     filters.command("eval")
-    & ~dev_filter
+    & dev_filter
 )
 async def executor(client, message):
     m = message
@@ -118,7 +118,7 @@ async def runtime_func_cq(_, cq):
 
 @Client.on_message(
     filters.command("sh")
-    & ~dev_filter
+    & dev_filter
 )
 async def shellrunner(client, message):
     if len(message.command) < 2:
