@@ -3,7 +3,7 @@ import logging
 import sys
 import time
 import random 
-from Grabber import user_collection , collection ,application, db, collection, clan_collection , Grabberu ,clan_collection, join_requests_collection
+from Grabber import *
 from functools import wraps
 from telegram import Update
 from Grabber.utils import * 
