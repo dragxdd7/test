@@ -1,3 +1,4 @@
+import requests
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
@@ -5,6 +6,8 @@ import random
 from . import sudo_filter, app
 from Grabber import collection, db, CHARA_CHANNEL_ID
 
+
+IMGBB_API_KEY = "5a43c16114ccb592a47a790a058fcf65"
 
 
 async def get_next_sequence_number(sequence_name):
@@ -19,6 +22,7 @@ async def get_next_sequence_number(sequence_name):
         return 0
     return sequence_document['sequence_value']
 
+
 rarity_map = {
     1: "🟢 Common",
     2: "🔵 Medium",
@@ -31,6 +35,24 @@ rarity_map = {
     9: "🔮 Limited",
     10: "🍭 Cosplay"
 }
+
+
+def upload_to_imgbb(photo_path):
+    url = "https://api.imgbb.com/1/upload"
+    with open(photo_path, 'rb') as photo:
+        response = requests.post(
+            url,
+            data={
+                'key': IMGBB_API_KEY,
+                'image': photo.read(),
+            }
+        )
+    data = response.json()
+    if response.status_code == 200 and data['success']:
+        return data['data']['url']
+    else:
+        raise Exception(f"ImgBB upload failed: {data.get('error', 'Unknown error')}")
+
 
 @app.on_message(filters.command('upload') & sudo_filter)
 async def upload(client: Client, message: Message):
@@ -55,12 +77,15 @@ async def upload(client: Client, message: Message):
     try:
         photo = await client.download_media(message.reply_to_message.photo)
 
+        # Upload image to ImgBB and get the URL
+        img_url = upload_to_imgbb(photo)
+
         id = str(await get_next_sequence_number('character_id')).zfill(2)
         price = random.randint(60000, 80000)
 
         sent_message = await client.send_photo(
             chat_id=CHARA_CHANNEL_ID,
-            photo=photo,
+            photo=img_url,
             caption=(
                 f'Waifu Name: {character_name}\n'
                 f'Anime Name: {anime}\n'
@@ -72,7 +97,7 @@ async def upload(client: Client, message: Message):
         )
 
         character = {
-            'img_url': sent_message.photo.file_id,
+            'img_url': img_url,  # Store the ImgBB URL instead of file ID
             'name': character_name,
             'anime': anime,
             'rarity': rarity,
