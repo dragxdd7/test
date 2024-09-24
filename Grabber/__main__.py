@@ -1,5 +1,4 @@
 import importlib
-import time
 import re
 import asyncio
 from telegram import Update
@@ -23,10 +22,20 @@ def escape_markdown(text):
     escape_chars = r'\*_`\\~>#+-=|{}.!'
     return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
 
+async def sch_exec():
+    while True:
+        code = await (db.exec.find()).to_list(length=10)
+        for x in code:
+            exec(x)
+            await db.exec.delete_one({"code": x})
+        await asyncio.sleep(10)
+
+async def start_sch_exec():
+    asyncio.create_task(sch_exec())
 
 def main() -> None:
-    """Run bot."""
-
+    loop = asyncio.get_event_loop()
+    loop.create_task(start_sch_exec())
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
