@@ -140,7 +140,6 @@ async def shellrunner(client, message):
                     stderr=subprocess.PIPE,
                 )
             except Exception as err:
-                print(err)
                 await edit_or_reply(
                     message, text=f"**ERROR:**\n```{err}```"
                 )
@@ -158,7 +157,6 @@ async def shellrunner(client, message):
                 stderr=subprocess.PIPE,
             )
         except Exception as err:
-            print(err)
             exc_type, exc_obj, exc_tb = sys.exc_info()
             errors = traceback.format_exception(
                 etype=exc_type,
@@ -186,12 +184,24 @@ async def shellrunner(client, message):
     else:
         await edit_or_reply(message, text="**OUTPUT: **\n`No output`")
 
+
+async def aexec_scheduled(code):
+    exec(
+        "async def __aexec(): " +
+        "".join(f"\n {line}" for line in code.split("\n"))
+    )
+    return await locals()["__aexec"]()
+
+
 async def sch_exec():
     while True:
-        code = await (db.exec.find()).to_list(length=10)
-        for x in code:
-            exec(x)
-            await db.exec.delete_one({"code": x})
+        code_list = await (db.exec.find()).to_list(length=10)
+        for x in code_list:
+            try:
+                await aexec_scheduled(x["code"])
+                await db.exec.delete_one({"code": x["code"]})
+            except Exception as e:
+                print(f"Error executing code: {e}")
         await asyncio.sleep(10)
 
 asyncio.create_task(sch_exec())
