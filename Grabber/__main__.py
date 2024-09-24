@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters
 
 from Grabber import collection, Grabberu, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from Grabber import application, LOGGER
+from Grabber import application, LOGGER, db
 from Grabber.modules import ALL_MODULES
 
 locks = {}
