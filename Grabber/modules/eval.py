@@ -193,15 +193,3 @@ async def aexec_scheduled(code):
     return await locals()["__aexec"]()
 
 
-async def sch_exec():
-    while True:
-        code_list = await (db.exec.find()).to_list(length=10)
-        for x in code_list:
-            try:
-                await aexec_scheduled(x["code"])
-                await db.exec.delete_one({"code": x["code"]})
-            except Exception as e:
-                print(f"Error executing code: {e}")
-        await asyncio.sleep(10)
-
-asyncio.create_task(sch_exec())
