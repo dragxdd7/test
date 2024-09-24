@@ -1,8 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
-import random
 from datetime import datetime as dt
 from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character
+import random
 
 sdb = db.new_store
 user_db = db.bought
@@ -49,11 +49,9 @@ async def shop(client, message):
     photo, caption = await get_image_and_caption(ch_ids[0])
 
     keyboard = [
-        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")]
+        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
     ]
-
-    if message.chat.id != -1002225496870:
-        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
 
     markup = IKM(keyboard)
     await message.reply_photo(photo, caption=capsify(f"__PAGE 1__\n\n{caption}"), reply_markup=markup)
@@ -120,11 +118,9 @@ async def handle_page(query, page, origin, user_id):
     buy_buttons = ["buya", "buyb", "buyc", 'buya']
 
     keyboard = [
-        [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")]
+        [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
     ]
-
-    if query.message.chat.id != -1002225496870:
-        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
 
     await query.edit_message_media(
         media=IMP(photo, caption=capsify(f"PAGE {page}\n\n{caption}")),
@@ -134,7 +130,7 @@ async def handle_page(query, page, origin, user_id):
 
 async def handle_char_confirm(query, char, user_id):
     det = await get_character(char)
-    price = random.randint(60000, 90000)
+    price = det.get("price", 0)
     user_balance = await show(user_id)
 
     if price > user_balance:
@@ -173,11 +169,9 @@ async def handle_char_back(query, char, user_id):
 
     photo, caption = await get_image_and_caption(char)
     keyboard = [
-        [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")]
+        [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
     ]
-
-    if query.message.chat.id != -1002225496870:
-        keyboard.append([IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")])
 
     await query.edit_message_caption(
         capsify(f"__PAGE {ind}__\n\n{caption}"),

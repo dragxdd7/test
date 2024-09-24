@@ -104,7 +104,7 @@ async def handle_gift_confirmation(message, gift_id):
         f"From: {character['anime']}\n"
         f"ID: {character['id']:03}"
     )
-    
+
     await message.reply_text(success_message)
 
 async def confirm_gift(update: Update, context: CallbackContext) -> None:
@@ -158,7 +158,7 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         f"**From:** {character['anime']}\n"
         f"**ID:** {character['id']:03}"
     )
-    
+
     await query.message.edit_text(success_message)
 
 async def cancel_gift(update: Update, context: CallbackContext) -> None:
