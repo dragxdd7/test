@@ -12,7 +12,7 @@ from pyrogram import filters
 from pyrogram.types import (InlineKeyboardButton,
                             InlineKeyboardMarkup, Message)
 
-from . import app as Client
+from . import app as Client, dev_filter
 from . import capsify
 
 
