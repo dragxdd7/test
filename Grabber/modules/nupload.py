@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
 import random
-from . import sudo_filter, app
+from . import uploader_filter, app
 from Grabber import collection, db, CHARA_CHANNEL_ID
 
 
@@ -54,7 +54,7 @@ def upload_to_imgbb(photo_path):
         raise Exception(f"ImgBB upload failed: {data.get('error', 'Unknown error')}")
 
 
-@app.on_message(filters.command('upload') & sudo_filter)
+@app.on_message(filters.command('upload') & uploader_filter)
 async def upload(client: Client, message: Message):
     if not message.reply_to_message or not message.reply_to_message.photo:
         await message.reply_text("Please reply to an image with the caption in the format: 'Name - Name Here\nAnime - Anime Here\nRarity - Number'")
