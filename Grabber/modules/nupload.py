@@ -1,11 +1,11 @@
 import requests
+import base64
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
 import random
 from . import uploader_filter, app
 from Grabber import collection, db, CHARA_CHANNEL_ID
-
 
 IMGBB_API_KEY = "5a43c16114ccb592a47a790a058fcf65"
 
@@ -39,14 +39,19 @@ rarity_map = {
 
 def upload_to_imgbb(photo_path):
     url = "https://api.imgbb.com/1/upload"
+    
     with open(photo_path, 'rb') as photo:
+        # Read the image and encode it to base64
+        encoded_image = base64.b64encode(photo.read()).decode('utf-8')
+
         response = requests.post(
             url,
             data={
                 'key': IMGBB_API_KEY,
-                'image': photo.read(),
+                'image': encoded_image  # Send base64 encoded image
             }
         )
+    
     data = response.json()
     if response.status_code == 200 and data['success']:
         return data['data']['url']
