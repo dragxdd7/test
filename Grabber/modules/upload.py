@@ -4,7 +4,7 @@ from pymongo import ReturnDocument, UpdateOne
 import urllib.request
 import random
 from . import sudo_filter, app
-from Grabber import application, collection, db, CHARA_CHANNEL_ID, user_collection
+from Grabber import application, collection, db, CHARA_CHANNEL_ID, user_collection, uploader_filter
 
 async def get_next_sequence_number(sequence_name):
     sequence_collection = db.sequences
@@ -126,7 +126,7 @@ async def delete(client: Client, message: Message):
     else:
         await message.reply_text('Character not found in database.')
 
-@app.on_message(filters.command('update') & sudo_filter)
+@app.on_message(filters.command('update') & uploader_filter)
 async def update(client: Client, message: Message):
     args = message.text.split(maxsplit=3)[1:]
     if len(args) != 3:

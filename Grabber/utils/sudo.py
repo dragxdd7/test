@@ -24,8 +24,22 @@ async def get_dev_user_ids():
 
 async def is_dev_user(_, __, message: Message):
     if not message.from_user:
-        return False  # Handle case where from_user is None
+        return False
     dev_user_ids = await get_dev_user_ids()
     return message.from_user.id in dev_user_ids
 
 dev_filter = filters.create(is_dev_user)
+
+uploaderdb = db.uploader
+
+async def get_uploader_user_ids():
+    uploader_users = await uploaderdb.find({}, {'user_id': 1}).to_list(length=None)
+    return [user['user_id'] for user in uploader_users]
+
+async def is_uploader_user(_, __, message: Message):
+    if not message.from_user:
+        return False
+    uploader_user_ids = await get_uploader_user_ids()
+    return message.from_user.id in uploader_user_ids
+
+uploader_filter = filters.create(is_uploader_user)
