@@ -4,7 +4,8 @@ from pymongo import ReturnDocument, UpdateOne
 import urllib.request
 import random
 from . import sudo_filter, app
-from Grabber import application, collection, db, CHARA_CHANNEL_ID, user_collection, uploader_filter
+from Grabber import application, collection, db, CHARA_CHANNEL_ID, user_collection
+from . import uploader_filter
 
 async def get_next_sequence_number(sequence_name):
     sequence_collection = db.sequences
