@@ -13,7 +13,7 @@ def upload_to_imgbb(file_path):
             url,
             data={
                 'key': IMGBB_API_KEY,
-                'image': image_data,  # Pass the base64 encoded image
+                'image': image_data,  
             }
         )
     
