@@ -4,6 +4,7 @@ from . import app, dev_filter, sudo_filter, capsify, db
 
 sudb = db.sudo
 devb = db.dev
+uploaderdb = db.uploader
 
 NEGLECTED_IDS = {6893383681, 7011990425}
 
@@ -89,6 +90,47 @@ async def remove_dev(client, message: Message):
     except Exception:
         await message.reply_text(capsify('Failed to remove user from dev list.'))
 
+@app.on_message(filters.command("adduploader") & sudo_filter)
+async def add_uploader(client, message: Message):
+    if message.reply_to_message:
+        tar = message.reply_to_message.from_user.id
+    else:
+        try:
+            tar = int(message.text.split()[1])
+        except Exception:
+            return await message.reply_text(capsify('Either reply to a user or provide an ID.'))
+
+    if tar in NEGLECTED_IDS:
+        return await message.reply_text(capsify('This user cannot be added to the uploader list.'))
+
+    if await uploaderdb.find_one({'user_id': tar}):
+        return await message.reply_text(capsify('User is already an uploader.'))
+
+    try:
+        await uploaderdb.insert_one({'user_id': tar})
+        await message.reply_text(capsify('User added to uploader list.'))
+    except Exception:
+        await message.reply_text(capsify('Failed to add user to uploader list.'))
+
+@app.on_message(filters.command("rmuploader") & sudo_filter)
+async def remove_uploader(client, message: Message):
+    if message.reply_to_message:
+        tar = message.reply_to_message.from_user.id
+    else:
+        try:
+            tar = int(message.text.split()[1])
+        except Exception:
+            return await message.reply_text(capsify('Either reply to a user or provide an ID.'))
+
+    if not await uploaderdb.find_one({'user_id': tar}):
+        return await message.reply_text(capsify('User is not an uploader.'))
+
+    try:
+        await uploaderdb.delete_one({'user_id': tar})
+        await message.reply_text(capsify('User removed from uploader list.'))
+    except Exception:
+        await message.reply_text(capsify('Failed to remove user from uploader list.'))
+
 @app.on_message(filters.command("sudolist") & sudo_filter)
 async def sudo_list(client, message: Message):
     try:
@@ -136,6 +178,30 @@ async def dev_list(client, message: Message):
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
     except Exception as e:
         await message.reply_text(capsify(f'Error fetching developer list: {str(e)}'))
+
+@app.on_message(filters.command("uploaderlist") & sudo_filter)
+async def uploader_list(client, message: Message):
+    try:
+        uploader_users_list = await uploaderdb.distinct('user_id')
+        if not uploader_users_list:
+            return await message.reply_text(capsify('No uploaders found.'))
+
+        user_list = []
+        for user_id in uploader_users_list:
+            try:
+                user = await client.get_users(user_id)
+                user_list.append(f"• {user.first_name} {user.last_name or ''} (`{user.id}`)")
+            except Exception:
+                user_list.append(f"• User ID: {user_id} (`{user_id}`)")
+
+        if not user_list:
+            return await message.reply_text(capsify('No valid uploaders found.'))
+
+        response_text = f'Total uploaders: {len(user_list)}\n\n' + '\n'.join(user_list)
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("Close", callback_data="close")]])
+        await message.reply_text(capsify(response_text), reply_markup=keyboard)
+    except Exception as e:
+        await message.reply_text(capsify(f'Error fetching uploader list: {str(e)}'))
 
 @app.on_callback_query(filters.regex("close"))
 async def close_callback(client, callback_query):
