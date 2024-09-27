@@ -1,7 +1,8 @@
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-from Grabber import user_collection, application
+from Grabber import application
+from . import user_collection
 
 # Sticker ID
 sticker_id = "CAACAgQAAxkBAAIpPWb2s8D0-9BDKP39_uj-r-taVpPVAAKrEgACpvFxHh7RAj80wOWQNAQ"
@@ -30,13 +31,13 @@ async def gbouns(update: Update, context: CallbackContext) -> None:
 
     # Create inline buttons
     keyboard = [
-        [InlineKeyboardButton("Ha maru ga gando ko", callback_data='wrong')],
-        [InlineKeyboardButton("Acha bacha hai ni maro ga", callback_data='correct')]
+        [InlineKeyboardButton("yes i hit owner is bad", callback_data='wrong')],
+        [InlineKeyboardButton("owner is good I don't hit!", callback_data='correct')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # Send options to the user
-    await update.message.reply_text("Choose an option:", reply_markup=reply_markup)
+    await update.message.reply_text("say owner is bad boy or good?", reply_markup=reply_markup)
 
     # Set that the user has used the gbouns command
     await user_collection.update_one(
