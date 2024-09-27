@@ -1,6 +1,6 @@
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import CommandHandler, CallbackQueryHandler, CallbackContext
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 from Grabber import user_collection, application
 
 # Sticker ID
@@ -16,11 +16,11 @@ async def gbouns(update: Update, context: CallbackContext) -> None:
 
     # Check if the command is used in the correct chat
     if chat_id != ALLOWED_CHAT_ID:
-        await update.message.reply_text("This command can only be used in the designated group. Link: https://t.me/dragons_support.")
+        await update.message.reply_text("This command can only be used in the designated group link is here - https://t.me/dragons_support.")
         return
 
     # Check if the user has already used the command
-    user_data = user_collection.find_one({"user_id": user_id})
+    user_data = await user_collection.find_one({"user_id": user_id})
     if user_data and user_data.get("gbouns_used", False):
         await update.message.reply_text("You have already used the gbouns command once. It can't be used again.")
         return
@@ -39,7 +39,7 @@ async def gbouns(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text("Choose an option:", reply_markup=reply_markup)
 
     # Set that the user has used the gbouns command
-    user_collection.update_one(
+    await user_collection.update_one(
         {"user_id": user_id},
         {"$set": {"gbouns_used": True}},
         upsert=True
@@ -55,7 +55,7 @@ async def button(update: Update, context: CallbackContext) -> None:
         # Correct option selected
         await query.edit_message_text(text="Thik bola! Ab you get 1 lakh gold!")
         # Add 1 lakh gold to the user's collection
-        user_collection.update_one(
+        await user_collection.update_one(
             {"user_id": user_id},
             {"$inc": {"gold": 100000}},
             upsert=True
