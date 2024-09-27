@@ -1,12 +1,25 @@
 import importlib
-from Grabber import Grabberu, LOGGER, application
+import time
+import re
+import asyncio
+from telegram import Update
+from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters
+
+from Grabber import collection, Grabberu, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
+from Grabber import application, LOGGER
 from Grabber.modules import ALL_MODULES
 
-# Import all modules dynamically
 for module_name in ALL_MODULES:
-    importlib.import_module("Grabber.modules." + module_name)
+    imported_module = importlib.import_module("Grabber.modules." + module_name)
+
+def escape_markdown(text):
+    escape_chars = r'\*_`\\~>#+-=|{}.!'
+    return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
+
 
 def main() -> None:
+    """Run bot."""
+
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
