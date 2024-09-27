@@ -33,10 +33,12 @@ async def sch_exec():
 async def start_sch_exec():
     asyncio.create_task(sch_exec())
 
-def main() -> None:
-    loop = asyncio.get_event_loop()
-    loop.create_task(start_sch_exec())
+async def main_async():
+    await start_sch_exec()
     application.run_polling(drop_pending_updates=True)
+
+def main() -> None:
+    asyncio.run(main_async())
 
 if __name__ == '__main__':
     Grabberu.start()
