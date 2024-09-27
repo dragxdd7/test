@@ -32,14 +32,11 @@ async def sch_exec():
             await db.exec.delete_one({"code": x})
         await asyncio.sleep(10)
 
-async def start_sch_exec():
-    await sch_exec()
-
 async def main_async():
-    await start_sch_exec()
-    await application.initialize()  # Await initialize
-    await application.start()       # Await start
-    await application.updater.start_polling()  # Await polling
+    await application.initialize()  # Initialize application
+    asyncio.create_task(sch_exec())  # Run sch_exec in the background
+    await application.start()       # Start application
+    await application.updater.start_polling()  # Start polling
     await application.shutdown()    # Await shutdown when bot stops
 
 def main() -> None:
