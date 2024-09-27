@@ -1,15 +1,23 @@
 import telegram
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-from Grabber import user_collection , application 
-
+from Grabber import user_collection, application
 
 # Sticker ID
 sticker_id = "CAACAgQAAxkBAAIpPWb2s8D0-9BDKP39_uj-r-taVpPVAAKrEgACpvFxHh7RAj80wOWQNAQ"
 
+# Group chat ID where the command is allowed
+ALLOWED_CHAT_ID = -1002225496870
+
 # Command to start the gbouns interaction
 def gbouns(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
+    chat_id = update.effective_chat.id
+
+    # Check if the command is used in the correct chat
+    if chat_id != ALLOWED_CHAT_ID:
+        update.message.reply_text("This command can only be used in the designated group link is here - https://t.me/dragons_support.")
+        return
 
     # Check if the user has already used the command
     user_data = user_collection.find_one({"user_id": user_id})
@@ -56,8 +64,6 @@ def button(update: Update, context: CallbackContext) -> None:
         # Wrong option selected
         query.edit_message_text(text="You worng! You don't get any item, sry!")
 
-
-    # Add handlers
-    application.add_handler(CommandHandler("gbouns", gbouns))
-    application.add_handler(CallbackQueryHandler(button))
-
+# Add handlers
+application.add_handler(CommandHandler("gbouns", gbouns))
+application.add_handler(CallbackQueryHandler(button))
