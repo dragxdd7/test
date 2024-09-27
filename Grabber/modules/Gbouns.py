@@ -39,10 +39,10 @@ async def gbouns(update: Update, context: CallbackContext) -> None:
     # Send options to the user
     await update.message.reply_text("say owner is bad boy or good?", reply_markup=reply_markup)
 
-    # Set that the user has used the gbouns command
+    # Set that the user has used the gbouns command and store the user's ID
     await user_collection.update_one(
         {"user_id": user_id},
-        {"$set": {"gbouns_used": True}},
+        {"$set": {"gbouns_used": True, "gbouns_trigger_user": user_id}},
         upsert=True
     )
 
@@ -50,8 +50,20 @@ async def gbouns(update: Update, context: CallbackContext) -> None:
 async def button(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     user_id = query.from_user.id
-    await query.answer()
 
+    # Get the user who triggered the gbouns command
+    triggered_user_data = await user_collection.find_one({"gbouns_trigger_user": user_id})
+    triggered_user_id = triggered_user_data.get("gbouns_trigger_user", None)
+
+    # Check if the user who clicked the button is the same as the one who triggered the command
+    if user_id != triggered_user_id:
+        # Send private message to the user who is not allowed to use the option
+        await context.bot.send_message(chat_id=user_id, text="You can't use this option, it's reserved for the person who triggered the command.")
+        await query.answer()
+        return
+
+    # Process the correct and wrong button choices
+    await query.answer()
     if query.data == "correct":
         # Correct option selected
         await query.edit_message_text(text="Thik bola! Ab you get 1 lakh gold!")
