@@ -2,6 +2,7 @@ import importlib
 import re
 import asyncio
 from telegram import Update
+from telegram.ext import Application
 from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters
 
 from Grabber import collection, Grabberu, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
@@ -15,6 +16,7 @@ last_user = {}
 warned_users = {}
 message_counts = {}
 
+# Import all modules dynamically
 for module_name in ALL_MODULES:
     imported_module = importlib.import_module("Grabber.modules." + module_name)
 
@@ -31,11 +33,14 @@ async def sch_exec():
         await asyncio.sleep(10)
 
 async def start_sch_exec():
-    asyncio.create_task(sch_exec())
+    await sch_exec()
 
 async def main_async():
     await start_sch_exec()
-    application.run_polling(drop_pending_updates=True)
+    await application.initialize()  # Await initialize
+    await application.start()       # Await start
+    await application.updater.start_polling()  # Await polling
+    await application.shutdown()    # Await shutdown when bot stops
 
 def main() -> None:
     asyncio.run(main_async())
