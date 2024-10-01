@@ -30,7 +30,8 @@ async def guess(client, message: Message):
     active_guesses[chat_id] = {
         'character': character,
         'start_time': datetime.now(),
-        'guessed': False
+        'guessed': False,
+        'message_id': message.message_id  # Track the original guess message
     }
 
     await message.reply_photo(
@@ -101,9 +102,11 @@ async def check_timeout(client, message: Message, chat_id):
 
     if chat_id in active_guesses and not active_guesses[chat_id]['guessed']:
         character = active_guesses[chat_id]['character']
-        await message.reply_photo(
-            photo=character['img_url'],
-            caption=capsify(f"Time out! ⌛ The correct name was: {character['name']}")
+        original_message_id = active_guesses[chat_id]['message_id']
+
+        await message.reply_text(
+            capsify(f"Time out! ⌛ The correct name was: {character['name']}"),
+            reply_to_message_id=original_message_id  # Reply to the original guess message
         )
         del active_guesses[chat_id]
 
