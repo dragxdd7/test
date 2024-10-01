@@ -8,7 +8,7 @@ devb = db.dev
 
 def sudocmd(func):
     @wraps(func)
-    async def wrapper(client, message: Message):
+    async def wrapper(client: Client, message: Message):
         user_id = message.from_user.id
         sudo_user = await sudb.find_one({"user_id": user_id})
         if not sudo_user:
@@ -19,7 +19,7 @@ def sudocmd(func):
 
 def devcmd(func):
     @wraps(func)
-    async def wrapper(client, message: Message):
+    async def wrapper(client: Client, message: Message):
         user_id = message.from_user.id
         dev_user = await devb.find_one({"user_id": user_id})
         if not dev_user:
@@ -30,7 +30,7 @@ def devcmd(func):
 
 def nopvt(func):
     @wraps(func)
-    async def wrapper(client, message: Message):
+    async def wrapper(client: Client, message: Message):
         if message.chat.type == 'private':
             await message.reply_text("This command cannot be used in private messages.")
             return
@@ -42,7 +42,7 @@ async def get_chat_id(message: Message):
 
 def limit(func):
     @wraps(func)
-    async def wrapper(client, message: Message):
+    async def wrapper(client: Client, message: Message):
         current_chat_id = message.chat.id
         allowed_chat_id = -1002225496870
 
