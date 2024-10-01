@@ -1,6 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from functools import wraps
+from . import db
 
 sudb = db.sudo
 devb = db.dev
