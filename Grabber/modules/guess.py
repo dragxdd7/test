@@ -46,6 +46,11 @@ async def guess(client, message: Message):
 @app.on_message(~filters.me, group=guess_watcher)
 async def check_guess(client, message: Message):
     chat_id = message.chat.id
+    
+    # Ensure the message has a 'from_user' attribute
+    if not message.from_user:
+        return
+    
     user_id = message.from_user.id
 
     if chat_id not in active_guesses:
