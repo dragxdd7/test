@@ -17,7 +17,7 @@ async def get_random_character():
     }).to_list(length=None)
     return random.choice(all_characters)
 
-@app.on_message(filters.command("guess") & sudo_filter)
+@app.on_message(filters.command("guess"))
 async def guess(client, message: Message):
     chat_id = message.chat.id
 
