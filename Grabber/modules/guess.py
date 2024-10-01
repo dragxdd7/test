@@ -18,6 +18,8 @@ async def get_random_character():
     return random.choice(all_characters)
 
 @app.on_message(filters.command("guess"))
+@nopvt
+@limit
 async def guess(client, message: Message):
     chat_id = message.chat.id
 
@@ -31,7 +33,7 @@ async def guess(client, message: Message):
         'character': character,
         'start_time': datetime.now(),
         'guessed': False,
-        'message_id': message.message_id  # Track the original guess message
+        'message_id': message.message_id  
     }
 
     await message.reply_photo(
