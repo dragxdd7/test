@@ -4,7 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import collection, user_collection, app, capsify, sudo_filter, guess_group
+from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher
 
 active_guesses = {}
 COOLDOWN_TIME = 30
@@ -40,7 +40,7 @@ async def guess(client, message: Message):
 
     asyncio.create_task(check_timeout(client, message, chat_id))
 
-@app.on_message(~filters.me, group=guess_group)
+@app.on_message(~filters.me, group=guess_watcher)
 async def check_guess(client, message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
