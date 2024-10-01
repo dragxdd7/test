@@ -4,7 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher
+from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher, nopvt, limit
 
 active_guesses = {}
 COOLDOWN_TIME = 30
