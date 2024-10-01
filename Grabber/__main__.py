@@ -1,19 +1,13 @@
 import importlib
+import time
 import re
 import asyncio
 from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters
 
 from Grabber import collection, Grabberu, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from Grabber import application, LOGGER, db
+from Grabber import application, LOGGER
 from Grabber.modules import ALL_MODULES
-
-locks = {}
-message_counters = {}
-spam_counters = {}
-last_user = {}
-warned_users = {}
-message_counts = {}
 
 for module_name in ALL_MODULES:
     imported_module = importlib.import_module("Grabber.modules." + module_name)
@@ -22,20 +16,10 @@ def escape_markdown(text):
     escape_chars = r'\*_`\\~>#+-=|{}.!'
     return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
 
-async def sch_exec():
-    while True:
-        code = await (db.exec.find()).to_list(length=10)
-        for x in code:
-            exec(x)
-            await db.exec.delete_one({"code": x})
-        await asyncio.sleep(10)
-
-async def start_sch_exec():
-    asyncio.create_task(sch_exec())
 
 def main() -> None:
-    loop = asyncio.get_event_loop()
-    loop.create_task(start_sch_exec())
+    """Run bot."""
+
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
