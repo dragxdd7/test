@@ -33,7 +33,7 @@ async def guess(client, message: Message):
         'character': character,
         'start_time': datetime.now(),
         'guessed': False,
-        'message_id': message.message_id  
+        'message_id': message.id  
     }
 
     await message.reply_photo(
