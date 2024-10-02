@@ -12,7 +12,7 @@ from Grabber import collection, top_global_groups_collection, group_user_totals_
 from Grabber import application, LOGGER
 from Grabber.modules import ALL_MODULES
 from Grabber.utils.bal import add, deduct , show 
-from .gandu import handle_messages
+#from .gandu import handle_messages
 
 locks = {}
 message_counters = {}
@@ -33,7 +33,7 @@ def escape_markdown(text):
     return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
 
 async def message_counter(update: Update, context: CallbackContext) -> None:
-    await handle_messages(update, context)
+    #await handle_messages(update, context)
     chat_id = str(update.effective_chat.id)
     user_id = update.effective_user.id
 
