@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 import random
-from . import sudb, add, deduct, show, app, spawn_watcher
+from . import sudb, app, spawn_watcher
 
 allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
 
@@ -50,7 +50,7 @@ async def spawn(client: Client, chat_id):
 
     character = random.choice(all_characters)
     last_characters[chat_id] = character
-    
+
     character_name = character['name']
     character_image = character['image']
 
@@ -70,7 +70,7 @@ async def spawn(client: Client, chat_id):
     keyboard = [[IKB("New Slave", callback_data=f"view_{character_name.lower()}")]]
     await client.send_photo(chat_id, photo=character_image, caption=caption, reply_markup=IKM(keyboard), has_spoiler=True)
 
-@app.on_message(filters.text , group=spawn_watcher)
+@app.on_message(filters.text, group=spawn_watcher)
 async def handle(client: Client, message):
     chat_id = message.chat.id
 
