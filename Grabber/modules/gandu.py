@@ -94,7 +94,7 @@ async def handle_messages(client: Client, message):
         ]
         reply_markup = IKM(keyboard)
 
-        await client.send_photo(chat_id, image=image_bytes, caption="Guess the word in the image to win!", reply_markup=reply_markup)
+        await client.send_photo(chat_id, photo=image_bytes, caption="Guess the word in the image to win!", reply_markup=reply_markup)
 
 
 @app.on_message(filters.command("wtime"))
