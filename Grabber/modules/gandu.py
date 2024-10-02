@@ -35,7 +35,7 @@ async def set_message_limit(client: Client, message):
     except (IndexError, ValueError):
         await message.reply("Please provide a valid message limit (integer).")
 
-def generate_random_image(word: str) -> bytes:
+def generate_random_image(word: str) -> io.BytesIO:
     img = Image.open(BG_IMAGE_PATH)
     d = ImageDraw.Draw(img)
     fnt = ImageFont.truetype('Fonts/font.ttf', 76)
@@ -48,7 +48,7 @@ def generate_random_image(word: str) -> bytes:
     img.save(img_byte_arr, format='PNG')
     img_byte_arr.seek(0)
 
-    return img_byte_arr.read()
+    return img_byte_arr
 
 async def handle_guess(client: Client, message):
     if not message.text:
@@ -87,15 +87,14 @@ async def handle_messages(client: Client, message):
         image_bytes = generate_random_image(random_word)
 
         alpha_dict[chat_id] = random_word
-        guess_start_time[chat_id] = time.time()  # Start timing
+        guess_start_time[chat_id] = time.time()
 
         keyboard = [
             [IKB("Join", url="https://t.me/dragons_support")]
         ]
         reply_markup = IKM(keyboard)
 
-        await client.send_photo(chat_id, photo=img_byte_arr, caption="Guess the word in the image to win!", reply_markup=reply_markup)
-
+        await client.send_photo(chat_id, photo=image_bytes, caption="Guess the word in the image to win!", reply_markup=reply_markup)
 
 @app.on_message(filters.command("wtime"))
 async def on_wtime(client: Client, message):
