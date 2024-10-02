@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 import random
-from . import sudb, app, spawn_watcher, add, deduct, show
+from . import sudb, add, deduct, show, app, spawn_watcher
 
 allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
 
@@ -17,24 +17,25 @@ async def sudo_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
     return [user['user_id'] for user in sudo_users]
 
-async def admin_ids(client: Client, chat_id: int):
+async def get_admin_ids(client: Client, chat_id: int):
     if chat_id not in admin_cache:
         admins = await client.get_chat_members(chat_id, filter="administrators")
         admin_cache[chat_id] = [admin.user.id for admin in admins]
     return admin_cache[chat_id]
 
 async def limit(client: Client, message):
-    admin_ids = await admin_ids(client, message.chat.id)
+    admin_ids = await get_admin_ids(client, message.chat.id)
+    sudo_users = await sudo_ids()
     user_id = message.from_user.id
 
-    if user_id not in admin_ids:
-        await message.reply("Only group admins can set the spawn limit!")
+    if user_id not in admin_ids and user_id not in sudo_users:
+        await message.reply("Only group admins or sudo users can set the spawn limit!")
         return
 
     try:
         limit_value = int(message.command[1])
-        if limit_value < 100:
-            await message.reply("Spawn limit must be 100 or greater!")
+        if limit_value < 1:
+            await message.reply("Spawn limit must be 1 or greater!")
             return
 
         group_spawn_limits[message.chat.id] = limit_value
@@ -129,4 +130,8 @@ async def change(client: Client, message):
 
 @app.on_message(filters.command("ctime") & filters.group)
 async def ctime(client: Client, message):
+    sudo_users = await sudo_ids()
+    if message.from_user.id not in sudo_users:
+        await message.reply("Only sudo users can use this command.")
+        return
     await limit(client, message)
