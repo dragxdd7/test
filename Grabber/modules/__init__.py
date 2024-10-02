@@ -116,6 +116,12 @@ def __list_all_modules():
 
     return all_modules
 
+async def get_group_spawn_limit(chat_id):
+    group_data = await db.groups.find_one({"chat_id": chat_id}, {"spawn_limit": 1})
+    return group_data['spawn_limit'] if group_data and 'spawn_limit' in group_data else None
+
+async def set_group_spawn_limit(chat_id, limit):
+    await db.groups.update_one({"chat_id": chat_id}, {"$set": {"spawn_limit": limit}}, upsert=True)
 
 
 ALL_MODULES = __list_all_modules()
