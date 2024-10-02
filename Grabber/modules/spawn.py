@@ -1,132 +1,227 @@
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+import importlib
+import time
 import random
-from . import sudb, db, get_group_spawn_limit, set_group_spawn_limit, app, spawn_watcher
+import re
+import asyncio
+from html import escape
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
+from telegram.ext import CommandHandler, CallbackContext, MessageHandler, CallbackQueryHandler, filters
+
+from Grabber import collection, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection, Grabberu 
+from Grabber import application, LOGGER
+from Grabber.modules import ALL_MODULES
+from Grabber.utils.bal import add, deduct , show 
 
 
-allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
-DEFAULT_SPAWN_LIMIT = 100
-group_spawn_counts = {}
-group_spawn_limits = {}
-active_characters = {}
-admin_cache = {}
+locks = {}
+message_counters = {}
+spam_counters = {}
 last_characters = {}
-picked_users = {}
+sent_characters = {}
+first_correct_guesses = {}
+message_counts = {}
 
-async def sudo_ids():
-    sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
-    return [user['user_id'] for user in sudo_users]
+for module_name in ALL_MODULES:
+    imported_module = importlib.import_module("Grabber.modules." + module_name)
 
-async def admin_ids(client: Client, chat_id: int):
-    if chat_id not in admin_cache:
-        admins = await client.get_chat_members(chat_id, filter="administrators")
-        admin_cache[chat_id] = [admin.user.id for admin in admins]
-    return admin_cache[chat_id]
+last_user = {}
+warned_users = {}
 
-async def limit(client: Client, message):
-    admin_ids = await admin_ids(client, message.chat.id)
-    user_id = message.from_user.id
+def escape_markdown(text):
+    escape_chars = r'\*_`\\~>#+-=|{}.!'
+    return re.sub(r'([%s])' % re.escape(escape_chars), r'\\\1', text)
 
-    if user_id not in admin_ids:
-        await message.reply("Only group admins can set the spawn limit!")
-        return
+async def message_counter(update: Update, context: CallbackContext) -> None:
+    chat_id = str(update.effective_chat.id)
+    user_id = update.effective_user.id
 
-    try:
-        limit_value = int(message.command[1])
-        if limit_value < 100:
-            sudo_ids = await sudo_ids()
-            if user_id in sudo_ids:
-                await db.set_group_spawn_limit(message.chat.id, limit_value)
+    if chat_id not in locks:
+        locks[chat_id] = asyncio.Lock()
+    lock = locks[chat_id]
+
+    async with lock:
+        chat_frequency = await user_totals_collection.find_one({'chat_id': chat_id})
+        if chat_frequency:
+            message_frequency = chat_frequency.get('message_frequency', 100)
         else:
-            await db.set_group_spawn_limit(message.chat.id, limit_value)
+            message_frequency = 100
 
-        group_spawn_limits[message.chat.id] = limit_value
-        await message.reply(f"Spawn limit set to {limit_value} messages.")
-    except (IndexError, ValueError):
-        await message.reply("Please provide a valid spawn limit (integer).")
+        if chat_id in last_user and last_user[chat_id]['user_id'] == user_id:
+            last_user[chat_id]['count'] += 1
+            if last_user[chat_id]['count'] >= 10:
+                if user_id in warned_users and time.time() - warned_users[user_id] < 600:
+                    return
+                else:
+                    await update.message.reply_text(
+                        f"⚠️ Don't Spam {update.effective_user.first_name}...\nYour Messages Will be Ignored for 10 Minutes...")
+                    warned_users[user_id] = time.time()
+                    return
+        else:
+            last_user[chat_id] = {'user_id': user_id, 'count': 1}
 
-async def spawn(client: Client, chat_id):
+        if chat_id in message_counts:
+            message_counts[chat_id] += 1
+        else:
+            message_counts[chat_id] = 1
+
+
+        if message_counts[chat_id] % message_frequency == 0:
+            await send_image(update, context)  # Send image when the frequency is met
+            message_counts[chat_id] = 0
+
+async def send_image(update: Update, context: CallbackContext) -> None:
+    chat_id = update.effective_chat.id
+
+    allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial" , "💋 Aura"]
+
     all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
+
     if not all_characters:
         return
 
     character = random.choice(all_characters)
+
     last_characters[chat_id] = character
-    character_name = character['name']
-    character_image = character['image']
 
-    active_characters[chat_id] = {
-        "id": character['_id'],
-        "name": character_name.lower(),
-        "anime": character['anime'],
-        "rarity": character['rarity']
-    }
+    if chat_id in first_correct_guesses:
+        del first_correct_guesses[chat_id]
 
-    caption = (
-        "ᴀ ɴᴇᴡ ꜱʟᴀᴠᴇ ᴀᴘᴘᴇᴀʀᴇᴅ\n"
-        "ᴜsᴇ /pick (ɴᴀᴍᴇ) ᴀɴᴅ ᴍᴀᴋᴇ ɪᴛ ʏᴏᴜʀs\n\n"
-        "⚠️ ᴄʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ᴛᴏ ᴠɪᴇᴡ ᴛʜᴇ ᴄʜᴀʀᴀᴄᴛᴇʀ's ɴᴀᴍᴇ"
+    keyboard = [[InlineKeyboardButton("ɴᴀᴍᴇ", callback_data='name')]]
+
+    await context.bot.send_photo(
+        chat_id=chat_id,
+        photo=character['img_url'],
+        caption=f"ᴀ ɴᴇᴡ ꜱʟᴀᴠᴇ ᴀᴘᴘᴇᴀʀᴇᴅ\n ᴜsᴇ /pick (ɴᴀᴍᴇ) ᴀɴᴅ ᴍᴀᴋᴇ ɪᴛ ʏᴏᴜʀs \n\n⚠️ ɴᴏᴛᴇ ᴡʜᴇɴ ʏᴏᴜ ᴄʟɪᴄᴋ ᴏɴ ɴᴀᴍᴇ ʙᴜᴛᴛᴏɴ ʙᴏᴛ ᴡɪʟʟ ᴅᴇᴅᴜᴄᴛ 100 ᴄᴏɪɴ ᴇᴠᴇʀʏᴛɪᴍᴇ",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        has_spoiler=True
     )
 
-    keyboard = [[IKB("New Slave", callback_data=f"view_{character_name.lower()}")]]
-    await client.send_photo(chat_id, photo=character_image, caption=caption, reply_markup=IKM(keyboard), has_spoiler=True)
+from telegram import Update
+from telegram.ext import CallbackContext
 
-@app.on_message(filters.text, group=spawn_watcher)
-async def handle(client: Client, message):
-    chat_id = message.chat.id
+async def bc(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    chat_id = query.message.chat_id
 
-    if chat_id not in group_spawn_counts:
-        group_spawn_counts[chat_id] = 1
-        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id) or DEFAULT_SPAWN_LIMIT
-    else:
-        group_spawn_counts[chat_id] += 1
+    try:
+        await query.answer()
 
-    if group_spawn_counts[chat_id] >= group_spawn_limits[chat_id]:
-        group_spawn_counts[chat_id] = 0
-        await spawn(client, chat_id)
+        user_balance = await show(user_id)
 
-@app.on_callback_query(filters.regex(r'view_'))
-async def click(client: Client, callback_query):
-    character_name = callback_query.data[5:]
-    character = last_characters[callback_query.message.chat.id]
+        if user_balance is not None:
+            if user_balance >= 100:
+                await deduct(user_id, 100)
+                name = last_characters.get(chat_id, {}).get('name', 'Unknown')
+                await query.answer(text=f"The name is: {name}", show_alert=True)
+            else:
+                await query.answer(text="You don't have sufficient balance.", show_alert=True)
+        else:
+            await add(user_id, 50000)
+            name = last_characters.get(chat_id, {}).get('name', 'Unknown')
+            await query.answer(text="Welcome, user! You've been added to our system with an initial balance of 50k", show_alert=True)
+    except Exception as e:
+        print(f"Error: {e}")
 
-    if character_name == character['name']:
-        await callback_query.answer(f"Character Name: {character['name'].capitalize()}", show_alert=True)
-    else:
-        await callback_query.answer("This character is no longer available.", show_alert=True)
+async def get_user_balance(user_id: int) -> int:
+    user = await user_collection.find_one({"id": user_id})
+    return user.get("balance") if user else None
 
-@app.on_message(filters.command("pick") & filters.group)
-async def pick(client: Client, message):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    user_name = message.from_user.first_name
-    pick_name = message.command[1].lower()
+async def guess(update: Update, context: CallbackContext) -> None:
+    chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
 
-    if chat_id not in active_characters:
-        await message.reply("No character available to pick right now!")
+    if chat_id not in last_characters:
         return
 
-    character = active_characters[chat_id]
+    if chat_id in first_correct_guesses:
+        await update.message.reply_text(f'❌ 𝘼𝙡𝙧𝙚𝙖𝙙𝙮 𝙜𝙪𝙚𝙨𝙨𝙚𝙙 𝙗𝙮 𝙎𝙤𝙢𝙚𝙤𝙣𝙚 𝙚𝙡𝙨𝙚..')
+        return
 
-    if pick_name in character["name"] and user_id not in picked_users:
-        picked_users[user_id] = character["name"]
-        congratulations_msg = (
-            f"✨ Congratulations, {user_name}! ✨\n"
-            f"You've acquired a new character!\n\n"
-            f"Name: {character['name'].capitalize()}\n"
-            f"Anime: {character['anime']}\n"
-            f"Rarity: {character['rarity']}\n\n"
-            "⛩ Check your harem now!"
-        )
-        await message.reply(congratulations_msg)
-        active_characters.pop(chat_id)
+    guess = ' '.join(context.args).lower() if context.args else ''
+
+    if "()" in guess or "&" in guess.lower():
+        await update.message.reply_text("𝙉𝙖𝙝𝙝 𝙔𝙤𝙪 𝘾𝙖𝙣'𝙩 𝙪𝙨𝙚 𝙏𝙝𝙞𝙨 𝙏𝙮𝙥𝙚𝙨 𝙤𝙛 𝙬𝙤𝙧𝙙𝙨 ❌️")
+        return
+
+    name_parts = last_characters[chat_id]['name'].lower().split()
+
+    if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
+        first_correct_guesses[chat_id] = user_id
+
+        user = await user_collection.find_one({'id': user_id})
+        if user:
+            update_fields = {}
+            if hasattr(update.effective_user, 'username') and update.effective_user.username != user.get('username'):
+                update_fields['username'] = update.effective_user.username
+            if update.effective_user.first_name != user.get('first_name'):
+                update_fields['first_name'] = update.effective_user.first_name
+            if update_fields:
+                await user_collection.update_one({'id': user_id}, {'$set': update_fields})
+
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': last_characters[chat_id]}})
+
+        elif hasattr(update.effective_user, 'username'):
+            await user_collection.insert_one({
+                'id': user_id,
+                'username': update.effective_user.username,
+                'first_name': update.effective_user.first_name,
+                'characters': [last_characters[chat_id]],
+            })
+
+        group_user_total = await group_user_totals_collection.find_one({'user_id': user_id, 'group_id': chat_id})
+        if group_user_total:
+            update_fields = {}
+            if hasattr(update.effective_user, 'username') and update.effective_user.username != group_user_total.get('username'):
+                update_fields['username'] = update.effective_user.username
+            if update.effective_user.first_name != group_user_total.get('first_name'):
+                update_fields['first_name'] = update.effective_user.first_name
+            if update_fields:
+                await group_user_totals_collection.update_one({'user_id': user_id, 'group_id': chat_id}, {'$set': update_fields})
+
+            await group_user_totals_collection.update_one({'user_id': user_id, 'group_id': chat_id}, {'$inc': {'count': 1}})
+
+        else:
+            await group_user_totals_collection.insert_one({
+                'user_id': user_id,
+                'group_id': chat_id,
+                'username': update.effective_user.username,
+                'first_name': update.effective_user.first_name,
+                'count': 1,
+            })
+
+        group_info = await top_global_groups_collection.find_one({'group_id': chat_id})
+        if group_info:
+            update_fields = {}
+            if update.effective_chat.title != group_info.get('group_name'):
+                update_fields['group_name'] = update.effective_chat.title
+            if update_fields:
+                await top_global_groups_collection.update_one({'group_id': chat_id}, {'$set': update_fields})
+
+            await top_global_groups_collection.update_one({'group_id': chat_id}, {'$inc': {'count': 1}})
+
+        else:
+            await top_global_groups_collection.insert_one({
+                'group_id': chat_id,
+                'group_name': update.effective_chat.title,
+                'count': 1,
+            })
+
+        keyboard = [[InlineKeyboardButton(f"harem", switch_inline_query_current_chat=f"collection.{user_id}")]]
+        await update.message.reply_text(
+            f'✨ Congratulations, {escape(update.effective_user.first_name)}! ✨\n'
+            f'You\'ve acquired a new character!\n\n'
+            f'Name: <b>{last_characters[chat_id]["name"]}</b>\n'
+            f'Anime: <b>{last_characters[chat_id]["anime"]}</b>\n'
+            f'Rarity: <b> {last_characters[chat_id]["rarity"]}</b>\n\n'
+            '⛩ Check your harem now!',
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup(keyboard))
+
     else:
-        await message.reply("Incorrect name! Try again or character already picked.")
+        await update.message.reply_text('𝙋𝙡𝙚𝙖𝙨𝙚 𝙒𝙧𝙞𝙩𝙚 𝘾𝙤𝙧𝙧𝙚𝙘𝙩 𝙉𝙖𝙢𝙚... ❌️')
 
-@app.on_message(filters.command("change") & filters.group)
-async def change(client: Client, message):
-    await limit(client, message)
-
-@app.on_message(filters.command("ctime") & filters.group)
-async def ctime(client: Client, message):
-    await limit(client, message)
+application.add_handler(CommandHandler(["pick"], guess, block=False))
+application.add_handler(MessageHandler(filters.ALL, message_counter, block=False))
