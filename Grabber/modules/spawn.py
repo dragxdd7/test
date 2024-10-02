@@ -1,7 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 import random
-from . import *
+from . import sudb, db, get_group_spawn_limit, set_group_spawn_limit
+
 
 allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
 DEFAULT_SPAWN_LIMIT = 100
