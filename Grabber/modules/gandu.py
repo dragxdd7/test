@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import random
 import io
 import time
-from . import add, deduct, show, sudb, app
+from . import add, deduct, show, sudb, app, gend_watcher
 from words import words
 
 BG_IMAGE_PATH = "Images/blue.jpg"
