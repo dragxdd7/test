@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 import random
-from . import sudb, add, deduct, show, app, spawn_watcher, db  # Import db
+from . import sudb, add, deduct, show, app, spawn_watcher, db  
 
 allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
 
@@ -86,15 +86,17 @@ async def handle(client: Client, message):
 
     if chat_id not in group_spawn_counts:
         group_spawn_counts[chat_id] = 1
-        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id)  # Retrieve limit from DB
+        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id)  
+        
         if group_spawn_limits[chat_id] is None:
-            group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT
+            group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT  # Default limit if none is set
     else:
         group_spawn_counts[chat_id] += 1
 
-    # Check and set limit to DEFAULT if not defined
-    if group_spawn_limits[chat_id] is None:
-        group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT
+    if chat_id not in group_spawn_limits:
+        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id)
+        if group_spawn_limits[chat_id] is None:
+            group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT
 
     if group_spawn_counts[chat_id] >= group_spawn_limits[chat_id]:
         group_spawn_counts[chat_id] = 0
