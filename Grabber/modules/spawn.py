@@ -1,10 +1,9 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 import random
-from . import sudb, add, deduct, show, app, spawn_watcher, db  
+from . import sudb, db, app, spawn_watcher
 
 allowed_rarities = ["🟢 Common", "🔵 Medium", "🟠 Rare", "🟡 Legendary", "🪽 Celestial", "💋 Aura"]
-
 DEFAULT_SPAWN_LIMIT = 100
 group_spawn_counts = {}
 group_spawn_limits = {}
@@ -17,50 +16,41 @@ async def sudo_ids():
     sudo_users = await sudb.find({}, {'user_id': 1}).to_list(length=None)
     return [user['user_id'] for user in sudo_users]
 
-async def get_admin_ids(client: Client, chat_id: int):
+async def admin_ids(client: Client, chat_id: int):
     if chat_id not in admin_cache:
-        admin_ids = []
-        async for admin in client.get_chat_members(chat_id, filter="administrators"):
-            admin_ids.append(admin.user.id)
-        admin_cache[chat_id] = admin_ids
+        admins = await client.get_chat_members(chat_id, filter="administrators")
+        admin_cache[chat_id] = [admin.user.id for admin in admins]
     return admin_cache[chat_id]
 
 async def limit(client: Client, message):
-    admin_ids = await get_admin_ids(client, message.chat.id)
-    sudo_users = await sudo_ids()
+    admin_ids = await admin_ids(client, message.chat.id)
     user_id = message.from_user.id
+
+    if user_id not in admin_ids:
+        await message.reply("Only group admins can set the spawn limit!")
+        return
 
     try:
         limit_value = int(message.command[1])
-        
-        if limit_value < 1:
-            await message.reply("Spawn limit must be 1 or greater!")
-            return
-        
-        if limit_value < 100 and user_id not in sudo_users:
-            await message.reply("Only sudo users can set the spawn limit to less than 100!")
-            return
-        
-        if limit_value >= 100 and user_id not in admin_ids and user_id not in sudo_users:
-            await message.reply("Only group admins or sudo users can set the spawn limit!")
-            return
+        if limit_value < 100:
+            sudo_ids = await sudo_ids()
+            if user_id in sudo_ids:
+                await db.set_group_spawn_limit(message.chat.id, limit_value)
+        else:
+            await db.set_group_spawn_limit(message.chat.id, limit_value)
 
         group_spawn_limits[message.chat.id] = limit_value
-        await db.save_group_spawn_limit(message.chat.id, limit_value)  # Save limit to DB
-        await message.reply(f"Spawn limit set to {limit_value} messages. Characters will spawn every {limit_value} messages.")
-        
+        await message.reply(f"Spawn limit set to {limit_value} messages.")
     except (IndexError, ValueError):
         await message.reply("Please provide a valid spawn limit (integer).")
 
 async def spawn(client: Client, chat_id):
     all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
-
     if not all_characters:
         return
 
     character = random.choice(all_characters)
     last_characters[chat_id] = character
-
     character_name = character['name']
     character_image = character['image']
 
@@ -86,17 +76,9 @@ async def handle(client: Client, message):
 
     if chat_id not in group_spawn_counts:
         group_spawn_counts[chat_id] = 1
-        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id)  
-        
-        if group_spawn_limits[chat_id] is None:
-            group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT  # Default limit if none is set
+        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id) or DEFAULT_SPAWN_LIMIT
     else:
         group_spawn_counts[chat_id] += 1
-
-    if chat_id not in group_spawn_limits:
-        group_spawn_limits[chat_id] = await db.get_group_spawn_limit(chat_id)
-        if group_spawn_limits[chat_id] is None:
-            group_spawn_limits[chat_id] = DEFAULT_SPAWN_LIMIT
 
     if group_spawn_counts[chat_id] >= group_spawn_limits[chat_id]:
         group_spawn_counts[chat_id] = 0
@@ -127,7 +109,6 @@ async def pick(client: Client, message):
 
     if pick_name in character["name"] and user_id not in picked_users:
         picked_users[user_id] = character["name"]
-
         congratulations_msg = (
             f"✨ Congratulations, {user_name}! ✨\n"
             f"You've acquired a new character!\n\n"
@@ -147,8 +128,4 @@ async def change(client: Client, message):
 
 @app.on_message(filters.command("ctime") & filters.group)
 async def ctime(client: Client, message):
-    sudo_users = await sudo_ids()
-    if message.from_user.id not in sudo_users:
-        await message.reply("Only sudo users can use this command.")
-        return
     await limit(client, message)
