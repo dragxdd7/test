@@ -51,9 +51,7 @@ Grabberu = Client(
     "Grabber",
     api_id=api_id,
     api_hash=api_hash,
-    bot_token=TOKEN,
-    plugins=dict(root="Grabber/modules")
-)
+    bot_token=TOKEN)
 app = Grabberu
 client = AsyncIOMotorClient(mongo_url)
 db = client['Character_catcher']
