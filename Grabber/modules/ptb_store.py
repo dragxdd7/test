@@ -61,7 +61,7 @@ async def shop(client, message):
 async def sales_list_callback(client, query):
     end_user = int(query.data.split('_')[1])
     if end_user == query.from_user.id:
-        await query.answer()
+        await query.answer()  # Always answer the query
         await query.message.delete()
     else:
         await query.answer(capsify('This is not for you baka.'), show_alert=True)
@@ -76,6 +76,9 @@ async def store_callback_handler(client, query):
     user = await user_collection.find_one({'id': user_id})
     if not user or origin != user_id:
         return await query.answer(capsify("This is not for you baka."), show_alert=True)
+
+    # Answer the query to avoid timeouts
+    await query.answer()
 
     if query.data.startswith("buy"):
         await handle_buy(query, data[0], origin, user_id)
@@ -96,7 +99,6 @@ async def handle_buy(query, buy_type, origin, user_id):
     if user_balance <= 0:
         return await query.answer(capsify("You do not have enough coins"), show_alert=True)
 
-    await query.answer()
     await query.edit_message_caption(
         f"{query.message.caption}\n\n{capsify('__Click on button below to purchase!__')}",
         reply_markup=IKM([
@@ -110,7 +112,6 @@ async def handle_page(query, page, origin, user_id):
     if str(query.message.date).split()[0] != today():
         return await query.answer(capsify("Query expired, use /store to continue!"), show_alert=True)
 
-    await query.answer()
     y = await get_today_characters(origin)
     char = y[1][page - 1]
     photo, caption = await get_image_and_caption(char)
@@ -160,7 +161,6 @@ async def handle_char_confirm(query, char, user_id):
 
 
 async def handle_char_back(query, char, user_id):
-    await query.answer()
     y = await get_today_characters(user_id)
     ch_ids = y[1]
     ind = ch_ids.index(char) + 1
