@@ -52,26 +52,53 @@ async def unblock_command(client, message: Message):
 
 block_dic = {}
 
+import inspect
+
 def block_dec(func):
-    async def wrapper(client, message: Message):
-        user_id = message.from_user.id
+    async def async_wrapper(client, message):
+        user_id = message.from_user.id if hasattr(message, 'from_user') else message.effective_user.id
         if await is_blocked(user_id) or user_id in block_dic:
             return
         return await func(client, message)
-    return wrapper
+    
+    def sync_wrapper(client, update):
+        user_id = update.effective_user.id
+        if is_blocked(user_id) or user_id in block_dic:
+            return
+        return func(client, update)
+    
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
 
 def block_cbq(func):
-    async def wrapper(client, callback_query):
-        user_id = callback_query.from_user.id
+    async def async_wrapper(client, callback_query):
+        user_id = callback_query.from_user.id if hasattr(callback_query, 'from_user') else callback_query.effective_user.id
         if await is_blocked(user_id) or user_id in block_dic:
-            return await callback_query.answer("You have been blocked.", show_alert=True)
+            await callback_query.answer("You have been blocked.", show_alert=True)
+            return
         return await func(client, callback_query)
-    return wrapper
+    
+    def sync_wrapper(client, update):
+        user_id = update.effective_user.id
+        if is_blocked(user_id) or user_id in block_dic:
+            update.callback_query.answer("You have been blocked.", show_alert=True)
+            return
+        return func(client, update)
+    
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
 
 def block_inl(func):
-    async def wrapper(client, inline_query):
-        user_id = inline_query.from_user.id
+    async def async_wrapper(client, inline_query):
+        user_id = inline_query.from_user.id if hasattr(inline_query, 'from_user') else inline_query.effective_user.id
         if await is_blocked(user_id) or user_id in block_dic:
-            return await inline_query.answer("You have been blocked.")
+            await inline_query.answer("You have been blocked. ")
+            return
         return await func(client, inline_query)
-    return wrapper
+    
+    def sync_wrapper(client, update):
+        user_id = update.effective_user.id
+        if is_blocked(user_id) or user_id in block_dic:
+            update.inline_query.answer("You have been blocked.")
+            return
+        return func(client, update)
+    
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
