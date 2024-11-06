@@ -3,8 +3,10 @@ from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ChatAction
 from . import app
+from .block import block_dec
 
 @app.on_message(filters.command("cosplay"))
+@block_dec 
 async def cosplay(_, msg):
     bot_info = await app.get_me()
     bot_username = bot_info.username
