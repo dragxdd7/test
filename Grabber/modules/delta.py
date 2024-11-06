@@ -3,6 +3,7 @@ import io
 from PIL import Image, ImageDraw, ImageFont
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from .block import block_cbq
 
 from Grabber import user_collection, collection
 from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudo_filter
@@ -97,6 +98,7 @@ async def delta(client, message):
         )
 
 @app.on_callback_query(filters.regex('correct|incorrect'))
+@block_cbq
 async def sumu(client, callback_query):
     user_id = callback_query.from_user.id
     user_name = callback_query.from_user.first_name
