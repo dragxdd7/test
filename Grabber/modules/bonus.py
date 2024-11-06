@@ -4,6 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import user_collection, Grabberu
 from . import add as add_balance, show as show_balance, capsify
+from .block import block_dec
 
 last_payment_times = {}
 
@@ -89,9 +90,11 @@ async def weekly(client: Client, message: Message):
         await handle_error(client, message, e)
 
 @Grabberu.on_message(filters.command("bonus"))
+@block_dec
 async def daily_reward_handler(client: Client, message: Message):
     await daily_reward(client, message)
 
 @Grabberu.on_message(filters.command("xbonus"))
+@block_dec
 async def weekly_handler(client: Client, message: Message):
     await weekly(client, message)
