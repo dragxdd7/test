@@ -5,12 +5,12 @@ import math
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app, capsify
 from .bank import block_dec
 
-@block_dec
 async def handle_error(client: Client, message: Message, error: Exception):
     error_message = f"An error occurred: {str(error)}"
     await message.reply_text(capsify(error_message))
     print(f"Error: {error}")
 
+@block_dec
 async def save(client: Client, message: Message):
     try:
         amount = int(message.command[1])
@@ -37,6 +37,7 @@ async def save(client: Client, message: Message):
     else:
         await message.reply_text(capsify("User data not found."))
 
+@block_dec
 async def withdraw(client: Client, message: Message):
     try:
         amount = int(message.command[1])
@@ -63,6 +64,7 @@ async def withdraw(client: Client, message: Message):
     else:
         await message.reply_text(capsify("User data not found."))
 
+@block_dec
 async def loan(client: Client, message: Message):
     try:
         loan_amount = int(message.command[1])
@@ -109,6 +111,7 @@ async def loan(client: Client, message: Message):
     else:
         await message.reply_text(capsify("User data not found."))
 
+@block_dec
 async def repay(client: Client, message: Message):
     try:
         repayment_amount = int(message.command[1])
