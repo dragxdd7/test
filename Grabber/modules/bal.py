@@ -2,8 +2,11 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import Grabberu as app, user_collection, show, sbank, capsify
 from datetime import datetime
+from .block import block_dec
+
 
 @app.on_message(filters.command("bal"))
+@block_dec
 async def balance(client: Client, message: Message):
     if not message.from_user:
         await message.reply_text("Couldn't retrieve user information.")
