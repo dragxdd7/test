@@ -10,7 +10,9 @@ from .sgift import confirm_gift, cancel_gift
 from .trade import confirm_trade, cancel_trade
 from .rps import rps_button 
 from .start import button
+from .block import block_cbq
 
+@block_cbq
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
