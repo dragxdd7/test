@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import application, user_collection
+from .block import block_dec
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -35,7 +36,7 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 
     return img_path
 
-
+@block_dec
 async def cmode(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     username = update.effective_user.username
