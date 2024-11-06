@@ -6,6 +6,7 @@ from pymongo import MongoClient
 import random
 import asyncio
 from . import user_collection, clan_collection, app as application, Grabberu
+from .block import block_dec, block_cbq
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -46,6 +47,7 @@ async def get_user_data(user_id):
     return user_data
 
 @Grabberu.on_message(filters.command("battle") & filters.reply)
+@block_dec
 async def battle_command(client, message):
     user_a_id = message.from_user.id
     user_a_data = await get_user_data(user_a_id)
@@ -83,6 +85,7 @@ async def battle_command(client, message):
     await message.reply_to_message.reply_text(f"{user_b_name}, {user_a_name} challenged you: Do you fight or run?", reply_markup=reply_markup)
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_accept'))
+@block_cbq
 async def handle_battle_accept(client, query: CallbackQuery):
     data = query.data.split(':')
     user_a_id = int(data[1])
@@ -134,11 +137,13 @@ async def handle_battle_accept(client, query: CallbackQuery):
     }
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_decline'))
+@block_cbq
 async def handle_battle_decline(client, query: CallbackQuery):
     await query.answer("Challenge declined!")
     await query.message.edit_text("The battle challenge was declined.")
 
 @Grabberu.on_callback_query(filters.regex(r'^battle_attack'))
+@block_cbq
 async def handle_battle_attack(client, query: CallbackQuery):
     data = query.data.split(':')
     weapon_name = data[1]
