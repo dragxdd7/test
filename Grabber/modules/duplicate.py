@@ -2,7 +2,7 @@ import io
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import collection, user_collection, app
-from ..block import block_dec
+from .block import block_dec
 
 @block_dec
 async def duplicate(client: Client, message: Message) -> None:
