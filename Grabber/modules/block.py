@@ -26,10 +26,10 @@ async def block_command(client, message: Message):
             target_id = int(message.text.split()[1])
         except:
             return await message.reply("Either reply to a user or provide an ID.")
-    
+
     if await is_blocked(target_id):
         return await message.reply("User is already blocked.")
-    
+
     await block(target_id)
     await message.reply("User blocked permanently.")
 
@@ -43,27 +43,27 @@ async def unblock_command(client, message: Message):
             target_id = int(message.text.split()[1])
         except:
             return await message.reply("Either reply to a user or provide an ID.")
-    
+
     if not await is_blocked(target_id):
         return await message.reply("User was not blocked.")
-    
+
     await unblock(target_id)
     await message.reply("User unblocked.")
 
 block_dic = {}
 
-def block_cbq(func):
-    async def wrapper(client, callback_query):
-        user_id = callback_query.from_user.id if callback_query.from_user else None
-        if user_id and (await is_blocked(user_id) or user_id in block_dic):
-            return await callback_query.answer("You have been blocked.", show_alert=True)
-        return await func(client, callback_query)
+def block_dec(func):
+    async def wrapper(client, message: Message):
+        user_id = message.from_user.id
+        if await is_blocked(user_id) or user_id in block_dic:
+            return
+        return await func(client, message)
     return wrapper
 
 def block_cbq(func):
     async def wrapper(client, callback_query):
-        user_id = callback_query.from_user.id
-        if await is_blocked(user_id) or user_id in block_dic:
+        user_id = callback_query.from_user.id if callback_query.from_user else None
+        if user_id and (await is_blocked(user_id) or user_id in block_dic):
             return await callback_query.answer("You have been blocked.", show_alert=True)
         return await func(client, callback_query)
     return wrapper
