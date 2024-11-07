@@ -3,6 +3,7 @@ import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import collection, user_collection, sudo_filter, app, capsify
+from .block import block_dec
 
 exchange_usage = {}
 
@@ -83,6 +84,7 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
     await message.reply_text(capsify(f"You have {3 - exchange_usage[user_id]['count']} exchanges remaining."))
 
 @app.on_message(filters.command("exchange"))
+@block_dec
 async def handle_exchange_command(client: Client, message: Message):
     args = message.text.split()[1:]
     await exchange_command(client, message, args)
