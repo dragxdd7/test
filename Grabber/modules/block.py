@@ -52,12 +52,12 @@ async def unblock_command(client, message: Message):
 
 block_dic = {}
 
-def block_dec(func):
-    async def wrapper(client, message: Message):
-        user_id = message.from_user.id
-        if await is_blocked(user_id) or user_id in block_dic:
-            return
-        return await func(client, message)
+def block_cbq(func):
+    async def wrapper(client, callback_query):
+        user_id = callback_query.from_user.id if callback_query.from_user else None
+        if user_id and (await is_blocked(user_id) or user_id in block_dic):
+            return await callback_query.answer("You have been blocked.", show_alert=True)
+        return await func(client, callback_query)
     return wrapper
 
 def block_cbq(func):
