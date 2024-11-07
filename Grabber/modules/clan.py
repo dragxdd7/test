@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
 from . import user_collection, clan_collection, join_requests_collection, app, db as database
+from .block import block_dec, block_cbq
 
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
@@ -12,6 +13,7 @@ def calculate_clan_level(clan_data):
     return cxp // 30 + 1
 
 @app.on_message(filters.command("myclan"))
+@block_dec
 async def my_clan(client, message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id})
@@ -48,6 +50,7 @@ async def my_clan(client, message):
         await message.reply_text(message_text)
 
 @app.on_message(filters.command("createclan"))
+@block_dec
 async def create_clan(client, message):
     user_id = message.from_user.id
     clan_name = ' '.join(message.command[1:])
@@ -94,6 +97,7 @@ async def create_clan(client, message):
         await message.reply_text(f"Error creating clan: {str(e)}")
 
 @app.on_message(filters.command("joinclan"))
+@block_dec
 async def join_clan(client, message):
     user_id = message.from_user.id
     clan_id = ' '.join(message.command[1:])
@@ -133,6 +137,7 @@ async def join_clan(client, message):
     await message.reply_text("Your request to join the clan has been sent to the leader.")
 
 @app.on_message(filters.command("dclan"))
+@block_dec
 async def delete_clan(client, message):
     user_id = message.from_user.id
 
@@ -158,6 +163,7 @@ async def delete_clan(client, message):
     await message.reply_text(f"`Clan '{clan_data['name']}' has been deleted.`")
 
 @app.on_callback_query(filters.regex(r'^leave_clan:'))
+@block_cbq
 async def leave_clan_callback(client, callback_query):
     try:
         user_id = callback_query.from_user.id
