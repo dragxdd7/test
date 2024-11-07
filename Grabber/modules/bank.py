@@ -3,7 +3,7 @@ from pyrogram.types import Message
 from datetime import datetime, timedelta
 import math
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app, capsify
-from .bank import block_dec
+from .block import block_dec
 
 async def handle_error(client: Client, message: Message, error: Exception):
     error_message = f"An error occurred: {str(error)}"
