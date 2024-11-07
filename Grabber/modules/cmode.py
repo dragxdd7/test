@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import application, user_collection
-from .block import block_dec
+from .block import block_dec, block_cbq
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
@@ -67,6 +67,7 @@ async def cmode(update: Update, context: CallbackContext) -> None:
 
     await update.message.reply_photo(photo=open(img_path, 'rb'), caption="Choose your collection mode:", reply_markup=reply_markup)
 
+@block_cbq
 async def cmode_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     data = query.data
