@@ -67,7 +67,6 @@ async def cmode(update: Update, context: CallbackContext) -> None:
 
     await update.message.reply_photo(photo=open(img_path, 'rb'), caption="Choose your collection mode:", reply_markup=reply_markup)
 
-@block_cbq
 async def cmode_callback(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     data = query.data
