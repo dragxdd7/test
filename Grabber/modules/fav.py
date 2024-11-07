@@ -3,8 +3,10 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, Message, CallbackQuery
 
 from . import user_collection, app, capsify
+from .block import block_dec, block_cbq
 
 @app.on_message(filters.command("fav"))
+@block_dec
 async def fav(client: Client, message: Message):
     user_id = message.from_user.id
 
@@ -48,6 +50,7 @@ async def handle_confirmation(user_id, character_id, character=None):
         await app.send_message(user_id, capsify('You have not got any slave yet...'))
 
 @app.on_callback_query(filters.regex(r'^(confirm_|cancel_)'))
+@block_cbq
 async def button(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     data = callback_query.data
