@@ -5,6 +5,7 @@ import random
 from datetime import datetime
 from pytz import timezone
 from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher, nopvt, limit
+from .block import block_dec
 
 active_guesses = {}
 COOLDOWN_TIME = 30
@@ -95,6 +96,7 @@ async def check_guess(client, message: Message):
         return
 
 @app.on_message(filters.command("xguess") & sudo_filter)
+@block_dec
 async def xguess(client, message: Message):
     chat_id = message.chat.id
 
