@@ -60,7 +60,6 @@ async def shop(client, message):
 
 
 @app.on_callback_query(filters.regex("saleslist:close"))
-@block_cbq
 async def sales_list_callback(client, query):
     end_user = int(query.data.split('_')[1])
     if end_user == query.from_user.id:
@@ -71,7 +70,6 @@ async def sales_list_callback(client, query):
 
 
 @app.on_callback_query(filters.regex("^buy|^pg|charcnf/|charback/"))
-@block_cbq
 async def store_callback_handler(client, query):
     data = query.data.split('_')
     origin = int(data[1])
