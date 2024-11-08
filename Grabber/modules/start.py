@@ -7,6 +7,7 @@ from datetime import timedelta
 from telegram.error import TelegramError
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
+from .block import block_dec_ptb
 
 from Grabber import application, PHOTO_URL, SUPPORT_CHAT, UPDATE_CHAT, BOT_USERNAME, db, GROUP_ID
 
@@ -14,6 +15,7 @@ collection = db['total_pm_users']
 
 start_time = time.time()
 
+@block_dec_ptb
 async def start(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     first_name = update.effective_user.first_name
