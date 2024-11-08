@@ -3,8 +3,10 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import (application, OWNER_ID, user_collection, top_global_groups_collection, group_user_totals_collection)
 from . import app, dev_filter
+from .block import block_dec
 
 @app.on_message(filters.command("gctop"))
+@block_dec
 async def global_leaderboard(client: Client, message: Message) -> None:
     cursor = top_global_groups_collection.aggregate([
         {"$project": {"group_name": 1, "count": 1}},
@@ -26,6 +28,7 @@ async def global_leaderboard(client: Client, message: Message) -> None:
     await message.reply_text(leaderboard_message)
 
 @app.on_message(filters.command("ctop"))
+@block_dec
 async def ctop(client: Client, message: Message) -> None:
     chat_id = message.chat.id
 
@@ -50,6 +53,7 @@ async def ctop(client: Client, message: Message) -> None:
     await message.reply_text(leaderboard_message)
 
 @app.on_message(filters.command("leaderboard"))
+@block_dec
 async def leaderboard(client: Client, message: Message) -> None:
     cursor = user_collection.aggregate([
         {"$project": {"username": 1, "first_name": 1, "character_count": {"$size": "$characters"}}},
