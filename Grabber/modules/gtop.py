@@ -1,8 +1,10 @@
 from pyrogram import Client, filters
 from . import user_collection, app
 import asyncio
+from .block import block_dec
 
 @app.on_message(filters.command("gtop"))
+@block_dec
 async def gtop_command(client, message):
     top_users = await user_collection.find().sort('gold', -1).limit(10).to_list(10)
 
