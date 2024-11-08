@@ -4,7 +4,7 @@ from . import app as bot
 from pyrogram.types import Message
 from html import escape
 from telegram.ext import CommandHandler
-
+from .block import block_dec
 XP_PER_LEVEL = 40
 
 LEVEL_TITLES = {
@@ -30,6 +30,7 @@ def get_user_level_title(user_level):
     return "👤 Rokki"
 
 @bot.on_message(filters.command(["xp"]))
+@block_dec
 async def check_stats(_, message: Message):
     user_id = message.from_user.id
     replied_user_id = None
