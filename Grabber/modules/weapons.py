@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQ
 import uuid
 import time
 from . import app, user_collection
+from .block import block_dec
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -12,6 +13,7 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
+@block_dec
 async def weapons(client, message, user_id):
     user_data = await user_collection.find_one({'id': user_id})
 
