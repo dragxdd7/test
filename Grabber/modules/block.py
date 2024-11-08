@@ -104,3 +104,29 @@ def block_inl_ptb(func):
             return
         return await func(update, context)
     return wrapper
+
+from pyrogram import Client, filters
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
+
+async def get_all_blocked_users():
+    blocked_users = await db.block.find().to_list(None)
+    return [user['user_id'] for user in blocked_users]
+
+@app.on_message(filters.command("blocklist") & sudo_filter)
+async def blocklist_command(client: Client, message: Message):
+    blocked_users = await get_all_blocked_users()
+    if not blocked_users:
+        return await message.reply("No users are currently blocked.")
+    user_list = "\n".join([f"- User ID: {user_id}" for user_id in blocked_users])
+    text = f"**Blocked Users:**\n{user_list}"
+    await message.reply(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Close", callback_data="close_blocklist")]]
+        )
+    )
+
+@app.on_callback_query(filters.regex("close_blocklist") & sudo_filter)
+async def close_callback(client: Client, callback_query: CallbackQuery):
+    await callback_query.message.delete()
+    await callback_query.answer("Closed", show_alert=False)
