@@ -3,8 +3,9 @@ from Grabber import application, user_collection
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 from . import add as add_balance , deduct as deduct_balance, show as show_balance
+from .block import block_dec_ptb
 
-
+@block_dec_ptb
 async def rps(update, context):
     try:
         amount = int(context.args[0])
