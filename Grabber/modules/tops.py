@@ -2,8 +2,10 @@ from Grabber import collection, user_collection, application
 from pyrogram import Client, filters
 from . import app, collection, user_collection
 from .profile import custom_format_number
+from .block import block_dec
 
 @app.on_message(filters.command("tops"))
+@block_dec
 async def top_users(client, message):
     users = await user_collection.find({}, {'id': 1, 'balance': 1, 'first_name': 1}).to_list(length=None)
     users_with_balance = [user for user in users if 'balance' in user]
