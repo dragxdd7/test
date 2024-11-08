@@ -75,3 +75,32 @@ def block_inl(func):
             return await inline_query.answer("You have been blocked.")
         return await func(client, inline_query)
     return wrapper
+
+from telegram import Update
+from telegram.ext import CallbackContext
+
+def block_dec_ptb(func):
+    async def wrapper(update: Update, context: CallbackContext):
+        user_id = update.effective_user.id if update.effective_user else None
+        if user_id and (await is_blocked(user_id) or user_id in block_dic):
+            return
+        return await func(update, context)
+    return wrapper
+
+def block_cbq_ptb(func):
+    async def wrapper(update: Update, context: CallbackContext):
+        user_id = update.effective_user.id if update.effective_user else None
+        if user_id and (await is_blocked(user_id) or user_id in block_dic):
+            await update.callback_query.answer("You have been blocked.", show_alert=True)
+            return
+        return await func(update, context)
+    return wrapper
+
+def block_inl_ptb(func):
+    async def wrapper(update: Update, context: CallbackContext):
+        user_id = update.effective_user.id if update.effective_user else None
+        if user_id and (await is_blocked(user_id) or user_id in block_dic):
+            await update.inline_query.answer("You have been blocked.")
+            return
+        return await func(update, context)
+    return wrapper
