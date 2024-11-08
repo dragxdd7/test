@@ -2,8 +2,10 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 from . import user_collection, Grabberu
+from .block import block_dec
 
 @Grabberu.on_message(filters.command("sbag"))
+@block_dec
 async def sbag(client, message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id})
