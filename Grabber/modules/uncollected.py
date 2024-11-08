@@ -2,7 +2,9 @@ from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
 import io
 from Grabber import collection, user_collection, application
+from .block import block_dec_ptb
 
+@block_dec_ptb
 async def uncollected(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
 
