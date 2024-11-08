@@ -5,6 +5,7 @@ from pyrogram.types import Message
 from datetime import datetime, timedelta
 import asyncio
 from . import add, deduct, show, app, capsify
+from .block import block_dec
 
 last_payment_times = {}
 last_loan_times = {}
@@ -16,6 +17,7 @@ def format_timedelta(td: timedelta) -> str:
     return "{:02}h {:02}m {:02}s".format(int(hours), int(minutes), int(seconds))
 
 @app.on_message(filters.command('pay'))
+@block_dec
 async def mpay(client, message):
     sender_id = message.from_user.id
 
