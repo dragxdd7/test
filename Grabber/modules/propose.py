@@ -5,6 +5,7 @@ import random
 from datetime import datetime, timedelta
 from Grabber import collection, user_collection, user_totals_collection
 from . import add as add_balance, deduct as deduct_balance, app, capsify
+from .block import block_dec
 
 rarity_map = {
     "🟢 Common": True,
@@ -18,6 +19,7 @@ last_propose_times = {}
 proposing_users = {}
 
 @app.on_message(filters.command("propose"))
+@block_dec
 async def propose(client, message: Message):
     user_id = message.from_user.id
 
