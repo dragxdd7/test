@@ -6,6 +6,7 @@ from datetime import datetime
 from pytz import timezone
 from . import collection, user_collection, app, capsify
 from .watchers import scrabble_watcher
+from .block import block_dec
 
 active_scrabbles = {}
 MAX_ATTEMPTS = 5
@@ -44,6 +45,7 @@ def provide_hint(word, attempts):
         return f"{word[:2]}{'_' * (len(word) - 3)}{word[-1]}"
 
 @app.on_message(filters.command("scrabble"))
+@block_dec
 async def scrabble(client, message: Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
