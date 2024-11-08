@@ -3,9 +3,9 @@ from itertools import groupby
 from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from . import user_collection, application, capsify
-from .block import block_dec
+from .block import block_dec_ptb
 
-@block_dec
+@block_dec_ptb
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
 
