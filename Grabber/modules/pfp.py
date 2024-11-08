@@ -29,7 +29,7 @@ def upload_to_imgbb(file_path):
         raise Exception(f"ImgBB upload failed: {data.get('error', {}).get('message', 'Unknown error')}")
 
 @app.on_message(filters.command("setpfp"))
-from .block import block_dec
+@block_dec
 async def set_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
     reply_message = message.reply_to_message
