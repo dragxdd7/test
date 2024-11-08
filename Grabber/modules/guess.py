@@ -21,6 +21,7 @@ async def get_random_character():
 @app.on_message(filters.command("guess"))
 @nopvt
 @limit
+@block_dec
 async def guess(client, message: Message):
     chat_id = message.chat.id
 
