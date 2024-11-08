@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, collection, app
+from .block import block_dec
 
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
@@ -63,6 +64,7 @@ async def handle_dice(client, message, receiver_id):
         print(f"Error handling dice: {e}")
 
 @app.on_message(filters.command("marry"))
+@block_dec
 async def dice_command(client, message: Message):
     chat_id = message.chat.id
     mention = message.from_user.mention
