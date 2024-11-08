@@ -1,9 +1,10 @@
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, CallbackContext
 from Grabber import user_collection, application
-
+from .block import block_dec_ptb
 pending_trades = {}
 
+@block_dec_ptb
 async def trade(update: Update, context: CallbackContext) -> None:
     message = update.message
     sender_id = message.from_user.id
