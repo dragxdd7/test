@@ -9,6 +9,7 @@ from telegram.ext import InlineQueryHandler, CallbackContext, CommandHandler
 from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
 
 from . import user_collection, collection, application, db, capsify
+from .block import block_dec_inl
 
 lock = asyncio.Lock()
 db.characters.create_index([('id', DESCENDING)])
@@ -28,6 +29,7 @@ def clear_all_caches():
 
 clear_all_caches()
 
+@block_dec_inl
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
