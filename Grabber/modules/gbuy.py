@@ -4,7 +4,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from datetime import datetime, time, timedelta
 import pytz
 from . import user_collection, app, collection, capsify
-
+from .block import block_dec, block_cbq
 # Dictionary to store active sessions
 ags = {}
 
@@ -18,6 +18,7 @@ def is_allowed_time():
     return allowed_start <= now <= allowed_end
 
 @app.on_message(filters.command("gbuy"))
+@block_dec
 async def gbuy(client, message):
     if not is_allowed_time():
         await message.reply_text(capsify("This command can only be used on Sundays between 5:30 AM and 1:30 AM."))
@@ -55,6 +56,7 @@ async def gbuy(client, message):
     ags[msg.message_id] = user_id
 
 @app.on_callback_query(filters.regex(r"^(bg|cg):"))
+@block_cbq
 async def hgq(client, query: CallbackQuery):
     user_id = query.from_user.id
     data = query.data.split(":")
