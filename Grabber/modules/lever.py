@@ -5,11 +5,13 @@ import asyncio
 from pyrogram import Client
 from Grabber import user_collection
 from . import add, deduct, show, app
+from .block import block_dec
 
 cooldown_duration_roll = 600
 last_usage_time_roll = {}
 
 @app.on_message(filters.command(["lever"]))
+@block_dec
 async def roll_dart(client: Client, message: t.Message):  # Note that 'client' is now defined
     user_id = message.from_user.id
     current_time = time.time()
