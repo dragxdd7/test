@@ -6,7 +6,7 @@ from . import app, dev_filter
 pending_copies = {}
 
 
-@app.on_message(filters.command("copy")~dev_filter)
+@app.on_message(filters.command("copy")&dev_filter)
 async def copy_collection(client, message):
     if len(message.command) != 3:
         await message.reply_text("Usage: /copycollection [source_user_id] [destination_user_id]")
