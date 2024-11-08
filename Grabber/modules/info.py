@@ -2,7 +2,9 @@ from telegram import Update, InlineQueryResultPhoto as IRP, InlineKeyboardButton
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from Grabber import user_collection, collection, application
 from . import capsify
+from .block import block_dec_ptb
 
+@block_dec_ptb
 async def details(update: Update, context: CallbackContext) -> None:
     try:
         args = context.args
