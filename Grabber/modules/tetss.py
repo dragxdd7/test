@@ -1,18 +1,13 @@
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from Grabber import user_collection
-from . import app
+from . import app, dev_filter
 
 pending_copies = {}
 
 
-@app.on_message(filters.command("copy"))
+@app.on_message(filters.command("copy")~dev_filter)
 async def copy_collection(client, message):
-    # Check if the user is a developer
-    if message.from_user.id != 7185106962:
-        await message.reply_text("You are not authorized to use this command.")
-        return
-
     if len(message.command) != 3:
         await message.reply_text("Usage: /copycollection [source_user_id] [destination_user_id]")
         return
