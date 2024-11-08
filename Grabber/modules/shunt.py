@@ -6,6 +6,7 @@ from pyrogram.errors import UserNotParticipant
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from motor.motor_asyncio import AsyncIOMotorClient
 from . import user_collection, app, dev_filter
+from .block import block_dec
 
 MUST_JOIN = "dragons_support"
 LOG_GROUP_CHAT_ID = -1002243796014
@@ -112,6 +113,7 @@ async def shunt_command(client, message):
         await message.reply_text("An error occurred while processing your request. Please try again later.")
 
 @app.on_message(filters.command(["rgold"]) & dev_filter)
+@block_dec
 async def reset_balance_command(client, message: t.Message):
     if message.reply_to_message and message.reply_to_message.from_user:
         user_id = message.reply_to_message.from_user.id
