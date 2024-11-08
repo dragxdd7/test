@@ -4,6 +4,7 @@ import base64
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, app
+from .block import block_dec
 
 IMGBB_API_KEY = "5a43c16114ccb592a47a790a058fcf65"
 
@@ -28,6 +29,7 @@ def upload_to_imgbb(file_path):
         raise Exception(f"ImgBB upload failed: {data.get('error', {}).get('message', 'Unknown error')}")
 
 @app.on_message(filters.command("setpfp"))
+from .block import block_dec
 async def set_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
     reply_message = message.reply_to_message
@@ -52,6 +54,7 @@ async def set_profile_media(client: Client, message: Message):
             os.remove(photo_path)
 
 @app.on_message(filters.command("delpfp"))
+@block_dec
 async def delete_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({'id': user_id})
