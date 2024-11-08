@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from datetime import datetime as dt
 from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character
 import random
+from .block import block_dec, block_cbq
 
 sdb = db.new_store
 user_db = db.bought
@@ -34,6 +35,7 @@ async def get_user_balance(user_id: int):
     return 0
 
 @app.on_message(filters.command("store"))
+@block_dec
 async def shop(client, message):
     user_id = message.from_user.id
     x = await get_today_characters(user_id)
@@ -58,6 +60,7 @@ async def shop(client, message):
 
 
 @app.on_callback_query(filters.regex("saleslist:close"))
+@block_cbq
 async def sales_list_callback(client, query):
     end_user = int(query.data.split('_')[1])
     if end_user == query.from_user.id:
@@ -68,6 +71,7 @@ async def sales_list_callback(client, query):
 
 
 @app.on_callback_query(filters.regex("^buy|^pg|charcnf/|charback/"))
+@block_cbq
 async def store_callback_handler(client, query):
     data = query.data.split('_')
     origin = int(data[1])
