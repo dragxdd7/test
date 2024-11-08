@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
 from . import ac, rc, app, user_collection, collection
-
+from .block import block_dec
 last_claim_time = {}
 
 async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
@@ -20,6 +20,7 @@ async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '�
         return []
 
 @app.on_message(filters.command("pwaifu"))
+@block_dec
 async def pwaifu(client: Client, message):
     chat_id = message.chat.id
     first_name = message.from_user.first_name
