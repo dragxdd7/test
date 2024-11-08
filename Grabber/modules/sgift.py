@@ -2,9 +2,11 @@ import uuid
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from Grabber import user_collection, application
+from .block import block_dec_ptb
 
 pending_gifts = {}
 
+@block_dec_ptb
 async def gift(update: Update, context: CallbackContext) -> None:
     message = update.message
     sender_id = message.from_user.id
