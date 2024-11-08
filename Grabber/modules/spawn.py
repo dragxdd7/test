@@ -12,6 +12,7 @@ from Grabber import collection, top_global_groups_collection, group_user_totals_
 from Grabber import application, LOGGER
 from Grabber.modules import ALL_MODULES
 from Grabber.utils.bal import add, deduct , show 
+from .block import block_dec_ptb
 
 
 locks = {}
@@ -129,6 +130,7 @@ async def get_user_balance(user_id: int) -> int:
     user = await user_collection.find_one({"id": user_id})
     return user.get("balance") if user else None
 
+@block_dec_ptb
 async def guess(update: Update, context: CallbackContext) -> None:
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
