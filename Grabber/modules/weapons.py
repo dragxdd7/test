@@ -13,7 +13,6 @@ weapons_data = [
     {'name': 'Snipper', 'price': 5000, 'damage': 30}
 ]
 
-@block_dec
 async def weapons(client, message, user_id):
     user_data = await user_collection.find_one({'id': user_id})
 
@@ -98,6 +97,7 @@ async def handle_buy_weapon(client, callback_query: CallbackQuery, user_id):
     await remove_expired_weapons(user_id)
 
 @app.on_message(filters.command("weapons"))
+@block_dec
 async def cmd_weapons(client, message):
     user_id = message.from_user.id
     await weapons(client, message, user_id)
