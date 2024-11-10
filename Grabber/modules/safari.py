@@ -11,7 +11,6 @@ import traceback
 import asyncio
 from Grabber import user_collection, collection, application, safari_cooldown_collection, safari_users_collection
 from . import app
-from .block import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -80,7 +79,6 @@ async def safe_edit_message(callback_query, new_text=None, new_markup=None):
     except Exception as e:
         logger.error(f"Error in safe_edit_message: {e}")
 
-@block_dec_ptb
 async def enter_safari(update: Update, context: CallbackContext):
     message = update.message
     user_id = message.from_user.id
