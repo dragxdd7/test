@@ -47,7 +47,7 @@ async def get_character(id: int):
 
 async def get_character_ids() -> list:
     all_characters = await collection.find({
-        'rarity': {'$nin': ['💋 Aura', '❄️ Winter']}  # Exclude characters with "💋 Aura" and "❄️ Winter" rarity
+        'rarity': {'$nin': ['💋 Aura', '❄️ Winter']}  
     }).to_list(length=None)
     return [x['id'] for x in all_characters]
 
