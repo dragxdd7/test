@@ -60,7 +60,7 @@ async def cmode(update: Update, context: CallbackContext) -> None:
         [IKB("🥵 Divine", callback_data=f"cmode:divine:{user_id}"), IKB("🔮 Limited", callback_data=f"cmode:limited:{user_id}")],
         [IKB("🪽 Celestial", callback_data=f"cmode:celestial:{user_id}"), IKB("💎 Premium", callback_data=f"cmode:premium:{user_id}")],
         [IKB("🔵 Medium", callback_data=f"cmode:medium:{user_id}"), IKB("🟡 Legendary", callback_data=f"cmode:legendary:{user_id}")],
-        [IKB("💋 Aura", callback_data=f"cmode:Aura:{user_id}"), IKB("🥴 Special", callback_data=f"cmode:special:{user_id}")],
+        [IKB("💋 Aura", callback_data=f"cmode:aura:{user_id}"), IKB("❄️ Winter", callback_data=f"cmode:winter:{user_id}")],
         [IKB("All", callback_data=f"cmode:all:{user_id}")]
     ]
     reply_markup = IKM(cmode_buttons)
@@ -75,15 +75,15 @@ async def cmode_callback(update: Update, context: CallbackContext) -> None:
         'rare': '🟠 Rare',
         'spacial': '🥴 Spacial',
         'exclusive': '💮 Exclusive',
-        'cosplay': '🍭Cosplay',
+        'cosplay': '🍭 Cosplay',
         'divine': '🥵 Divine',
         'limited': '🔮 Limited',
-        'celestial': '🪽 celestial',
+        'celestial': '🪽 Celestial',
         'premium': '💎 Premium',
         'medium': '🔵 Medium',
         'legendary': '🟡 Legendary',
-        'Aura': '💋 Aura',
-        'special': '🥴 Special',
+        'aura': '💋 Aura',
+        'winter': '❄️ Winter',
         'all': 'All'
     }
 
