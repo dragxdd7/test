@@ -22,7 +22,8 @@ def is_new_day(last_win_time):
 
 async def get_random_character():
     all_characters = await collection.find({
-        'id': {'$gte': '01', '$lte': '1100'}
+        'id': {'$gte': '01', '$lte': '1100'},
+        'rarity': {'$ne': '💋 Aura'}
     }).to_list(length=None)
     while True:
         character = random.choice(all_characters)
