@@ -40,24 +40,16 @@ async def acapsify(text: str) -> str:
 
 
 async def get_character(id: int):
-    return await collection.find_one({'id': id})
+    return await collection.find_one({
+        'id': id,
+        'rarity': {'$nin': ['💋 Aura', '❄️ Winter']}  
+    })
 
 async def get_character_ids() -> list:
-    all_characters = await collection.find({}).to_list(length=None)
+    all_characters = await collection.find({
+        'rarity': {'$nin': ['💋 Aura', '❄️ Winter']}  # Exclude characters with "💋 Aura" and "❄️ Winter" rarity
+    }).to_list(length=None)
     return [x['id'] for x in all_characters]
-
-async def get_price(character_id: int):
-    character = await collection.find_one({'id': character_id})
-    if character and 'price' in character:
-        return character['price']
-    else:
-        raise ValueError(f"Price not found for character with ID {character_id}")
-
-async def get_image_and_caption(id: int):
-    char = await get_character(id)
-    price = await get_price(id)
-    form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
-    return char['img_url'], capsify(form.format(char['name'], char['anime'], char['id'], price))
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
