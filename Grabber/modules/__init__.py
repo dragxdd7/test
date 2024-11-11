@@ -51,6 +51,15 @@ async def get_character_ids() -> list:
     }).to_list(length=None)
     return [x['id'] for x in all_characters]
 
+async def get_image_and_caption(id: int):
+    char = await get_character(id)
+    if not char:
+        raise ValueError(f"Character with ID {id} not found or is excluded")
+    
+    price = await get_price(id)
+    form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
+    return char['img_url'], capsify(form.format(char['name'], char['anime'], char['id'], price))
+
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[logging.FileHandler("log.txt"), logging.StreamHandler()],
