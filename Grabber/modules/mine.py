@@ -25,7 +25,7 @@ async def mines(client, message):
 
     user_id = message.from_user.id
     user_data = await user_collection.find_one({"id": user_id})
-    user_balance = user_data.get("ruby", 0) if user_data else 0
+    user_balance = user_data.get("rubies", 0) if user_data else 0
 
     if user_balance < amount:
         await message.reply_text("Insufficient balance to make the bet.")
@@ -74,7 +74,7 @@ async def mines_button(client, query: CallbackQuery):
     revealed[index] = True
     if minefield[index] == '💣':
         game_data['game_active'] = False
-        await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": -amount}})
+        await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": -amount}})
         await query.message.edit_text(
             "💣 You hit the bomb! Game over!",
             reply_markup=None
@@ -84,7 +84,7 @@ async def mines_button(client, query: CallbackQuery):
 
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
         game_data['game_active'] = False
-        await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": amount * 2}})
+        await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": amount * 2}})
         await query.message.edit_text(
             "🎉 You revealed all the safe tiles! You win!",
             reply_markup=None
@@ -116,5 +116,5 @@ async def cash_out(client, query: CallbackQuery):
 
     amount = game_data['amount']
     game_data['game_active'] = False
-    await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": amount}})
+    await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": amount}})
     await query.message.edit_text("💰 You cashed out!", reply_markup=None)
