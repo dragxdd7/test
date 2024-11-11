@@ -1,11 +1,9 @@
-from telegram.ext import CommandHandler, CallbackQueryHandler
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from Grabber import application, user_collection
+from pyrogram import filters, Client
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
+from Grabber import app, user_collection
 import random
-from . import add as add_balance, deduct as deduct_balance, show as show_balance
-from .block import block_dec_ptb
+from .block import block_dec
 
-# Define the Minefield
 def generate_minefield(size, bombs):
     minefield = ['💎'] * size
     bomb_positions = random.sample(range(size), bombs)
@@ -13,93 +11,110 @@ def generate_minefield(size, bombs):
         minefield[pos] = '💣'
     return minefield
 
-@block_dec_ptb
-async def mines(update, context):
+@block_dec
+@app.on_message(filters.command("mines"))
+async def mines(client, message):
     try:
-        amount = int(context.args[0])
-        bombs = int(context.args[1])
+        amount = int(message.command[1])
+        bombs = int(message.command[2])
         if amount < 1 or bombs < 1:
             raise ValueError("Invalid bet amount or bomb count.")
     except (IndexError, ValueError):
-        await update.message.reply_text("Use /mines [amount] [bombs]")
+        await message.reply_text("Use /mines [amount] [bombs]")
         return
 
-    user_id = update.effective_user.id
-    user_balance = await show_balance(user_id)
+    user_id = message.from_user.id
+    user_data = await user_collection.find_one({"id": user_id})
+    user_balance = user_data.get("ruby", 0) if user_data else 0
 
     if user_balance < amount:
-        await update.message.reply_text("Insufficient balance to make the bet.")
+        await message.reply_text("Insufficient balance to make the bet.")
         return
 
-    size = 25  # Number of tiles
+    size = 25
     minefield = generate_minefield(size, bombs)
-    
-    # Save game state in user data
-    context.user_data['amount'] = amount
-    context.user_data['minefield'] = minefield
-    context.user_data['revealed'] = [False] * size
-    context.user_data['bombs'] = bombs
 
-    # Create initial keyboard
+    client.user_data[user_id] = {
+        'amount': amount,
+        'minefield': minefield,
+        'revealed': [False] * size,
+        'bombs': bombs,
+        'game_active': True
+    }
+
     keyboard = [
-        [InlineKeyboardButton(" ", callback_data=str(i)) for i in range(j, j + 5)]
+        [IKB(" ", callback_data=f"{user_id}_{i}") for i in range(j, j + 5)]
         for j in range(0, size, 5)
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = IKM(keyboard)
 
-    await update.message.reply_text("Choose a tile:", reply_markup=reply_markup)
+    await message.reply_text("Choose a tile:", reply_markup=reply_markup)
 
-async def mines_button(update, context):
-    query = update.callback_query
-    user_id = update.effective_user.id
-    index = int(query.data)
+@app.on_callback_query(filters.regex(r"^\d+_\d+$"))
+async def mines_button(client, query: CallbackQuery):
+    user_id, index = map(int, query.data.split('_'))
+    if user_id != query.from_user.id:
+        await query.answer("This is not your game.", show_alert=True)
+        return
 
-    minefield = context.user_data['minefield']
-    revealed = context.user_data['revealed']
-    amount = context.user_data['amount']
+    game_data = client.user_data.get(user_id)
+    if not game_data or not game_data['game_active']:
+        await query.answer("Game has already ended.")
+        return
 
-    if revealed[index]:  # Tile already revealed
+    index = int(index)
+    minefield = game_data['minefield']
+    revealed = game_data['revealed']
+    amount = game_data['amount']
+
+    if revealed[index]:
         await query.answer("This tile is already revealed.")
         return
 
     revealed[index] = True
     if minefield[index] == '💣':
-        # Game over: User hit a bomb
-        await deduct_balance(user_id, amount)
+        game_data['game_active'] = False
+        await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": -amount}})
         await query.message.edit_text(
             "💣 You hit the bomb! Game over!",
             reply_markup=None
         )
+        del client.user_data[user_id]
         return
 
-    # Check if all non-bomb tiles are revealed
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
-        await add_balance(user_id, amount * 2)  # Example payout
+        game_data['game_active'] = False
+        await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": amount * 2}})
         await query.message.edit_text(
             "🎉 You revealed all the safe tiles! You win!",
             reply_markup=None
         )
+        del client.user_data[user_id]
         return
 
-    # Update the keyboard with revealed tiles
     keyboard = [
-        [InlineKeyboardButton(minefield[i] if revealed[i] else " ", callback_data=str(i))
+        [IKB(minefield[i] if revealed[i] else " ", callback_data=f"{user_id}_{i}")
          for i in range(j, j + 5)]
         for j in range(0, len(minefield), 5)
     ]
-    keyboard.append([InlineKeyboardButton("Cash Out", callback_data='cash_out')])
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    keyboard.append([IKB("Cash Out", callback_data=f"{user_id}_cash_out")])
+    reply_markup = IKM(keyboard)
 
     await query.message.edit_text("Choose a tile:", reply_markup=reply_markup)
 
-async def cash_out(update, context):
-    query = update.callback_query
-    user_id = update.effective_user.id
-    amount = context.user_data['amount']
+@app.on_callback_query(filters.regex(r"^\d+_cash_out$"))
+async def cash_out(client, query: CallbackQuery):
+    user_id = int(query.data.split('_')[0])
+    if user_id != query.from_user.id:
+        await query.answer("This is not your game.", show_alert=True)
+        return
 
-    await add_balance(user_id, amount)  # Return the bet amount
+    game_data = client.user_data.pop(user_id, None)
+    if not game_data or not game_data['game_active']:
+        await query.answer("Game has already ended.")
+        return
+
+    amount = game_data['amount']
+    game_data['game_active'] = False
+    await user_collection.update_one({"id": user_id}, {"$inc": {"ruby": amount}})
     await query.message.edit_text("💰 You cashed out!", reply_markup=None)
-
-application.add_handler(CommandHandler("mines", mines))
-application.add_handler(CallbackQueryHandler(mines_button))
-application.add_handler(CallbackQueryHandler(cash_out, pattern='cash_out'))
