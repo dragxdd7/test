@@ -34,7 +34,7 @@ rarity_map = {
     8: "💎 Premium",
     9: "🔮 Limited",
     10: "🍭 Cosplay",
-    11: "💋 Aura"
+    11: "💋 Aura",
     12: "❄️ Winter",
 }
 
