@@ -38,6 +38,11 @@ def capsify(text: str) -> str:
 async def acapsify(text: str) -> str:
     return capsify(text)
 
+async def get_price(id: int):
+    character = await collection.find_one({'id': id})
+    if character:
+        return character.get('price')
+    return None
 
 async def get_character(id: int):
     return await collection.find_one({
