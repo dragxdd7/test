@@ -58,7 +58,7 @@ async def mines(client, message):
         for j in range(0, size, 5)
     ]
     reply_markup = IKM(keyboard)
-    await message.reply_text(f"Choose a tile:\n\n**Current Multiplier:** {client.user_data[user_id]['multiplier']:.2f}x", reply_markup=reply_markup)
+    await message.reply_text(f"Choose a tile:\n\n**Current Multiplier:** {client.user_data[user_id]['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies", reply_markup=reply_markup)
 
 @app.on_callback_query(filters.regex(r"^\d+_\d+$"))
 async def mines_button(client, query: CallbackQuery):
@@ -114,7 +114,7 @@ async def mines_button(client, query: CallbackQuery):
     reply_markup = IKM(keyboard)
 
     await query.message.edit_text(
-        f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x",
+        f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies",
         reply_markup=reply_markup
     )
 
@@ -131,9 +131,7 @@ async def cash_out(client, query: CallbackQuery):
         return
 
     amount = game_data['amount']
-    winnings = int(amount * game_data['multiplier'])
+    winnings = int(amount * game_data['multiplier']) - amount
     game_data['game_active'] = False
     await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": winnings}, "$set": {"last_game_time": time.time()}})
     await query.message.edit_text(f"💰 You cashed out! You won {winnings} rubies.", reply_markup=None)
-
-
