@@ -67,7 +67,7 @@ async def start_auction(chat_id, character):
     del active_auctions[character_id]
 
 
-@app.on_message(filters.text, group=auction_watcher & nopvt)  
+@app.on_message(filters.text, group=auction_watcher)  
 async def handle_message(client, message: Message):
     chat_id = message.chat.id
     message_counts.setdefault(chat_id, 0)
