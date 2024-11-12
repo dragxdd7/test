@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import user_collection, collection, app, capsify, nopvt, limit
+from . import user_collection, collection, app, capsify, nopvt, limit, sudo_filter
 from .block import block_dec
 
 
