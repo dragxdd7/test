@@ -5,6 +5,8 @@ import random
 import time
 from .block import block_dec
 
+app.user_data = {}
+
 def generate_minefield(size, bombs):
     minefield = ['💎'] * size
     bomb_positions = random.sample(range(size), bombs)
