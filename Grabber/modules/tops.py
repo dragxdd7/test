@@ -1,25 +1,58 @@
 from Grabber import collection, user_collection, application
 from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, collection, user_collection
 from .profile import custom_format_number
 from .block import block_dec
 
 @app.on_message(filters.command("tops"))
 @block_dec
-async def top_users(client, message):
-    users = await user_collection.find({}, {'id': 1, 'balance': 1, 'first_name': 1}).to_list(length=None)
-    users_with_balance = [user for user in users if 'balance' in user]
-    sorted_users = sorted(users_with_balance, key=lambda x: float(x['balance'].replace(',', '')) if isinstance(x['balance'], str) else x['balance'], reverse=True)[:10]
+async def show_top_menu(client, message):
+    buttons = [
+        [IKB("🏅 Gold", callback_data="top_gold"),
+         IKB("💎 Rubies", callback_data="top_rubies")],
+        [IKB("💰 Balance", callback_data="top_balance")]
+    ]
+    reply_markup = IKM(buttons)
+    await message.reply_text("**🏆 Select the Top List 🏆**", reply_markup=reply_markup)
 
-    top_users_message = "**🏆 Top 10 Users by Balance 🏆**\n\n"
+@app.on_callback_query(filters.regex(r"^top_(gold|rubies|balance)$"))
+async def show_top_list(client, callback_query):
+    list_type = callback_query.data.split("_")[1]
+    
+    users = await user_collection.find({}, {'id': 1, 'balance': 1, 'gold': 1, 'rubies': 1, 'first_name': 1}).to_list(length=None)
+    if list_type == "balance":
+        users_with_value = [user for user in users if 'balance' in user]
+        sorted_users = sorted(users_with_value, key=lambda x: float(x['balance'].replace(',', '')) if isinstance(x['balance'], str) else x['balance'], reverse=True)[:10]
+    elif list_type == "gold":
+        users_with_value = [user for user in users if 'gold' in user]
+        sorted_users = sorted(users_with_value, key=lambda x: float(x['gold']), reverse=True)[:10]
+    elif list_type == "rubies":
+        users_with_value = [user for user in users if 'rubies' in user]
+        sorted_users = sorted(users_with_value, key=lambda x: float(x['rubies']), reverse=True)[:10]
+
+    type_label = "Balance" if list_type == "balance" else "Gold" if list_type == "gold" else "Rubies"
+    top_users_message = f"**🏆 Top 10 Users by {type_label} 🏆**\n\n"
     for index, user in enumerate(sorted_users):
-        if isinstance(user['balance'], str):
-            user_balance = custom_format_number(float(user['balance'].replace(',', '')))
+        if list_type == "balance":
+            value = custom_format_number(float(user['balance'].replace(',', ''))) if isinstance(user['balance'], str) else custom_format_number(user['balance'])
         else:
-            user_balance = custom_format_number(user['balance'])
+            value = custom_format_number(user[list_type])
 
         first_name = user.get('first_name', 'Anonymous')
         first_word = first_name.split()[0] if ' ' in first_name else first_name
-        top_users_message += f"**{index + 1}. {first_word} - Ŧ{user_balance}**\n"
+        top_users_message += f"**{index + 1}. {first_word} - Ŧ{value}**\n"
 
-    await message.reply_text(top_users_message)
+    buttons = [[IKB("🔙 Back", callback_data="back_to_menu")]]
+    reply_markup = IKM(buttons)
+    await callback_query.message.edit_text(top_users_message, reply_markup=reply_markup)
+
+@app.on_callback_query(filters.regex(r"^back_to_menu$"))
+async def back_to_menu(client, callback_query):
+    buttons = [
+        [IKB("🏅 Gold", callback_data="top_gold"),
+         IKB("💎 Rubies", callback_data="top_rubies")],
+        [IKB("💰 Balance", callback_data="top_balance")]
+    ]
+    reply_markup = IKM(buttons)
+    await callback_query.message.edit_text("**🏆 Select the Top List 🏆**", reply_markup=reply_markup)
