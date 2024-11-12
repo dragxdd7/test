@@ -4,3 +4,4 @@ delta_watcher = 3
 guess_watcher = 4
 gend_watcher = 5
 spawn_watcher = 6
+auction_watcher = 7
