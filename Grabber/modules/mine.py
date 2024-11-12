@@ -40,6 +40,9 @@ async def mines(client, message):
         await message.reply_text("Insufficient rubies to make the bet.")
         return
 
+    # Deduct the bet amount from the user's rubies
+    await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": -amount}})
+
     size = 25
     minefield = generate_minefield(size, bombs)
     base_multiplier = bombs / 10
