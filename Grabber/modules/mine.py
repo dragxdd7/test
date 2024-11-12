@@ -4,6 +4,8 @@ from Grabber import app, user_collection
 import random
 from .block import block_dec
 
+user_data = {}
+
 def generate_minefield(size, bombs):
     minefield = ['💎'] * size
     bomb_positions = random.sample(range(size), bombs)
@@ -24,8 +26,8 @@ async def mines(client, message):
         return
 
     user_id = message.from_user.id
-    user_data = await user_collection.find_one({"id": user_id})
-    user_balance = user_data.get("rubies", 0) if user_data else 0
+    user_data_entry = await user_collection.find_one({"id": user_id})
+    user_balance = user_data_entry.get("rubies", 0) if user_data_entry else 0
 
     if user_balance < amount:
         await message.reply_text("Insufficient balance to make the bet.")
@@ -34,7 +36,7 @@ async def mines(client, message):
     size = 25
     minefield = generate_minefield(size, bombs)
 
-    client.user_data[user_id] = {
+    user_data[user_id] = {
         'amount': amount,
         'minefield': minefield,
         'revealed': [False] * size,
@@ -57,7 +59,7 @@ async def mines_button(client, query: CallbackQuery):
         await query.answer("This is not your game.", show_alert=True)
         return
 
-    game_data = client.user_data.get(user_id)
+    game_data = user_data.get(user_id)
     if not game_data or not game_data['game_active']:
         await query.answer("Game has already ended.")
         return
@@ -79,7 +81,7 @@ async def mines_button(client, query: CallbackQuery):
             "💣 You hit the bomb! Game over!",
             reply_markup=None
         )
-        del client.user_data[user_id]
+        del user_data[user_id]
         return
 
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
@@ -89,7 +91,7 @@ async def mines_button(client, query: CallbackQuery):
             "🎉 You revealed all the safe tiles! You win!",
             reply_markup=None
         )
-        del client.user_data[user_id]
+        del user_data[user_id]
         return
 
     keyboard = [
@@ -109,7 +111,7 @@ async def cash_out(client, query: CallbackQuery):
         await query.answer("This is not your game.", show_alert=True)
         return
 
-    game_data = client.user_data.pop(user_id, None)
+    game_data = user_data.pop(user_id, None)
     if not game_data or not game_data['game_active']:
         await query.answer("Game has already ended.")
         return
