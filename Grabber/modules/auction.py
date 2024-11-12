@@ -1,86 +1,77 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import user_collection, collection, app, capsify, nopvt, limit, sudo_filter
+from . import user_collection, collection, app, capsify, nopvt, limit
 from .block import block_dec
-
 
 AUCTION_TIME = 60
 MIN_BID = 10000
-active_auctions = {}
+active_auctions = []
 
-@app.on_message(filters.command("auction") & sudo_filter)
-@block_dec
-@nopvt
-#@limit
-async def start_auction(client, message: Message):
-    user_id = message.from_user.id
-    chat_id = message.chat.id
-    args = message.text.split()
-    if len(args) < 2:
-        await message.reply_text(capsify("Please provide the character ID for the auction."))
-        return
+async def scheduled_auction():
+    while True:
+        await asyncio.sleep(30 * 60)
+        rarity_filter = {"rarity": {"$in": ["💋 Aura", "❄️ Winter"]}}
+        characters = await collection.find(rarity_filter).to_list(None)
 
-    character_id = args[1]
-    character = await collection.find_one({'id': character_id})
-    if not character:
-        await message.reply_text(capsify("Character not found."))
-        return
+        if characters:
+            character = random.choice(characters)
+            character_id = str(character['id'])
 
-    if character_id in active_auctions:
-        await message.reply_text(capsify("This character is already up for auction."))
-        return
+            if character_id in active_auctions:
+                continue
 
-    active_auctions[character_id] = {
-        'character': character,
-        'highest_bid': MIN_BID,
-        'highest_bidder': None,
-        'end_time': datetime.now(),
-    }
+            active_auctions[character_id] = {
+                'character': character,
+                'highest_bid': MIN_BID,
+                'highest_bidder': None,
+                'end_time': datetime.now() + timedelta(seconds=AUCTION_TIME),
+            }
 
-    await client.send_photo(
-        chat_id=chat_id,
-        photo=character['img_url'],
-        caption=capsify(
-            f"**Auction started for {character['name']}**\n"
-            f"Anime: {character['anime']}\n"
-            f"Rarity: {character['rarity']}\n\n"
-            f"Place your bid using /bid amount\n"
-            f"Minimum bid: {MIN_BID} rubies\n"
-            f"Auction ends in {AUCTION_TIME} seconds!"
-        )
-    )
+            chat_id = -1001234567890
 
-    active_auctions[character_id]['end_time'] = datetime.now()
-
-    await asyncio.sleep(AUCTION_TIME)
-
-    auction = active_auctions.get(character_id)
-    if auction and auction['highest_bidder']:
-        winner_id = auction['highest_bidder']
-        winner_data = await user_collection.find_one({'id': winner_id})
-
-        await user_collection.update_one(
-            {'id': winner_id},
-            {'$push': {'characters': character}},
-            upsert=True
-        )
-
-        await client.send_message(
-            chat_id=chat_id,
-            text=capsify(
-                f"**Auction Over!**\n\n"
-                f"**{winner_data['name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
+            await app.send_photo(
+                chat_id=chat_id,
+                photo=character['img_url'],
+                caption=capsify(
+                    f"**Auction started for {character['name']}**\n"
+                    f"Anime: {character['anime']}\n"
+                    f"Rarity: {character['rarity']}\n\n"
+                    f"Place your bid using /bid amount\n"
+                    f"Minimum bid: {MIN_BID} rubies\n"
+                    f"Auction ends in {AUCTION_TIME} seconds!"
+                )
             )
-        )
-    else:
-        await client.send_message(
-            chat_id=chat_id,
-            text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
-        )
 
-    del active_auctions[character_id]
+            await asyncio.sleep(AUCTION_TIME)
+
+            auction = active_auctions.get(character_id)
+            if auction and auction['highest_bidder']:
+                winner_id = auction['highest_bidder']
+                winner_data = await user_collection.find_one({'id': winner_id})
+
+                await user_collection.update_one(
+                    {'id': winner_id},
+                    {'$push': {'characters': character}},
+                    upsert=True
+                )
+
+                await app.send_message(
+                    chat_id=chat_id,
+                    text=capsify(
+                        f"**Auction Over!**\n\n"
+                        f"**{winner_data['name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
+                    )
+                )
+            else:
+                await app.send_message(
+                    chat_id=chat_id,
+                    text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
+                )
+
+            del active_auctions[character_id]
 
 @app.on_message(filters.command("bid"))
 @block_dec
@@ -139,3 +130,7 @@ async def place_bid(client, message: Message):
         )
     else:
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
+
+@app.on_start()
+async def on_start():
+    app.loop.create_task(scheduled_auction())
