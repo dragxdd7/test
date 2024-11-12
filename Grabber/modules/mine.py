@@ -137,4 +137,3 @@ async def cash_out(client, query: CallbackQuery):
     await query.message.edit_text(f"💰 You cashed out! You won {winnings} rubies.", reply_markup=None)
 
 
-In this when user places between amount should be deducted from his rubies
