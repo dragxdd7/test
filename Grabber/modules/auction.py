@@ -13,7 +13,7 @@ active_auctions = {}
 @app.on_message(filters.command("auction"), sudo_filter)
 @block_dec
 @nopvt
-@limit
+#@limit
 async def start_auction(client, message: Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
