@@ -10,7 +10,7 @@ AUCTION_TIME = 60
 MIN_BID = 10000
 active_auctions = {}
 
-@app.on_message(filters.command("auction"), sudo_filter)
+@app.on_message(filters.command("auction") & sudo_filter)
 @block_dec
 @nopvt
 #@limit
