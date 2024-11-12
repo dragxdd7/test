@@ -1,8 +1,8 @@
 from pyrogram import filters
 from pyrogram.types import Message
-from Grabber import app, user_collection
+from . import app, user_collection
 import time
-from .capsify import capsify
+from . import capsify
 
 app.payment_cooldowns = {}
 
