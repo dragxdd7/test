@@ -40,9 +40,6 @@ async def mines(client, message):
         await message.reply_text("Insufficient rubies to make the bet.")
         return
 
-    # Deduct the bet amount from the user's rubies
-    await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": -amount}})
-
     size = 25
     minefield = generate_minefield(size, bombs)
     base_multiplier = bombs / 10
@@ -138,3 +135,6 @@ async def cash_out(client, query: CallbackQuery):
     game_data['game_active'] = False
     await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": winnings}, "$set": {"last_game_time": time.time()}})
     await query.message.edit_text(f"💰 You cashed out! You won {winnings} rubies.", reply_markup=None)
+
+
+In this when user places between amount should be deducted from his rubies
