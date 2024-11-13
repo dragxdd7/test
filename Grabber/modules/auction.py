@@ -5,18 +5,25 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, collection, app, capsify, nopvt
 from .block import block_dec
-from .watchers import auction_watcher 
+from .watchers import auction_watcher
 
 AUCTION_TIME = 60
 MIN_BID = 10000
 active_auctions = {}
 message_counts = {}
+active_auction_chats = set() 
 
 async def start_auction(chat_id, character):
     character_id = str(character['id'])
 
     if character_id in active_auctions:
         return
+
+    # Check if there's already an active auction in the chat
+    if chat_id in active_auction_chats:
+        return
+
+    active_auction_chats.add(chat_id)  # Mark the chat as having an active auction
 
     active_auctions[character_id] = {
         'character': character,
@@ -67,9 +74,10 @@ async def start_auction(chat_id, character):
         )
 
     del active_auctions[character_id]
+    active_auction_chats.remove(chat_id)  # Remove the chat from the active auction set
 
 
-@app.on_message(filters.text, group=auction_watcher)  
+@app.on_message(filters.text, group=auction_watcher)
 async def handle_message(client, message: Message):
     chat_id = message.chat.id
     message_counts.setdefault(chat_id, 0)
