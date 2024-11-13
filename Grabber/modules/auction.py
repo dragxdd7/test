@@ -1,4 +1,4 @@
-"""import asyncio
+import asyncio
 from datetime import datetime, timedelta
 import random
 from pyrogram import Client, filters
@@ -37,6 +37,8 @@ async def start_auction(chat_id, character):
             f"Auction ends in {AUCTION_TIME} seconds!"
         )
     )
+
+    message_counts[chat_id] = 0
 
     await asyncio.sleep(AUCTION_TIME)
 
@@ -81,7 +83,7 @@ async def handle_message(client, message: Message):
             character = random.choice(characters)
             await start_auction(chat_id, character)
 
-        message_counts[chat_id] = 0  # Reset message count after triggering auction
+        message_counts[chat_id] = 0
 
 
 @app.on_message(filters.command("bid"))
@@ -139,4 +141,4 @@ async def place_bid(client, message: Message):
             )
         )
     else:
-        await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))"""
+        await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
