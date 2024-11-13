@@ -1,4 +1,4 @@
-"""import asyncio
+import asyncio
 from datetime import datetime, timedelta
 import random
 from pyrogram import Client, filters
@@ -139,4 +139,4 @@ async def place_bid(client, message: Message):
             )
         )
     else:
-        await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))"""
+        await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
