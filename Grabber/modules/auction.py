@@ -57,7 +57,7 @@ async def start_auction(chat_id, character):
             chat_id=chat_id,
             text=capsify(
                 f"**Auction Over!**\n\n"
-                f"**{winner_data['name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
+                f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
             )
         )
     else:
@@ -135,7 +135,7 @@ async def place_bid(client, message: Message):
         await client.send_message(
             chat_id=chat_id,
             text=capsify(
-                f"**{message.from_user.name}** bid {bid_amount} rubies on **{active_auction['character']['name']}**.\n"
+                f"**{message.from_user.first_name}** bid {bid_amount} rubies on **{active_auction['character']['name']}**.\n"
                 f"Time left: {max(0, (active_auction['end_time'] - datetime.now()).seconds)} seconds.\n"
                 f"Current highest bid: {bid_amount} rubies."
             )
