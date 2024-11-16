@@ -29,7 +29,9 @@ rarity_map = {
     7: "🥴 Special",
     8: "💎 Premium",
     9: "🔮 Limited",
-    10: "🍭 Cosplay"
+    10: "🍭 Cosplay",
+    11: "💋 Aura",
+    12: "❄️ Winter"
 }
 
 @app.on_message(filters.command('sexkjshs') & sudo_filter)
@@ -49,7 +51,9 @@ async def upload(client: Client, message: Message):
             "7 🥴 Special\n"
             "8 💎 Premium\n"
             "9 🔮 Limited\n"
-            "10 🍭 Cosplay"
+            "10 🍭 Cosplay",
+            "11 💋 Aura",
+            "12 ❄️ Winter"
         )
         return
 
