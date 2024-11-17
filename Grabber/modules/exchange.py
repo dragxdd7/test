@@ -9,11 +9,10 @@ exchange_usage = {}
 
 async def exchange_command(client: Client, message: Message, args: list[str]) -> None:
     user_id = message.from_user.id
-
     tz = pytz.timezone('Asia/Kolkata')
     now = datetime.datetime.now(tz)
 
-    if now.weekday() != 5:  # 5 is Saturday
+    if now.weekday() != 5:
         await message.reply_text(capsify("The /exchange command is only available on Saturdays."))
         return
 
@@ -56,8 +55,8 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         await message.reply_text(capsify("Desired character not found. Please provide a valid character ID."))
         return
 
-    if desired_character.get('rarity') == '💋 Aura':
-        await message.reply_text(capsify("You cannot exchange for a character with 💋 Aura rarity."))
+    if desired_character.get('rarity') in ['💋 Aura', '❄️ Winter']:
+        await message.reply_text(capsify("You cannot exchange for a character with 💋 Aura or ❄️ Winter rarity."))
         return
 
     index_to_remove = next((i for i, char in enumerate(user_characters) if char['id'] == your_character_id), None)
