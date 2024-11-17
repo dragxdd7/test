@@ -51,10 +51,6 @@ async def scrabble(client, message: Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
 
-    if chat_id != -1002225496870:
-        await message.reply_text(capsify("This command can only be used at @dragons_support."))
-        return
-
     if user_id in cooldown_users:
         remaining_time = COOLDOWN_TIME - (datetime.now() - cooldown_users[user_id]).total_seconds()
         remaining_time = max(remaining_time, 0)
@@ -166,10 +162,6 @@ async def remove_cooldown(user_id):
 async def xscrabble(client, message: Message):
     user_id = message.from_user.id
     chat_id = message.chat.id
-
-    if chat_id != -1002225496870:
-        await message.reply_text(capsify("This command can only be used at @dragons_support."))
-        return
 
     if user_id in active_scrabbles:
         del active_scrabbles[user_id]
