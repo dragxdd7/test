@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from . import collection, user_collection, sudo_filter, app,, dev_filter
+from . import collection, user_collection, sudo_filter, app, dev_filter
 
 LOG_CHAT_ID = -1002220682772 
 
