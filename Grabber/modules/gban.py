@@ -2,10 +2,10 @@ import asyncio
 from pyrogram import filters
 from Grabber.utils.gban import add_to_global_ban, remove_from_global_ban, fetch_globally_banned_users, get_all_chats, is_user_globally_banned
 import time
-from . import dev_filter, capsify, app
+from . import sudo_filter, capsify, app
 from .watchers import gban_watcher
 
-@app.on_message(filters.command(["gban"]) & dev_filter)
+@app.on_message(filters.command(["gban"]) & sudo_filter)
 async def gban_user(client, message):
     if len(message.command) < 2 and not message.reply_to_message:
         await message.reply_text(capsify("Usage: `/gban <reason>`."))
@@ -44,7 +44,7 @@ async def gban_user(client, message):
 
     await message.reply_text(capsify(f"User `{user_id}` has been globally banned in `{ban_count}` chat(s) in `{duration:.2f}` seconds."))
 
-@app.on_message(filters.command(["ungban"]) & dev_filter)
+@app.on_message(filters.command(["ungban"]) & sudo_filter)
 async def ungban_user(client, message):
     if len(message.command) < 2 and not message.reply_to_message:
         await message.reply_text(capsify("Usage: `/ungban id`."))
@@ -81,7 +81,7 @@ async def ungban_user(client, message):
 
     await message.reply_text(capsify(f"User `{user_id}` has been globally unbanned in `{unban_count}` chat(s) in `{duration:.2f}` seconds."))
 
-@app.on_message(filters.command(["gbanlist"]) & dev_filter)
+@app.on_message(filters.command(["gbanlist"]) & sudo_filter)
 async def gban_list(client, message):
     banned_users = await fetch_globally_banned_users()
     if not banned_users:
