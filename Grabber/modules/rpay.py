@@ -39,6 +39,7 @@ async def rpay(client, message: Message):
         return
 
     await druby(payer_id, amount)
-    await arubby(payee_id, amount)    app.payment_cooldowns[payer_id] = time.time()
+    await aruby(payee_id, amount)  # Fixed the function call here
+    app.payment_cooldowns[payer_id] = time.time()
 
     await message.reply_text(capsify(f"Successfully paid {amount} rubies to {payee.mention}."))
