@@ -1,6 +1,6 @@
 from pyrogram import filters
 from pyrogram.types import Message
-from . import app, user_collection, druby, sruby
+from . import app, user_collection, aruby, sruby
 import time
 from . import capsify
 
@@ -38,7 +38,7 @@ async def rpay(client, message: Message):
         await message.reply_text(capsify(f"Please wait {remaining_time} seconds before making another payment."))
         return
 
-    await druby(payer_id, amount)
+    await aruby(payer_id, amount)
     await user_collection.update_one({"id": payee_id}, {"$inc": {"rubies": amount}})
     app.payment_cooldowns[payer_id] = time.time()
 
