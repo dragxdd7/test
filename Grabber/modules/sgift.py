@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from Grabber import user_collection, application
 from .block import block_dec_ptb
+from . import capsify 
 
 pending_gifts = {}
 
@@ -60,7 +61,7 @@ async def gift(update: Update, context: CallbackContext) -> None:
                 ]
             ]
         )
-        await message.reply_text(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?", reply_markup=keyboard)
+        await message.reply_text(capsify(f"Do you confirm gifting {character['name']} to {pending_gifts[gift_id]['receiver_name']}?"), reply_markup=keyboard)
 
 async def handle_gift_confirmation(message, gift_id):
     gift_info = pending_gifts.pop(gift_id, None)
@@ -101,10 +102,10 @@ async def handle_gift_confirmation(message, gift_id):
         })
 
     success_message = (
-        f"🎁 Gifted Successfully\n\n"
-        f"Character: {character['name']}\n"
-        f"From: {character['anime']}\n"
-        f"ID: {character['id']:03}"
+        f"{capsify('🎁 Gifted Successfully')}\n\n"
+        f"{capsify('Character:')} {character['name']}\n"
+        f"{capsify('From:')} {character['anime']}\n"
+        f"{capsify('ID:')} {character['id']:03}"
     )
 
     await message.reply_text(success_message)
@@ -155,10 +156,10 @@ async def confirm_gift(update: Update, context: CallbackContext) -> None:
         })
 
     success_message = (
-        f"**🎁 Gifted Successfully**\n\n"
-        f"**Character:** {character['name']}\n"
-        f"**From:** {character['anime']}\n"
-        f"**ID:** {character['id']:03}"
+        f"{capsify('🎁 Gifted Successfully')}\n\n"
+        f"{capsify('Character:')} {character['name']}\n"
+        f"{capsify('From:')} {character['anime']}\n"
+        f"{capsify('ID:')} {character['id']:03}"
     )
 
     await query.message.edit_text(success_message)
@@ -176,7 +177,6 @@ async def cancel_gift(update: Update, context: CallbackContext) -> None:
         return
 
     pending_gifts.pop(gift_id, None)
-    await query.message.edit_text("❌ Gift Cancelled.")
-
+    await query.message.edit_text(capsify("❌ Gift Cancelled."))
 
 application.add_handler(CommandHandler("gift", gift, block=False))
