@@ -92,20 +92,11 @@ async def mines_button(client, query: CallbackQuery):
         await query.answer(capsify("Slow down!"), show_alert=True)
         return
 
-    update_result = await user_collection.update_one(
-        {
-            "id": user_id,
-            "game_data.revealed": revealed,
-            "game_data.game_active": True,
-        },
-        {
-            "$set": {f"game_data.revealed.{index}": True, "last_click_time": time.time()}
-        },
+    revealed[index] = True
+    await user_collection.update_one(
+        {"id": user_id},
+        {"$set": {"game_data.revealed": revealed, "last_click_time": time.time()}}
     )
-
-    if update_result.modified_count == 0:
-        await query.answer(capsify("Another action is in progress. Please wait."), show_alert=True)
-        return
 
     if minefield[index] == '💣':
         await druby(user_id, amount)
