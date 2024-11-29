@@ -57,3 +57,25 @@ async def sbank(user_id):
     if x:
         return int(x.get("saved_amount", 0))
     return 0
+
+async def aruby(user_id, balance):
+    x = await user_collection.find_one({'id': user_id})
+    if not x:
+        return
+    x['rubies'] = str(int(x.get('rubies', 0)) + balance)
+    x.pop('_id')
+    await user_collection.update_one({'id': user_id}, {'$set': x}, upsert=True)
+
+async def druby(user_id, balance):
+    x = await user_collection.find_one({'id': user_id})
+    if not x:
+        return
+    x['rubies'] = str(int(x.get('rubies', 0)) - balance)
+    x.pop('_id')
+    await user_collection.update_one({'id': user_id}, {'$set': x}, upsert=True)
+
+async def sruby(user_id):
+    x = await user_collection.find_one({"id": user_id})
+    if x:
+        return int(x.get("rubies", 0))
+    return 0
