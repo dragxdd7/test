@@ -167,6 +167,15 @@ async def cash_out(client, query: CallbackQuery):
         return
 
     amount = game_data['amount']
-    winnings = int(amount * game_data['multiplier']) - amount
-    await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": winnings}, "$set": {"last_game_time": time.time(), "game_data": None}})
-    await query.message.edit_text(f"💰 You cashed out! You won {winnings} rubies.", reply_markup=None)
+    winnings = int(amount * game_data['multiplier']) - amount  # Calculate only the winnings
+    await user_collection.update_one(
+        {"id": user_id},
+        {
+            "$inc": {"rubies": winnings},
+            "$set": {"last_game_time": time.time(), "game_data": None},
+        }
+    )
+    await query.message.edit_text(
+        f"💰 You cashed out! You won {winnings} rubies.",
+        reply_markup=None
+    )
