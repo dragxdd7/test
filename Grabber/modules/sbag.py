@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 from . import user_collection, Grabberu
 from .block import block_dec
+from . import sruby
 
 @Grabberu.on_message(filters.command("sbag"))
 @block_dec
@@ -12,12 +13,12 @@ async def sbag(client, message):
 
     if user_data:
         gold_amount = user_data.get('gold', 0)
-        ruby_amount = user_data.get('rubies', 0)  # Include ruby amount
+        ruby_amount = await sruby(user_id)
         weapons = user_data.get('weapons', [])
 
         message_text = (
             f"💰 Your current gold amount: {gold_amount}\n"
-            f"💎 Your current ruby amount: {ruby_amount}\n\n"  # Display ruby amount
+            f"💎 Your current ruby amount: {ruby_amount}\n\n"
         )
 
         if weapons:
