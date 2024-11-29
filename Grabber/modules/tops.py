@@ -19,8 +19,9 @@ async def show_top_menu(client, message):
 @app.on_callback_query(filters.regex(r"^top_(gold|rubies|balance)$"))
 async def show_top_list(client, callback_query):
     list_type = callback_query.data.split("_")[1]
-    
+
     users = await user_collection.find({}, {'id': 1, 'balance': 1, 'gold': 1, 'rubies': 1, 'first_name': 1}).to_list(length=None)
+    
     if list_type == "balance":
         users_with_value = [user for user in users if 'balance' in user]
         sorted_users = sorted(users_with_value, key=lambda x: float(x['balance'].replace(',', '')) if isinstance(x['balance'], str) else x['balance'], reverse=True)[:10]
@@ -29,7 +30,7 @@ async def show_top_list(client, callback_query):
         sorted_users = sorted(users_with_value, key=lambda x: float(x['gold']), reverse=True)[:10]
     elif list_type == "rubies":
         users_with_value = [user for user in users if 'rubies' in user]
-        sorted_users = sorted(users_with_value, key=lambda x: float(x['rubies']), reverse=True)[:10]
+        sorted_users = sorted(users_with_value, key=lambda x: float(x['rubies'].replace(',', '')) if isinstance(x['rubies'], str) else x['rubies'], reverse=True)[:10]
 
     type_label = "Balance" if list_type == "balance" else "Gold" if list_type == "gold" else "Rubies"
     top_users_message = f"**🏆 Top 10 Users by {type_label} 🏆**\n\n"
@@ -37,7 +38,7 @@ async def show_top_list(client, callback_query):
         if list_type == "balance":
             value = custom_format_number(float(user['balance'].replace(',', ''))) if isinstance(user['balance'], str) else custom_format_number(user['balance'])
         else:
-            value = custom_format_number(user[list_type])
+            value = custom_format_number(float(user[list_type].replace(',', ''))) if isinstance(user[list_type], str) else custom_format_number(user[list_type])
 
         first_name = user.get('first_name', 'Anonymous')
         first_word = first_name.split()[0] if ' ' in first_name else first_name
