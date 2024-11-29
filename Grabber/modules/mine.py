@@ -2,7 +2,7 @@ from pyrogram import filters, Client
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
 from Grabber import app, user_collection
 import random
-from . import aruby, druby, sruby, capsify 
+from . import aruby, druby, sruby, capsify
 import time
 from .block import block_dec
 
@@ -89,7 +89,7 @@ async def mines_button(client, query: CallbackQuery):
         return
 
     if time.time() - user_data.get("last_click_time", 0) < 1:
-        await query.answer(capsify("Slow down!"), show_alert=True)
+        await query.answer(capsify("Slow down ❕"), show_alert=True)
         return
 
     revealed[index] = True
@@ -145,11 +145,15 @@ async def cash_out(client, query: CallbackQuery):
     game_data = user_data.get("game_data") if user_data else None
 
     if not game_data or not game_data['game_active']:
-        await query.answer(capsify("Game has already ended."))
+        await query.answer(capsify("Game has already ended."), show_alert=True)
         return
 
     amount = game_data['amount']
     winnings = int(amount * game_data['multiplier']) - amount
+
+    if winnings < 0:
+        winnings = 0  # Prevent negative winnings
+
     await aruby(user_id, winnings)
     await query.message.edit_text(
         capsify(f"💰 You cashed out! You won {winnings} rubies."),
