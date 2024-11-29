@@ -33,7 +33,7 @@ async def mines(client, message):
         await message.reply_text(capsify("Use /mines [amount] [bombs]"))
         return
 
-    user_balance = user_data.get("rubies", 0) if user_data else 0
+    user_balance = await sruby(user_id)
     if user_balance < amount:
         await message.reply_text(capsify("Insufficient rubies to make the bet."))
         return
@@ -107,46 +107,27 @@ async def mines_button(client, query: CallbackQuery):
         return
 
     if minefield[index] == '💣':
-        await user_collection.update_one(
-            {"id": user_id},
-            {
-                "$inc": {"rubies": -amount},
-                "$set": {
-                    "last_game_time": time.time(),
-                    "game_data": None,
-                },
-            }
-        )
+        await druby(user_id, amount)
         await query.message.edit_text(
             capsify(f"💣 You hit the bomb! Game over! You lost {amount} rubies."),
             reply_markup=None
         )
+        await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
         return
 
     multiplier += game_data['bombs'] / 10
     game_data['multiplier'] = multiplier
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
         winnings = int(amount * multiplier)
-        await user_collection.update_one(
-            {"id": user_id},
-            {
-                "$inc": {"rubies": winnings},
-                "$set": {
-                    "last_game_time": time.time(),
-                    "game_data": None,
-                },
-            }
-        )
+        await aruby(user_id, winnings)
         await query.message.edit_text(
             capsify(f"🎉 You revealed all the safe tiles! You win {winnings} rubies!"),
             reply_markup=None
         )
+        await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
         return
 
-    await user_collection.update_one(
-        {"id": user_id},
-        {"$set": {"game_data": game_data}}
-    )
+    await user_collection.update_one({"id": user_id}, {"$set": {"game_data": game_data}})
 
     keyboard = [
         [IKB(minefield[i] if revealed[i] else " ", callback_data=f"{user_id}_{i}")
@@ -177,14 +158,9 @@ async def cash_out(client, query: CallbackQuery):
 
     amount = game_data['amount']
     winnings = int(amount * game_data['multiplier']) - amount
-    await user_collection.update_one(
-        {"id": user_id},
-        {
-            "$inc": {"rubies": winnings},
-            "$set": {"last_game_time": time.time(), "game_data": None},
-        }
-    )
+    await aruby(user_id, winnings)
     await query.message.edit_text(
         capsify(f"💰 You cashed out! You won {winnings} rubies."),
         reply_markup=None
     )
+    await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
