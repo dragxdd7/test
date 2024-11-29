@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import random
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import user_collection, collection, app, capsify, nopvt
+from . import user_collection, collection, app, capsify, nopvt, sruby, druby, aruby
 from .block import block_dec
 from .watchers import auction_watcher
 
@@ -23,9 +23,10 @@ async def start_auction(chat_id, character):
         'highest_bid': MIN_BID,
         'highest_bidder': None,
         'end_time': datetime.now() + timedelta(seconds=AUCTION_TIME),
+        'bid_message_id': None,  # To store the message ID of the bid
     }
 
-    await app.send_photo(
+    auction_message = await app.send_photo(
         chat_id=chat_id,
         photo=character['img_url'],
         caption=capsify(
@@ -47,19 +48,18 @@ async def start_auction(chat_id, character):
         winner_id = auction['highest_bidder']
         winner_data = await user_collection.find_one({'id': winner_id})
 
-        await user_collection.update_one(
-            {'id': winner_id},
-            {'$push': {'characters': character}},
-            upsert=True
-        )
+        await aruby(winner_id, auction['highest_bid'])
 
-        await app.send_message(
-            chat_id=chat_id,
-            text=capsify(
-                f"**Auction Over!**\n\n"
-                f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
+        winner_bid_message_id = auction['bid_message_id']
+        if winner_bid_message_id:
+            await app.send_message(
+                chat_id=chat_id,
+                text=capsify(
+                    f"**Auction Over!**\n\n"
+                    f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!",
+                ),
+                reply_to_message_id=winner_bid_message_id
             )
-        )
     else:
         await app.send_message(
             chat_id=chat_id,
@@ -68,8 +68,7 @@ async def start_auction(chat_id, character):
 
     del active_auctions[character_id]
 
-
-@app.on_message(filters.text, group=auction_watcher)  
+@app.on_message(filters.text, group=auction_watcher)
 async def handle_message(client, message: Message):
     chat_id = message.chat.id
     message_counts.setdefault(chat_id, 0)
@@ -84,7 +83,6 @@ async def handle_message(client, message: Message):
             await start_auction(chat_id, character)
 
         message_counts[chat_id] = 0
-
 
 @app.on_message(filters.command("bid"))
 @block_dec
@@ -117,20 +115,17 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify("No active auctions at the moment."))
         return
 
-    user_data = await user_collection.find_one({'id': user_id})
-    if not user_data or user_data.get('rubies', 0) < bid_amount:
+    user_rubies = await sruby(user_id)
+    if user_rubies < bid_amount:
         await message.reply_text(capsify("You do not have enough rubies to place this bid."))
         return
 
     if bid_amount > active_auction['highest_bid']:
         active_auction['highest_bid'] = bid_amount
         active_auction['highest_bidder'] = user_id
+        active_auction['bid_message_id'] = message.message_id  # Store the message ID of the bid
 
-        await user_collection.update_one(
-            {'id': user_id},
-            {'$inc': {'rubies': -bid_amount}},
-            upsert=True
-        )
+        await druby(user_id, bid_amount)
 
         await client.send_message(
             chat_id=chat_id,
@@ -140,5 +135,7 @@ async def place_bid(client, message: Message):
                 f"Current highest bid: {bid_amount} rubies."
             )
         )
+
+        await message.reply_text(capsify(f"Your bid of {bid_amount} rubies has been placed successfully!"))
     else:
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
