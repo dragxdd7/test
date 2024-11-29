@@ -1,7 +1,7 @@
 from pyrogram import filters, Client
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
 from Grabber import app, user_collection
-import random
+import random, aruby, duby, sruby
 import time
 from .block import block_dec
 
