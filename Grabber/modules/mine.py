@@ -2,7 +2,7 @@ from pyrogram import filters, Client
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
 from Grabber import app, user_collection
 import random
-from . import aruby, druby, sruby, capsify
+from . import aruby, druby, sruby, capsify, nopvt, limit
 import time
 from .block import block_dec
 
@@ -13,8 +13,11 @@ def generate_minefield(size, bombs):
         minefield[pos] = '💣'
     return minefield
 
-@block_dec
+
 @app.on_message(filters.command("mines"))
+@block_dec
+@nopvt
+@limit
 async def mines(client, message):
     user_id = message.from_user.id
     user_data = await user_collection.find_one({"id": user_id})
