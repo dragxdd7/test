@@ -21,7 +21,7 @@ async def mines(client, message):
 
     if time.time() - last_game_time < 300:
         remaining_time = int(300 - (time.time() - last_game_time))
-        await message.reply_text(f"Please wait {remaining_time} seconds before starting a new game.")
+        await message.reply_text(capsify(f"Please wait {remaining_time} seconds before starting a new game."))
         return
 
     try:
@@ -30,12 +30,12 @@ async def mines(client, message):
         if amount < 1 or bombs < 1:
             raise ValueError("Invalid bet amount or bomb count.")
     except (IndexError, ValueError):
-        await message.reply_text("Use /mines [amount] [bombs]")
+        await message.reply_text(capsify("Use /mines [amount] [bombs]"))
         return
 
     user_balance = user_data.get("rubies", 0) if user_data else 0
     if user_balance < amount:
-        await message.reply_text("Insufficient rubies to make the bet.")
+        await message.reply_text(capsify("Insufficient rubies to make the bet."))
         return
 
     size = 25
@@ -58,20 +58,23 @@ async def mines(client, message):
         for j in range(0, size, 5)
     ]
     reply_markup = IKM(keyboard)
-    await message.reply_text(f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies", reply_markup=reply_markup)
+    await message.reply_text(
+        capsify(f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies"),
+        reply_markup=reply_markup
+    )
 
 @app.on_callback_query(filters.regex(r"^\d+_\d+$"))
 async def mines_button(client, query: CallbackQuery):
     user_id, index = map(int, query.data.split('_'))
     if user_id != query.from_user.id:
-        await query.answer("This is not your game.", show_alert=True)
+        await query.answer(capsify("This is not your game."), show_alert=True)
         return
 
     user_data = await user_collection.find_one({"id": user_id})
     game_data = user_data.get("game_data") if user_data else None
 
     if not game_data or not game_data['game_active']:
-        await query.answer("Game has already ended.", show_alert=True)
+        await query.answer(capsify("Game has already ended."), show_alert=True)
         return
 
     index = int(index)
@@ -81,7 +84,11 @@ async def mines_button(client, query: CallbackQuery):
     multiplier = game_data['multiplier']
 
     if revealed[index]:
-        await query.answer("This tile is already revealed.")
+        await query.answer(capsify("This tile is already revealed."), show_alert=True)
+        return
+
+    if time.time() - user_data.get("last_click_time", 0) < 1:
+        await query.answer(capsify("Slow down!"), show_alert=True)
         return
 
     update_result = await user_collection.update_one(
@@ -91,12 +98,12 @@ async def mines_button(client, query: CallbackQuery):
             "game_data.game_active": True,
         },
         {
-            "$set": {f"game_data.revealed.{index}": True}
+            "$set": {f"game_data.revealed.{index}": True, "last_click_time": time.time()}
         },
     )
 
     if update_result.modified_count == 0:
-        await query.answer("Another action is in progress. Please wait.", show_alert=True)
+        await query.answer(capsify("Another action is in progress. Please wait."), show_alert=True)
         return
 
     if minefield[index] == '💣':
@@ -111,7 +118,7 @@ async def mines_button(client, query: CallbackQuery):
             }
         )
         await query.message.edit_text(
-            f"💣 You hit the bomb! Game over! You lost {amount} rubies.",
+            capsify(f"💣 You hit the bomb! Game over! You lost {amount} rubies."),
             reply_markup=None
         )
         return
@@ -131,7 +138,7 @@ async def mines_button(client, query: CallbackQuery):
             }
         )
         await query.message.edit_text(
-            f"🎉 You revealed all the safe tiles! You win {winnings} rubies!",
+            capsify(f"🎉 You revealed all the safe tiles! You win {winnings} rubies!"),
             reply_markup=None
         )
         return
@@ -150,24 +157,26 @@ async def mines_button(client, query: CallbackQuery):
     reply_markup = IKM(keyboard)
 
     await query.message.edit_text(
-        f"Choose a tile:\n\n**Current Multiplier:** {multiplier:.2f}x
+        capsify(f"Choose a tile:\n\n**Current Multiplier:** {multiplier:.2f}x"),
+        reply_markup=reply_markup
+    )
 
 @app.on_callback_query(filters.regex(r"^\d+_cash_out$"))
 async def cash_out(client, query: CallbackQuery):
     user_id = int(query.data.split('_')[0])
     if user_id != query.from_user.id:
-        await query.answer("This is not your game.", show_alert=True)
+        await query.answer(capsify("This is not your game."), show_alert=True)
         return
 
     user_data = await user_collection.find_one({"id": user_id})
     game_data = user_data.get("game_data") if user_data else None
 
     if not game_data or not game_data['game_active']:
-        await query.answer("Game has already ended.")
+        await query.answer(capsify("Game has already ended."))
         return
 
     amount = game_data['amount']
-    winnings = int(amount * game_data['multiplier']) - amount  # Calculate only the winnings
+    winnings = int(amount * game_data['multiplier']) - amount
     await user_collection.update_one(
         {"id": user_id},
         {
@@ -176,6 +185,6 @@ async def cash_out(client, query: CallbackQuery):
         }
     )
     await query.message.edit_text(
-        f"💰 You cashed out! You won {winnings} rubies.",
+        capsify(f"💰 You cashed out! You won {winnings} rubies."),
         reply_markup=None
     )
