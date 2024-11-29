@@ -44,10 +44,10 @@ def limit(func):
     @wraps(func)
     async def wrapper(client: Client, message: Message):
         current_chat_id = message.chat.id
-        allowed_chat_id = -1002225496870
+        allowed_chat_id = -1002413377777
 
         if current_chat_id != allowed_chat_id:
-            await message.reply_text("This command only works in @dragons_support.")
+            await message.reply_text("This command only works in @dragona_support.")
             return
 
         return await func(client, message)
