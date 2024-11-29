@@ -1,6 +1,6 @@
 from pyrogram import filters
 from pyrogram.types import Message
-from . import app, user_collection
+from . import app, user_collection, druby, sruby
 import time
 from . import capsify
 
@@ -27,10 +27,7 @@ async def rpay(client, message: Message):
         await message.reply_text(capsify("Use /rpay [amount] while replying to the user."))
         return
 
-    payer_data = await user_collection.find_one({"id": payer_id})
-    payee_data = await user_collection.find_one({"id": payee_id})
-    payer_balance = payer_data.get("rubies", 0) if payer_data else 0
-
+    payer_balance = await sruby(payer_id)
     if payer_balance < amount:
         await message.reply_text(capsify("Insufficient rubies to complete the payment."))
         return
@@ -41,7 +38,7 @@ async def rpay(client, message: Message):
         await message.reply_text(capsify(f"Please wait {remaining_time} seconds before making another payment."))
         return
 
-    await user_collection.update_one({"id": payer_id}, {"$inc": {"rubies": -amount}})
+    await druby(payer_id, amount)
     await user_collection.update_one({"id": payee_id}, {"$inc": {"rubies": amount}})
     app.payment_cooldowns[payer_id] = time.time()
 
