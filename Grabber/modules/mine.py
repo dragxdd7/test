@@ -71,7 +71,7 @@ async def mines_button(client, query: CallbackQuery):
     game_data = user_data.get("game_data") if user_data else None
 
     if not game_data or not game_data['game_active']:
-        await query.answer("Game has already ended.")
+        await query.answer("Game has already ended.", show_alert=True)
         return
 
     index = int(index)
@@ -84,41 +84,73 @@ async def mines_button(client, query: CallbackQuery):
         await query.answer("This tile is already revealed.")
         return
 
-    revealed[index] = True
+    update_result = await user_collection.update_one(
+        {
+            "id": user_id,
+            "game_data.revealed": revealed,
+            "game_data.game_active": True,
+        },
+        {
+            "$set": {f"game_data.revealed.{index}": True}
+        },
+    )
+
+    if update_result.modified_count == 0:
+        await query.answer("Another action is in progress. Please wait.", show_alert=True)
+        return
+
     if minefield[index] == '💣':
-        game_data['game_active'] = False
-        await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": -amount}, "$set": {"last_game_time": time.time(), "game_data": None}})
+        await user_collection.update_one(
+            {"id": user_id},
+            {
+                "$inc": {"rubies": -amount},
+                "$set": {
+                    "last_game_time": time.time(),
+                    "game_data": None,
+                },
+            }
+        )
         await query.message.edit_text(
             f"💣 You hit the bomb! Game over! You lost {amount} rubies.",
             reply_markup=None
         )
         return
 
-    game_data['multiplier'] += game_data['bombs'] / 10
+    multiplier += game_data['bombs'] / 10
+    game_data['multiplier'] = multiplier
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
-        game_data['game_active'] = False
-        winnings = int(amount * game_data['multiplier'])
-        await user_collection.update_one({"id": user_id}, {"$inc": {"rubies": winnings}, "$set": {"last_game_time": time.time(), "game_data": None}})
+        winnings = int(amount * multiplier)
+        await user_collection.update_one(
+            {"id": user_id},
+            {
+                "$inc": {"rubies": winnings},
+                "$set": {
+                    "last_game_time": time.time(),
+                    "game_data": None,
+                },
+            }
+        )
         await query.message.edit_text(
             f"🎉 You revealed all the safe tiles! You win {winnings} rubies!",
             reply_markup=None
         )
         return
 
-    await user_collection.update_one({"id": user_id}, {"$set": {"game_data": game_data}})
+    await user_collection.update_one(
+        {"id": user_id},
+        {"$set": {"game_data": game_data}}
+    )
 
     keyboard = [
         [IKB(minefield[i] if revealed[i] else " ", callback_data=f"{user_id}_{i}")
          for i in range(j, j + 5)]
         for j in range(0, len(minefield), 5)
     ]
-    keyboard.append([IKB(f"Cash Out ({int(amount * game_data['multiplier'])} rubies)", callback_data=f"{user_id}_cash_out")])
+    keyboard.append([IKB(f"Cash Out ({int(amount * multiplier)} rubies)", callback_data=f"{user_id}_cash_out")])
     reply_markup = IKM(keyboard)
 
     await query.message.edit_text(
-        f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies",
-        reply_markup=reply_markup
-    )
+        f"Choose a tile:\n\n**Current Multiplier:** {multiplier:.2f}x
 
 @app.on_callback_query(filters.regex(r"^\d+_cash_out$"))
 async def cash_out(client, query: CallbackQuery):
