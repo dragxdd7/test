@@ -109,6 +109,7 @@ async def mines_button(client, query: CallbackQuery):
 
     multiplier += game_data['bombs'] / 10
     game_data['multiplier'] = multiplier
+
     if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
         winnings = int(amount * multiplier)
         await aruby(user_id, winnings)
