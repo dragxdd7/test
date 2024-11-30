@@ -1,6 +1,6 @@
 from pyrogram import filters, Client
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
-from . import app, user_collection, sruby, aruby, druby, capsify 
+from Grabber import app, user_collection, sruby, aruby, druby
 from PIL import Image, ImageDraw, ImageFont
 import random
 import io
@@ -133,9 +133,10 @@ async def handle_stock_guess(client, query: CallbackQuery):
 
         await query.message.edit_media(
             media=image,
-            caption=capsify(f"Your current bet amount is {amount} rubies.\nChoose Higher or Lower."),
             reply_markup=reply_markup
         )
+
+        await query.message.reply_text(capsify(f"Your current bet amount is {amount} rubies.\nChoose Higher or Lower."))
 
 @app.on_callback_query(filters.regex(r"^\d+_cash_out$"))
 async def cash_out(client, query: CallbackQuery):
