@@ -17,9 +17,9 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         username = "None"
     text = f"Username: {username}\nID: {user_id}\nCurrent Rarity: {current_rarity}"
     img_width, img_height = img.size
-    dp_size = (300, 300)
+    dp_size = (200, 200)
     dp_x = (img_width - dp_size[0]) // 2
-    dp_y = 50
+    dp_y = 30
     if user_dp_url:
         response = requests.get(user_dp_url)
         user_dp = Image.open(BytesIO(response.content)).convert("RGBA")
@@ -28,8 +28,10 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         draw_mask = ImageDraw.Draw(mask)
         draw_mask.ellipse((0, 0, dp_size[0], dp_size[1]), fill=255)
         img.paste(user_dp, (dp_x, dp_y), mask)
-    text_x = 50
-    text_y = dp_y + dp_size[1] + 30
+    text_x = img_width // 2
+    text_y = dp_y + dp_size[1] + 20
+    text_width, text_height = d.multiline_textsize(text, font=font)
+    text_x -= text_width // 2
     d.multiline_text((text_x, text_y), text, fill=(0, 0, 0), font=font, align="center")
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
