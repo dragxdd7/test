@@ -7,7 +7,7 @@ from . import application, user_collection
 from .block import block_dec_ptb, block_cbq
 
 FONT_PATH = "Fonts/font.ttf"
-BG_IMAGE_PATH = "Images/blue.jpg"
+BG_IMAGE_PATH = "Images/cmode.jpg"
 
 def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img = Image.open(BG_IMAGE_PATH).convert("RGBA")
