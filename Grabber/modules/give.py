@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from . import collection, user_collection, sudo_filter, app, dev_filter
 
-LOG_CHAT_ID = -1002220682772 
+LOG_CHAT_ID = -1002203193964
 
 async def give_character(receiver_id, character_id):
     character = await collection.find_one({'id': character_id})
