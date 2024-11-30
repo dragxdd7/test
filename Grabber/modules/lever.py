@@ -12,7 +12,7 @@ last_usage_time_roll = {}
 
 @app.on_message(filters.command(["lever"]))
 @block_dec
-async def roll_dart(client: Client, message: t.Message):  # Note that 'client' is now defined
+async def roll_dart(client: Client, message: t.Message):
     user_id = message.from_user.id
     current_time = time.time()
 
@@ -53,19 +53,20 @@ async def roll_dart(client: Client, message: t.Message):  # Note that 'client' i
 
     last_usage_time_roll[user_id] = current_time
 
-    value = await client.send_dice(chat_id=message.chat.id, emoji="🎰")  # Now using 'client'
+    value = await client.send_dice(chat_id=message.chat.id, emoji="🎰")
     await asyncio.sleep(random.uniform(1, 5))
     slot_value = value.dice.value
 
     jackpot_multiplier = 2
     two_equal_multiplier = 1
 
-    if slot_value in (1, 22, 43, 64):
+    # Adjust winning conditions
+    if slot_value == 1:  # Only 1 is a jackpot now
         reward = jackpot_multiplier * slot_amount
         await add(user_id, reward)
         await message.reply_text(f"[🎰](https://graph.org//file/18f84c8f4059fa74bc2ff.jpg) You hit the jackpot!\nYou won ₳{reward}!")
         await add_xp(user_id, 6)
-    elif slot_value in (2, 3, 4, 5, 6, 9, 11, 13, 16, 17, 18, 21, 23, 24, 26, 27, 30, 32, 33, 35, 38, 39, 41, 42, 44, 47, 48, 49, 52, 54, 56, 59, 60, 61, 62, 63):
+    elif slot_value == 2:  # Only 2 is a two-equal win
         reward = two_equal_multiplier * slot_amount
         await add(user_id, reward)
         await message.reply_text(f"[🎰](https://graph.org//file/18f84c8f4059fa74bc2ff.jpg) Two signs came out equal!\nYou won ₳{reward}!")
