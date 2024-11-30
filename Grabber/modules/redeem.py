@@ -7,10 +7,12 @@ from Grabber import application, user_collection
 from . import add, deduct, show, app, sudo_filter
 from .block import block_dec
 
+log_chat_id = -1002203193964 
+
 last_usage_time = {}
 daily_code_usage = {}
 generated_codes = {}
-user_redemptions = {}  # Track which codes have been redeemed by which users
+user_redemptions = {}
 
 async def generate_random_code(prefix=""):
     return prefix + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
@@ -54,6 +56,16 @@ async def gen(client, message: Message):
     code = await generate_random_code(prefix="SUMU-")
     generated_codes[code] = {'amount': amount, 'quantity': quantity, 'user_id': message.from_user.id}
 
+    # Log the code generation in the log chat
+    await client.send_message(
+        log_chat_id,
+        f"**New Code Generated**\n\n"
+        f"**User ID:** `{message.from_user.id}`\n"
+        f"**Code:** `{code}`\n"
+        f"**Amount:** {amount}\n"
+        f"**Quantity:** {quantity}"
+    )
+
     response_text = (
         f"Generated code:\n"
         f"`{code}`\n"
@@ -76,7 +88,6 @@ async def redeem(client, message: Message):
             await message.reply_text("You can only redeem the codes you generated.")
             return
 
-        # Check if the user has already redeemed this code
         if code in user_redemptions.get(user_id, []):
             await message.reply_text("You have already redeemed this code.")
             return
@@ -87,7 +98,6 @@ async def redeem(client, message: Message):
 
             details['quantity'] -= 1
 
-            # Track the redemption
             if user_id not in user_redemptions:
                 user_redemptions[user_id] = []
             user_redemptions[user_id].append(code)
