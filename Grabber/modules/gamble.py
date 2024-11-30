@@ -34,8 +34,8 @@ async def gamble(client, message):
         await message.reply_text(capsify(f"You do not have enough balance to gamble Ŧ{amount}. Your current balance is Ŧ{balance}."))
         return
 
-    # Winning chance is 30 out of 100
-    if random.randint(1, 100) <= 30:  # 30% chance to win
+    # Winning chance is now 10 out of 100
+    if random.randint(1, 100) <= 10:  # 10% chance to win
         coin_side = choice
         new_balance = amount  # Amount to add
         message_text = capsify(f"🤩 You chose {choice} and won Ŧ{amount}.\nCoin was in {coin_side} hand.")
