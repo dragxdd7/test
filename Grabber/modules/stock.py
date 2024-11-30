@@ -1,6 +1,6 @@
 from pyrogram import filters, Client
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, CallbackQuery
-from Grabber import app, user_collection, sruby, aruby, druby
+from . import app, user_collection, sruby, aruby, druby, capsify 
 from PIL import Image, ImageDraw, ImageFont
 import random
 import io
