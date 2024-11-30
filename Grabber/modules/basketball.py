@@ -1,5 +1,4 @@
 from pyrogram import filters, types as t
-import random
 import time
 import asyncio
 from pyrogram import Client
@@ -49,7 +48,7 @@ async def roll_dart(client: Client, message: t.Message):
     value = await client.send_dice(chat_id=message.chat.id, emoji="🏀")
 
     await asyncio.sleep(2)
-    if value.dice.value in [4, 5, 6]:
+    if value.dice.value == 6:  # Winning only if the dice rolls a 6
         await add(user_id, bastek_amount)
         await message.reply_text(f"[🏀](https://graph.org//file/5a2360e5023e2976eb23c.jpg) You're lucky!\nYou won ₩{bastek_amount}")
         await add_xp(user_id, 4)
