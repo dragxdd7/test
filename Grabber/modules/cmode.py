@@ -13,14 +13,16 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img = Image.open(BG_IMAGE_PATH).convert("RGBA")
     img = img.resize((275, 183))
     d = ImageDraw.Draw(img)
-    font = ImageFont.truetype(FONT_PATH, 20)
+
+    text_font = ImageFont.truetype("Fonts/font.ttf", 20)  # Primary font for text
+    emoji_font = ImageFont.truetype("Fonts/NotoColorEmoji.ttf", 20)  # Emoji-compatible font
 
     if not username:
         username = "None"
     text_lines = [
-        f"Username: {username}",
-        f"ID: {user_id}",
-        f"Current Rarity: {current_rarity}"
+        capsify(f"Username: {username}"),
+        capsify(f"ID: {user_id}"),
+        capsify(f"Current Rarity: {current_rarity}")
     ]
 
     dp_size = (50, 50)
@@ -39,10 +41,14 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     text_y = dp_y + dp_size[1] + 10
 
     for line in text_lines:
-        text_width, text_height = d.textsize(line, font=font)
-        text_x = (img.width - text_width) // 2
-        d.text((text_x, text_y), line, fill=(0, 0, 0), font=font)
-        text_y += text_height + 5
+        # Draw each character with the appropriate font (text or emoji)
+        x_offset = 0
+        for char in line:
+            font = emoji_font if char in emoji_font.get_chars() else text_font
+            char_width, char_height = d.textsize(char, font=font)
+            d.text((((img.width - sum(d.textsize(c, font=font)[0] for c in line)) // 2) + x_offset, text_y), char, font=font, fill=(0, 0, 0))
+            x_offset += char_width
+        text_y += 30  # Line spacing
 
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
