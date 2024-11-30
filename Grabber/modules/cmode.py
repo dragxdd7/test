@@ -10,30 +10,29 @@ FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/blue.jpg"
 
 def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
-    img = Image.open(BG_IMAGE_PATH)
+    img = Image.open(BG_IMAGE_PATH).convert("RGBA")
     d = ImageDraw.Draw(img)
     font = ImageFont.truetype(FONT_PATH, 80)
-
     if not username:
         username = "None"
     text = f"Username: {username}\nID: {user_id}\nCurrent Rarity: {current_rarity}"
-
-    text_x = 10
-    text_y = 10
-    dp_size = (200, 200)
-
+    img_width, img_height = img.size
+    dp_size = (300, 300)
+    dp_x = (img_width - dp_size[0]) // 2
+    dp_y = 50
     if user_dp_url:
         response = requests.get(user_dp_url)
-        user_dp = Image.open(BytesIO(response.content))
-        user_dp.thumbnail(dp_size)
-        img.paste(user_dp, (text_x, text_y))
-        text_x += dp_size[0] + 10
-
-    d.text((text_x, text_y), text, fill=(0, 0, 0), font=font)
-
+        user_dp = Image.open(BytesIO(response.content)).convert("RGBA")
+        user_dp = user_dp.resize(dp_size, Image.ANTIALIAS)
+        mask = Image.new("L", dp_size, 0)
+        draw_mask = ImageDraw.Draw(mask)
+        draw_mask.ellipse((0, 0, dp_size[0], dp_size[1]), fill=255)
+        img.paste(user_dp, (dp_x, dp_y), mask)
+    text_x = 50
+    text_y = dp_y + dp_size[1] + 30
+    d.multiline_text((text_x, text_y), text, fill=(0, 0, 0), font=font, align="center")
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
-
     return img_path
 
 @block_dec_ptb
