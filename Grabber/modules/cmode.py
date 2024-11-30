@@ -9,39 +9,18 @@ from .block import block_dec_ptb, block_cbq
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
 
-def is_emoji(character):
-    return any(
-        character in map(chr, range(start, end + 1))
-        for start, end in [
-            (0x1F600, 0x1F64F),
-            (0x1F300, 0x1F5FF),
-            (0x1F680, 0x1F6FF),
-            (0x1F700, 0x1F77F),
-            (0x1F780, 0x1F7FF),
-            (0x1F800, 0x1F8FF),
-            (0x1F900, 0x1F9FF),
-            (0x1FA00, 0x1FAFF),
-            (0x2600, 0x26FF),
-            (0x2700, 0x27BF),
-            (0xFE00, 0xFE0F),
-            (0x1F1E6, 0x1F1FF),
-        ]
-    )
-
 def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img = Image.open(BG_IMAGE_PATH).convert("RGBA")
     img = img.resize((275, 183))
     d = ImageDraw.Draw(img)
-
-    text_font = ImageFont.truetype("Fonts/font.ttf", 20)
-    emoji_font = ImageFont.truetype("Fonts/noto-color-emoji.ttf", 20)
+    font = ImageFont.truetype(FONT_PATH, 20)
 
     if not username:
         username = "None"
     text_lines = [
-        capsify(f"Username: {username}"),
-        capsify(f"ID: {user_id}"),
-        capsify(f"Current Rarity: {current_rarity}")
+        f"Username: {username}",
+        f"ID: {user_id}",
+        f"Current Rarity: {current_rarity}"
     ]
 
     dp_size = (50, 50)
@@ -60,13 +39,10 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     text_y = dp_y + dp_size[1] + 10
 
     for line in text_lines:
-        x_offset = 0
-        for char in line:
-            font = emoji_font if is_emoji(char) else text_font
-            char_width, char_height = d.textsize(char, font=font)
-            d.text(((img.width - sum(d.textsize(c, font=font)[0] for c in line)) // 2 + x_offset, text_y), char, font=font, fill=(0, 0, 0))
-            x_offset += char_width
-        text_y += 30
+        text_width, text_height = d.textsize(line, font=font)
+        text_x = (img.width - text_width) // 2
+        d.text((text_x, text_y), line, fill=(0, 0, 0), font=font)
+        text_y += text_height + 5
 
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
