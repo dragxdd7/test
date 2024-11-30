@@ -15,7 +15,7 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     d = ImageDraw.Draw(img)
 
     text_font = ImageFont.truetype("Fonts/font.ttf", 20)  # Primary font for text
-    emoji_font = ImageFont.truetype("Fonts/NotoColorEmoji.ttf", 20)  # Emoji-compatible font
+    emoji_font = ImageFont.truetype("Fonts/noto-color-emoji.ttf", 20)  # Emoji-compatible font
 
     if not username:
         username = "None"
