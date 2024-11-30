@@ -1,11 +1,8 @@
-from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext
+import io
 from Grabber import collection, user_collection, application
 from .block import block_dec_ptb
-from telegraph import Telegraph
-
-telegraph = Telegraph()
-telegraph.create_account(short_name="uncollected_bot")
 
 @block_dec_ptb
 async def uncollected(update: Update, context: CallbackContext) -> None:
@@ -24,23 +21,21 @@ async def uncollected(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text('You have collected all characters!')
         return
 
-    content = "<b>Uncollected Characters:</b><br><br>"
+    uncollected_text = "Uncollected Characters:\n\n"
     for character in uncollected_characters:
-        content += (
-            f"♦️ <b>{character['name']}</b><br>"
-            f"[{character['anime']}]<br>"
-            f"[{character['id']}]<br><br>"
+        uncollected_text += (
+            f"♦️ {character['name']}\n"
+            f"  [{character['anime']}]\n"
+            f"  [{character['id']}]\n\n"
         )
 
-    response = telegraph.create_page(
-        title="Uncollected Characters",
-        html_content=content
-    )
-    telegraph_url = f"https://telegra.ph/{response['path']}"
+    file_name = f"uncollected_characters_{user_id}.txt"
+    file = io.BytesIO()
+    file.write(uncollected_text.encode())
+    file.seek(0)
 
-    reply_markup = IKM([
-        [IKB("Uncollected", url=telegraph_url)]
-    ])
-    await update.message.reply_text("Click the button below to view your uncollected characters:", reply_markup=reply_markup)
+    await update.message.reply_document(document=file, filename=file_name)
+    file.close()
 
 application.add_handler(CommandHandler(["uncollected"], uncollected, block=False))
+
