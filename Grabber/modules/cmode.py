@@ -17,7 +17,11 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 
     if not username:
         username = "None"
-    text = f"Username: {username}\nID: {user_id}\nCurrent Rarity: {current_rarity}"
+    text_lines = [
+        f"Username: {username}",
+        f"ID: {user_id}",
+        f"Current Rarity: {current_rarity}"
+    ]
 
     dp_size = (50, 50)
     dp_x = (img.width - dp_size[0]) // 2
@@ -32,29 +36,13 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         draw_mask.ellipse((0, 0, dp_size[0], dp_size[1]), fill=255)
         img.paste(user_dp, (dp_x, dp_y), mask)
 
-    text_x = 10
     text_y = dp_y + dp_size[1] + 10
-    max_text_width = img.width - 20
-    lines = []
-    current_line = ""
 
-    for word in text.split():
-        test_line = f"{current_line} {word}".strip()
-        test_width, _ = d.textsize(test_line, font=font)
-        if test_width <= max_text_width:
-            current_line = test_line
-        else:
-            lines.append(current_line)
-            current_line = word
-    if current_line:
-        lines.append(current_line)
-
-    line_height = font.getsize("A")[1]
-    for line in lines:
-        text_width, _ = d.textsize(line, font=font)
+    for line in text_lines:
+        text_width, text_height = d.textsize(line, font=font)
         text_x = (img.width - text_width) // 2
         d.text((text_x, text_y), line, fill=(0, 0, 0), font=font)
-        text_y += line_height + 5
+        text_y += text_height + 5
 
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
