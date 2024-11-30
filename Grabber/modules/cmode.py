@@ -11,15 +11,18 @@ BG_IMAGE_PATH = "Images/cmode.jpg"
 
 def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img = Image.open(BG_IMAGE_PATH).convert("RGBA")
+    img = img.resize((275, 183))
     d = ImageDraw.Draw(img)
-    font = ImageFont.truetype(FONT_PATH, 80)
+    font = ImageFont.truetype(FONT_PATH, 20)
+
     if not username:
         username = "None"
     text = f"Username: {username}\nID: {user_id}\nCurrent Rarity: {current_rarity}"
-    img_width, img_height = img.size
-    dp_size = (200, 200)
-    dp_x = (img_width - dp_size[0]) // 2
-    dp_y = 30
+
+    dp_size = (50, 50)
+    dp_x = (img.width - dp_size[0]) // 2
+    dp_y = 10
+
     if user_dp_url:
         response = requests.get(user_dp_url)
         user_dp = Image.open(BytesIO(response.content)).convert("RGBA")
@@ -28,11 +31,31 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
         draw_mask = ImageDraw.Draw(mask)
         draw_mask.ellipse((0, 0, dp_size[0], dp_size[1]), fill=255)
         img.paste(user_dp, (dp_x, dp_y), mask)
-    text_x = img_width // 2
-    text_y = dp_y + dp_size[1] + 20
-    text_width, text_height = d.multiline_textsize(text, font=font)
-    text_x -= text_width // 2
-    d.multiline_text((text_x, text_y), text, fill=(0, 0, 0), font=font, align="center")
+
+    text_x = 10
+    text_y = dp_y + dp_size[1] + 10
+    max_text_width = img.width - 20
+    lines = []
+    current_line = ""
+
+    for word in text.split():
+        test_line = f"{current_line} {word}".strip()
+        test_width, _ = d.textsize(test_line, font=font)
+        if test_width <= max_text_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word
+    if current_line:
+        lines.append(current_line)
+
+    line_height = font.getsize("A")[1]
+    for line in lines:
+        text_width, _ = d.textsize(line, font=font)
+        text_x = (img.width - text_width) // 2
+        d.text((text_x, text_y), line, fill=(0, 0, 0), font=font)
+        text_y += line_height + 5
+
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
     return img_path
