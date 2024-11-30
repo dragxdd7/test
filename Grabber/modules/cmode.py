@@ -3,7 +3,7 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import application, user_collection
+from . import application, user_collection, capsify 
 from .block import block_dec_ptb, block_cbq
 
 FONT_PATH = "Fonts/font.ttf"
