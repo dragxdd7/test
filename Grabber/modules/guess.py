@@ -4,7 +4,8 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import aruby, capsify, sudo_filter, guess_watcher, nopvt
+from . import aruby, capsify, sudo_filter, guess_watcher, nopvt, app
+
 from .block import block_dec
 
 active_guesses = {}
