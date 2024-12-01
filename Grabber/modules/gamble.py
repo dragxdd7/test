@@ -2,10 +2,14 @@ import random
 from pyrogram import Client, filters
 from Grabber import user_collection
 from . import add, deduct, show, abank, dbank, sbank, app, capsify
+from .block import block_dec, temp_block
 
 @app.on_message(filters.command("gamble"))
+@block_dec
 async def gamble(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user = await user_collection.find_one({'id': user_id})
     balance = int(user.get('balance', 0))
 
