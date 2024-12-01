@@ -3,11 +3,14 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, collection, user_collection
 from .profile import custom_format_number
-from .block import block_dec
+from .block import block_dec, temp_block
 
 @app.on_message(filters.command("tops"))
 @block_dec
 async def show_top_menu(client, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     buttons = [
         [IKB("🏅 Gold", callback_data="top_gold"),
          IKB("💎 Rubies", callback_data="top_rubies")],
