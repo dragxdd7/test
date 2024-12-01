@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import user_collection, Grabberu
 from . import add as add_balance, show as show_balance, capsify
-from .block import block_dec
+from .block import block_dec, temp_block
 
 last_payment_times = {}
 
