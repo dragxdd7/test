@@ -2,7 +2,7 @@ from . import db, app, sudo_filter
 from pyrogram.types import Message
 from time import time
 import asyncio
-import time
+from time import time
 from pyrogram import Client, filters
 from .watchers import block_watcher
 from .capsify import capsify
