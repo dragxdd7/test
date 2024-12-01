@@ -4,7 +4,7 @@ from . import user_collection, app
 from pyrogram.types import Message  
 from datetime import datetime, timedelta
 from html import escape
-from .block import block_dec, temp_block
+from .block import block_dec
 
 beast_list = {
     1: {'name': '𝐋𝐮𝐜𝐲', 'price': 30000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
@@ -38,8 +38,8 @@ async def beastshop_cmd(client: Client, message: Message):
 @block_dec
 async def buybeast_cmd(client: Client, message: Message):
     user_id = message.from_user.id
-    if temp_block(user_id):
-        return
+    #if temp_block(user_id):
+        #return
     user_data = await get_user_data(user_id)
 
     beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
@@ -67,8 +67,8 @@ async def buybeast_cmd(client: Client, message: Message):
 @block_dec
 async def showbeast_cmd(client: Client, message: Message):
     user_id = message.from_user.id
-    if temp_block(user_id):
-        return
+    #if temp_block(user_id):
+        #return
     user_data = await get_user_data(user_id)
 
     if 'beasts' in user_data and user_data['beasts']:
@@ -94,8 +94,8 @@ async def showbeast_cmd(client: Client, message: Message):
 @block_dec
 async def showbeastdetails_cmd(client: Client, message: Message):
     user_id, user_data = message.from_user.id, await get_user_data(message.from_user.id)
-    if temp_block(user_id):
-        return
+    #if temp_block(user_id):
+        #return
 
     if 'beasts' in user_data and user_data['beasts']:
         beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
