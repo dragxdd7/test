@@ -4,7 +4,7 @@ import random
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, collection, app, capsify, nopvt, sruby, druby, aruby
-from .block import block_dec, temp_block
+from .block import block_dec
 from .watchers import auction_watcher
 
 AUCTION_TIME = 60
@@ -77,7 +77,7 @@ async def handle_message(client, message: Message):
 @nopvt
 async def place_bid(client, message: Message):
     user_id = message.from_user.id
-    if temp_block(user_id):
+    #if temp_block(user_id):
         return
     chat_id = message.chat.id
     args = message.text.split()
