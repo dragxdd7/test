@@ -5,7 +5,7 @@ from pyrogram.types import Message
 from datetime import datetime, timedelta
 import asyncio
 from . import add, deduct, show, app, capsify
-from .block import block_dec
+from .block import block_dec, temp_block
 
 last_payment_times = {}
 last_loan_times = {}
@@ -20,6 +20,8 @@ def format_timedelta(td: timedelta) -> str:
 @block_dec
 async def mpay(client, message):
     sender_id = message.from_user.id
+    if temp_block(sender_id):
+        return
 
     if not message.reply_to_message:
         await message.reply_text(capsify("Please reply to a user to /pay."))
