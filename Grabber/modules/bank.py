@@ -75,19 +75,32 @@ async def loan(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
-    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'loan_due_date': 1})
+    user_data = await user_collection.find_one(
+        {'id': user_id},
+        projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'loan_due_date': 1, 'last_loan_date': 1}
+    )
 
     if user_data:
+        current_time = datetime.now()
+        last_loan_date = user_data.get('last_loan_date')
+
+        # Check if the user is eligible for a new loan
+        if last_loan_date:
+            days_since_last_loan = (current_time - last_loan_date).days
+            if days_since_last_loan < 7:
+                await message.reply_text(capsify(f"You can only take a loan once every 7 days. Try again in {7 - days_since_last_loan} days."))
+                return
+
+        # Check for existing loans
         if 'loan_amount' in user_data and user_data['loan_amount'] > 0:
-            current_time = datetime.now()
             loan_due_date = user_data.get('loan_due_date')
-            
+
             if current_time > loan_due_date:
                 overdue_hours = (current_time - loan_due_date).total_seconds() / 3600
                 penalty = math.ceil(overdue_hours) * (int(user_data['loan_amount']) * 0.05)
             else:
                 penalty = 0
-            
+
             total_deducted = int(user_data['balance']) + penalty
             await user_collection.update_one({'id': user_id}, {'$set': {'balance': 0, 'saved_amount': 0, 'loan_amount': 0}})
             log_message = f"User {message.from_user.first_name} ({user_id}) tried to exploit the loan system. Deducted balance and penalty: {total_deducted} tokens."
@@ -95,13 +108,13 @@ async def loan(client: Client, message: Message):
             await message.reply_text(capsify("You tried to exploit the loan system. Your balance and saved amount have been reset to 0 as a penalty."))
             return
 
-        current_time = datetime.now()
+        # Approve new loan
         loan_due_date = current_time + timedelta(days=10)
 
         new_balance = int(user_data.get('balance', 0)) + loan_amount
         await user_collection.update_one(
             {'id': user_id},
-            {'$set': {'loan_amount': loan_amount, 'loan_due_date': loan_due_date}}
+            {'$set': {'loan_amount': loan_amount, 'loan_due_date': loan_due_date, 'last_loan_date': current_time}}
         )
         await add(user_id, loan_amount)
 
