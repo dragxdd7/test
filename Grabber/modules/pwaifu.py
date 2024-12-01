@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
 from . import ac, rc, app, user_collection, collection
-from .block import block_dec
+from .block import block_dec, temp_block
 last_claim_time = {}
 
 async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
@@ -25,6 +25,8 @@ async def pwaifu(client: Client, message):
     chat_id = message.chat.id
     first_name = message.from_user.first_name
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     if user_id == 7162166061:
         await message.reply_text(f"Sorry {first_name}, you are banned from using this command.")
