@@ -4,7 +4,8 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import aruby, capsify, sudo_filter, guess_watcher, nopvt, block_dec
+from . import aruby, capsify, sudo_filter, guess_watcher, nopvt
+from .block import block_dec
 
 active_guesses = {}
 COOLDOWN_TIME = 30
