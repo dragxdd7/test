@@ -9,6 +9,8 @@ from .block import block_dec, temp_block
 @block_dec 
 async def cosplay(_, msg):
     user_id = msg.from_user.id
+    if temp_block(user_id):
+        return
     bot_info = await app.get_me()
     bot_username = bot_info.username
 
