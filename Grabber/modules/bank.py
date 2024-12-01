@@ -50,6 +50,8 @@ async def withdraw(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1})
 
     if user_data:
@@ -77,6 +79,8 @@ async def loan(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one(
         {'id': user_id},
         projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'loan_due_date': 1, 'last_loan_date': 1}
@@ -137,6 +141,8 @@ async def repay(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'loan_amount': 1, 'loan_due_date': 1})
 
     if user_data:
