@@ -5,7 +5,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import application, user_collection
 from . import add, deduct, show, app, sudo_filter
-from .block import block_dec
+from .block import block_dec, temp_block
 
 log_chat_id = -1002203193964 
 
@@ -21,6 +21,8 @@ async def generate_random_code(prefix=""):
 @block_dec
 async def daily_code(client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     today = datetime.datetime.now().date()
     if user_id in daily_code_usage:
         last_usage_date = daily_code_usage[user_id]
@@ -80,6 +82,8 @@ async def redeem(client, message: Message):
     args = message.command[1:]
     code = " ".join(args)
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     if code in generated_codes:
         details = generated_codes[code]
