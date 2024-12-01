@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from datetime import datetime as dt
 from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character
 import random
-from .block import block_dec, block_cbq
+from .block import block_dec, block_cbq, temp_block
 
 sdb = db.new_store
 user_db = db.bought
@@ -38,6 +38,8 @@ async def get_user_balance(user_id: int):
 @block_dec
 async def shop(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     x = await get_today_characters(user_id)
 
     if not x or x[0] != today():
