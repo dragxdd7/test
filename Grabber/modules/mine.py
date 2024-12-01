@@ -4,7 +4,7 @@ from Grabber import app, user_collection
 import random
 from . import aruby, druby, sruby, capsify, nopvt, limit
 import time
-from .block import block_dec
+from .block import block_dec, temp_block
 
 def generate_minefield(size, bombs):
     minefield = ['💎'] * size
@@ -20,6 +20,8 @@ def generate_minefield(size, bombs):
 @limit
 async def mines(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one({"id": user_id})
     last_game_time = user_data.get("last_game_time", 0) if user_data else 0
 
