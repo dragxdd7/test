@@ -3,11 +3,13 @@ from itertools import groupby
 from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto
 from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from . import user_collection, application, capsify
-from .block import block_dec_ptb
+from .block import block_dec_ptb, temp_block
 
 @block_dec_ptb
 async def harem(update: Update, context: CallbackContext, page=0) -> None:
     user_id = update.effective_user.id
+    if temp_block(user_id):
+        return
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
