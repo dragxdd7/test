@@ -7,6 +7,8 @@ from .block import block_dec, temp_block
 @block_dec
 async def gtop_command(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     top_users = await user_collection.find().sort('gold', -1).limit(10).to_list(10)
 
     if not top_users:
