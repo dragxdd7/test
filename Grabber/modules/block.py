@@ -17,7 +17,7 @@ def temp_block(user_id):
             block.pop(user_id)
     return user_id in t_block
 
-@app.on_message(filters.private, group=block_watcher)
+@app.on_message(~filters.me, group=block_watcher)
 async def block_cwf(_, m):
     user_id = m.from_user.id
     if user_id in t_block:
