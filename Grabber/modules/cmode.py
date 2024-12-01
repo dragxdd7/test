@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import application, user_collection, capsify 
-from .block import block_dec_ptb, block_cbq
+from .block import block_dec_ptb, block_cbq, temp_block
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
@@ -51,6 +51,8 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 @block_dec_ptb
 async def cmode(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
+    if temp_block(user_id):
+        return
     username = update.effective_user.username
 
     profile_photos = await context.bot.get_user_profile_photos(update.effective_user.id)
