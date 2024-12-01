@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
 from . import user_collection, clan_collection, join_requests_collection, app, db as database
-from .block import block_dec, block_cbq
+from .block import block_dec, block_cbq, temp_block
 
 def generate_unique_numeric_code():
     return str(random.randint(1000000000, 9999999999))
@@ -16,6 +16,8 @@ def calculate_clan_level(clan_data):
 @block_dec
 async def my_clan(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one({'id': user_id})
 
     if not user_data or 'clan_id' not in user_data:
@@ -53,6 +55,8 @@ async def my_clan(client, message):
 @block_dec
 async def create_clan(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     clan_name = ' '.join(message.command[1:])
 
     if not clan_name:
@@ -100,6 +104,8 @@ async def create_clan(client, message):
 @block_dec
 async def join_clan(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     clan_id = ' '.join(message.command[1:])
 
     if not clan_id:
