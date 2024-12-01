@@ -78,7 +78,7 @@ async def handle_message(client, message: Message):
 async def place_bid(client, message: Message):
     user_id = message.from_user.id
     #if temp_block(user_id):
-        return
+        #return
     chat_id = message.chat.id
     args = message.text.split()
     if len(args) < 2:
