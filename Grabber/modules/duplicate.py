@@ -3,11 +3,13 @@ import io
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import collection, user_collection, app
-from .block import block_dec
+from .block import block_dec, temp_block
 
 @block_dec
 async def duplicate(client: Client, message: Message) -> None:
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     user = await user_collection.find_one({'id': user_id})
     if not user:
