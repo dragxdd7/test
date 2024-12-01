@@ -6,6 +6,7 @@ from pyrogram import Client, filters
 from datetime import datetime
 import pytz
 from . import user_collection, collection, app, capsify
+from .block import block_dec, temp_block
 
 def custom_format_number(num):
     if int(num) >= 10**6:
@@ -35,8 +36,11 @@ def calculate_days_old(created_at):
     return days_old
 
 @app.on_message(filters.command('xprofile'))
+@block_dec
 async def xprofile(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     try:
         user_data = await user_collection.find_one(
