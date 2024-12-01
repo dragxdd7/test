@@ -3,7 +3,7 @@ from Grabber import application, user_collection
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 from . import add as add_balance , deduct as deduct_balance, show as show_balance
-from .block import block_dec_ptb
+from .block import block_dec_ptb, temp_block
 
 @block_dec_ptb
 async def rps(update, context):
@@ -16,6 +16,8 @@ async def rps(update, context):
         return
 
     user_id = update.effective_user.id
+    if temp_block(user_id):
+        return
     user_balance = await show_balance(user_id)
 
     if user_balance < amount:
