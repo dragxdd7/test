@@ -146,6 +146,8 @@ async def join_clan(client, message):
 @block_dec
 async def delete_clan(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     user_data = await user_collection.find_one({'id': user_id})
     if not user_data or 'clan_id' not in user_data:
