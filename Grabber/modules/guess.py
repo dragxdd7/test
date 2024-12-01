@@ -4,7 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import aruby, capsify, sudo_filter, guess_watcher, nopvt, app
+from . import aruby, capsify, sudo_filter, guess_watcher, nopvt, app, collection, limit, user_collection
 
 from .block import block_dec
 
