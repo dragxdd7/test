@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, collection, app
-from .block import block_dec
+from .block import block_dec, temp_block
 
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
@@ -69,6 +69,8 @@ async def dice_command(client, message: Message):
     chat_id = message.chat.id
     mention = message.from_user.mention
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     if user_id in cooldowns and time.time() - cooldowns[user_id] < 60:
         cooldown_time = int(60 - (time.time() - cooldowns[user_id]))
