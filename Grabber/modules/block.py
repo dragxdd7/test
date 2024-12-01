@@ -9,6 +9,13 @@ dic1 = {}
 dic2 = {}
 t_block = {}
 
+def temp_block(user_id):
+    if user_id in t_block:
+        if int(time.time() - t_block[user_id]) > 600:
+            t_block.pop(user_id)
+    return user_id in t_block
+
+
 @app.on_message(filters.group, group=block_watcher)
 async def block_cwf(_, m: Message):
     user_id = m.from_user.id
