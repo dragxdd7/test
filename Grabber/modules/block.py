@@ -13,28 +13,30 @@ t_block = {}
 
 def temp_block(user_id):
     if user_id in t_block:
-        if int(time.time() - block[user_id]) > 600:
-            block.pop(user_id)
+        if int(time.time() - t_block[user_id]) > 600:
+            t_block.pop(user_id)
     return user_id in t_block
 
 @app.on_message(~filters.me, group=block_watcher)
-async def block_cwf(_, m):
+async def block_cwf(_, m: Message):
     user_id = m.from_user.id
     if user_id in t_block:
         return
+    
     if user_id in dic1:
         if int(time.time() - dic1[user_id]) <= 1:
             if user_id in dic2:
                 dic2[user_id] += 1
             else:
                 dic2[user_id] = 1
+            
             if dic2[user_id] >= 4:
-                dic2[user_id] =  0
+                dic2[user_id] = 0
                 t_block[user_id] = time.time()
                 txt = "You have been blocked for 10 minutes due to flooding ⚠️"
-                await _.send_message(m.chat.id, txt)
+                await m.reply(txt)  
         else:
-            dic2[user_id] =  0
+            dic2[user_id] = 0
         dic1[user_id] = time.time()
     else:
         dic1[user_id] = time.time()
