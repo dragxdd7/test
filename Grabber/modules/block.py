@@ -1,9 +1,44 @@
 from . import db, app, sudo_filter
-from pyrogram import filters
 from pyrogram.types import Message
 from time import time
 import asyncio
+import time
+import asyncio
+from pyrogram import Client, filters
 
+block_watcher = 69
+
+dic1 = {}
+dic2 = {}
+block = {}
+
+def is_blocked(user_id):
+    if user_id in block:
+        if int(time.time() - block[user_id]) > 600:
+            block.pop(user_id)
+    return user_id in block
+
+@app.on_message(filters.private, group=block_watcher)
+async def block_cwf(_, m):
+    user_id = m.from_user.id
+    if user_id in block:
+        return
+    if user_id in dic1:
+        if int(time.time() - dic1[user_id]) <= 1:
+            if user_id in dic2:
+                dic2[user_id] += 1
+            else:
+                dic2[user_id] = 1
+            if dic2[user_id] >= 4:
+                dic2[user_id] =  0
+                block[user_id] = time.time()
+                txt = "You have been blocked for 10 minutes due to flooding ⚠️"
+                await _.send_message(m.chat.id, txt)
+        else:
+            dic2[user_id] =  0
+        dic1[user_id] = time.time()
+    else:
+        dic1[user_id] = time.time()
 bdb = db.block
 
 async def block(user_id):
