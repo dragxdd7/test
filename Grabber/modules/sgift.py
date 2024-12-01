@@ -2,7 +2,7 @@ import uuid
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler
 from Grabber import user_collection, application
-from .block import block_dec_ptb
+from .block import block_dec_ptb, temp_block
 from . import capsify 
 
 pending_gifts = {}
@@ -22,6 +22,8 @@ async def gift(update: Update, context: CallbackContext) -> None:
 
     if sender_id == receiver_id:
         await message.reply_text("You can't gift a character to yourself!")
+        return
+    if temp_block(sender_id):
         return
 
     if len(context.args) != 1:
