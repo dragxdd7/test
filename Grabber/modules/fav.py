@@ -3,12 +3,14 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, Message, CallbackQuery
 
 from . import user_collection, app, capsify
-from .block import block_dec, block_cbq
+from .block import block_dec, block_cbq, temp_block
 
 @app.on_message(filters.command("fav"))
 @block_dec
 async def fav(client: Client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     if len(message.command) < 2:
         await message.reply_text(capsify('Please provide Slave ID...'))
