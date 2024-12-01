@@ -1,10 +1,7 @@
 from . import db, app, sudo_filter
-from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, Message, CallbackQuery
-from time import time
-import asyncio
-from time import time
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram import Client, filters
-from .watchers import block_watcher
+from time import time
 from . import capsify
 
 dic1 = {}
@@ -13,7 +10,7 @@ t_block = {}
 
 def temp_block(user_id):
     if user_id in t_block:
-        if int(time() - t_block[user_id]) > 600:
+        if int(time.time() - t_block[user_id]) > 600:
             t_block.pop(user_id)
     return user_id in t_block
 
@@ -24,18 +21,22 @@ async def block_cwf(_, m: Message):
         return
 
     if user_id in dic1:
-        if int(time() - dic1[user_id]) <= 1:
-            dic2[user_id] = dic2.get(user_id, 0) + 1
+        if int(time.time() - dic1[user_id]) <= 1:
+            if user_id in dic2:
+                dic2[user_id] += 1
+            else:
+                dic2[user_id] = 1
+
             if dic2[user_id] >= 4:
                 dic2[user_id] = 0
-                t_block[user_id] = time()
+                t_block[user_id] = time.time()
                 txt = capsify("You have been blocked for 10 minutes due to flooding ⚠️")
                 await m.reply(txt)
         else:
             dic2[user_id] = 0
-        dic1[user_id] = time()
+        dic1[user_id] = time.time()
     else:
-        dic1[user_id] = time()
+        dic1[user_id] = time.time()
 
 bdb = db.block
 
@@ -99,6 +100,10 @@ def block_cbq(func):
         return await func(client, callback_query)
     return wrapper
 
+async def get_all_blocked_users():
+    blocked_users = await db.block.find().to_list(None)
+    return [user['user_id'] for user in blocked_users]
+
 @app.on_message(filters.command("blocklist") & sudo_filter)
 async def blocklist_command(client: Client, message: Message):
     blocked_users = await get_all_blocked_users()
@@ -108,7 +113,9 @@ async def blocklist_command(client: Client, message: Message):
     text = capsify(f"Blocked Users:\n{user_list}")
     await message.reply(
         text,
-        reply_markup=IKM([[IKB("Close", callback_data="close_blocklist")]])
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("Close", callback_data="close_blocklist")]]
+        )
     )
 
 @app.on_callback_query(filters.regex("close_blocklist") & sudo_filter)
@@ -116,6 +123,4 @@ async def close_callback(client: Client, callback_query: CallbackQuery):
     await callback_query.message.delete()
     await callback_query.answer(capsify("Closed"), show_alert=False)
 
-async def get_all_blocked_users():
-    blocked_users = await db.block.find().to_list(None)
-    return [user['user_id'] for user in blocked_users]
+
