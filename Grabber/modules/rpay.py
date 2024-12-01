@@ -3,12 +3,16 @@ from pyrogram.types import Message
 from . import app, user_collection, aruby, sruby, druby
 import time
 from . import capsify
+from .block import block_dec, temp_block
 
 app.payment_cooldowns = {}
 
 @app.on_message(filters.command("rpay"))
+@block_dec
 async def rpay(client, message: Message):
     payer_id = message.from_user.id
+    if temp_block(payer_id):
+        return
     if not message.reply_to_message:
         await message.reply_text(capsify("Please reply to the user you want to pay."))
         return
