@@ -5,7 +5,7 @@ import random
 from datetime import datetime, timedelta
 from Grabber import collection, user_collection, user_totals_collection
 from . import add as add_balance, deduct as deduct_balance, app, capsify
-from .block import block_dec
+from .block import block_dec, temp_block
 
 rarity_map = {
     "🟢 Common": True,
@@ -22,6 +22,8 @@ proposing_users = {}
 @block_dec
 async def propose(client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     user_data = await user_collection.find_one({'id': user_id})
 
