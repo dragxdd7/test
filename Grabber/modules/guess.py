@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 from pytz import timezone
 from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher, nopvt, limit
-from .block import block_dec
+from .block import block_dec, temp_block
 
 active_guesses = {}
 COOLDOWN_TIME = 30
@@ -23,6 +23,9 @@ async def get_random_character():
 @block_dec
 async def guess(client, message: Message):
     chat_id = message.chat.id
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
 
     if chat_id in active_guesses:
         await message.reply_text(capsify("A guessing game is already running in this chat!"))
