@@ -9,6 +9,31 @@ dic1 = {}
 dic2 = {}
 t_block = {}
 
+@app.on_message(filters.group, group=block_watcher)
+async def block_cwf(_, m: Message):
+    user_id = m.from_user.id
+
+    if user_id in t_block:
+        if time.time() - t_block[user_id] < 600:
+            return
+        t_block.pop(user_id)
+
+    current_time = time.time()
+
+    if user_id in dic1:
+        if current_time - dic1[user_id] <= 1:
+            dic2[user_id] = dic2.get(user_id, 0) + 1
+            if dic2[user_id] >= 4:
+                t_block[user_id] = current_time
+                dic2[user_id] = 0
+                txt = capsify("You have been blocked for 10 minutes due to flooding ⚠️")
+                await m.reply(txt)
+        else:
+            dic2[user_id] = 0
+    else:
+        dic2[user_id] = 0
+
+    dic1[user_id] = current_time
 bdb = db.block
 
 async def block(user_id):
