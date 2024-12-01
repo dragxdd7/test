@@ -3,7 +3,7 @@ from pyrogram.types import Message
 from datetime import datetime, timedelta
 import math
 from . import add, deduct, show, abank, dbank, sbank, user_collection, app, capsify
-from .block import block_dec
+from .block import block_dec, temp_block
 
 async def handle_error(client: Client, message: Message, error: Exception):
     error_message = f"An error occurred: {str(error)}"
@@ -21,6 +21,8 @@ async def save(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1})
 
     if user_data:
