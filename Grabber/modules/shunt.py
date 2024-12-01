@@ -6,7 +6,7 @@ from pyrogram.errors import UserNotParticipant
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from motor.motor_asyncio import AsyncIOMotorClient
 from . import user_collection, app, dev_filter
-from .block import block_dec
+from .block import block_dec, temp_block
 
 MUST_JOIN = "dragons_support"
 LOG_GROUP_CHAT_ID = -1002243796014
@@ -60,6 +60,8 @@ async def send_log(log_message):
 @app.on_message(filters.command(["shunt"]))
 async def shunt_command(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     current_time = time.time()
 
     if user_id in user_last_command_times and current_time - user_last_command_times[user_id] < 5:
