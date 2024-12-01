@@ -5,8 +5,7 @@ import asyncio
 import time
 import asyncio
 from pyrogram import Client, filters
-
-block_watcher = 69
+from .watchers import block_watcher
 
 dic1 = {}
 dic2 = {}
