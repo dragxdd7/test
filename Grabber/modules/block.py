@@ -1,7 +1,7 @@
 from . import db, app, sudo_filter
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram import Client, filters
-from time import time
+import time 
 from . import capsify
 from .watchers import block_watcher
 
