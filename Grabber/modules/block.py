@@ -5,7 +5,7 @@ import asyncio
 from time import time
 from pyrogram import Client, filters
 from .watchers import block_watcher
-from .capsify import capsify
+from . import capsify
 
 dic1 = {}
 dic2 = {}
