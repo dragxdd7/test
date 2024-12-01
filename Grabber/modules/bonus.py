@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from Grabber import user_collection, Grabberu
 from . import add as add_balance, show as show_balance, capsify
-from .block import block_dec, temp_block
+from .block import block_dec
 
 last_payment_times = {}
 
@@ -51,8 +51,8 @@ async def daily_reward(client: Client, message: Message):
     try:
         user_id = message.from_user.id
         user_data = await user_collection.find_one({'id': user_id}, projection={'last_daily_reward': 1, 'balance': 1})
-        if temp_block(user_id):
-            return
+        #if temp_block(user_id):
+            #return
         if user_data:
             last_claimed_date = user_data.get('last_daily_reward')
             if last_claimed_date and last_claimed_date.date() == datetime.utcnow().date():
@@ -73,8 +73,8 @@ async def weekly(client: Client, message: Message):
     try:
         user_id = message.from_user.id
         user_data = await user_collection.find_one({'id': user_id}, projection={'last_weekly_bonus': 1, 'balance': 1})
-        if temp_block(user_id):
-            return
+        #if temp_block(user_id):
+            #return
 
         if user_data:
             last_claimed_date = user_data.get('last_weekly_bonus')
