@@ -3,12 +3,14 @@ import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import collection, user_collection, sudo_filter, app, capsify
-from .block import block_dec
+from .block import block_dec, temp_block
 
 exchange_usage = {}
 
 async def exchange_command(client: Client, message: Message, args: list[str]) -> None:
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     tz = pytz.timezone('Asia/Kolkata')
     now = datetime.datetime.now(tz)
 
