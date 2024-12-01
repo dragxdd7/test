@@ -3,7 +3,7 @@ from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, 
 from pyrogram import Client, filters
 from time import time
 from . import capsify
-from .watcher import block_watcher
+from .watchers import block_watcher
 
 dic1 = {}
 dic2 = {}
