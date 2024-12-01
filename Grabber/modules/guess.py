@@ -4,8 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import collection, user_collection, app, capsify, sudo_filter, guess_watcher, nopvt, limit
-from .block import block_dec, temp_block
+from . import aruby, capsify, sudo_filter, guess_watcher, nopvt, block_dec
 
 active_guesses = {}
 COOLDOWN_TIME = 30
@@ -23,7 +22,7 @@ async def get_random_character():
 @block_dec
 async def guess(client, message: Message):
     chat_id = message.chat.id
-    
+
     if chat_id in active_guesses:
         await message.reply_text(capsify("A guessing game is already running in this chat!"))
         return
@@ -47,11 +46,10 @@ async def guess(client, message: Message):
 @app.on_message(~filters.me, group=guess_watcher)
 async def check_guess(client, message: Message):
     chat_id = message.chat.id
-    
-    # Ensure the message has a 'from_user' attribute
+
     if not message.from_user:
         return
-    
+
     user_id = message.from_user.id
 
     if chat_id not in active_guesses:
@@ -76,11 +74,8 @@ async def check_guess(client, message: Message):
         game_data['guessed'] = True
         reward = random.randint(20, 30)
 
-        await user_collection.update_one(
-            {'id': user_id},
-            {'$inc': {'rubies': reward}},
-            upsert=True
-        )
+        # Use aruby function to add rubies
+        await aruby(user_id, reward)
 
         await message.reply_text(
             capsify(f"Congratulations {message.from_user.first_name}! 🎉 You guessed correctly and won {reward} Ruby!")
@@ -115,7 +110,7 @@ async def check_timeout(client, message: Message, chat_id):
 
         await message.reply_text(
             capsify(f"Time out! ⌛ The correct name was: {character['name']}"),
-            reply_to_message_id=original_message_id  # Reply to the original guess message
+            reply_to_message_id=original_message_id  
         )
         del active_guesses[chat_id]
 
