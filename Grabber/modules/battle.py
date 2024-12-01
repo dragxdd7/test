@@ -6,7 +6,7 @@ from pymongo import MongoClient
 import random
 import asyncio
 from . import user_collection, clan_collection, app as application, Grabberu
-from .block import block_dec, block_cbq, temp_block
+from .block import block_dec, block_cbq
 
 weapons_data = [
     {'name': 'Sword', 'price': 500, 'damage': 10},
@@ -50,8 +50,8 @@ async def get_user_data(user_id):
 @block_dec
 async def battle_command(client, message):
     user_a_id = message.from_user.id
-    if temp_block(user_a_id):
-        return
+    #if temp_block(user_a_id):
+        #return
     user_a_data = await get_user_data(user_a_id)
 
     if not ('clan_id' in user_a_data or 'leader_id' in user_a_data):
