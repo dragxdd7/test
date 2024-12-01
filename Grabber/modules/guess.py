@@ -23,10 +23,7 @@ async def get_random_character():
 @block_dec
 async def guess(client, message: Message):
     chat_id = message.chat.id
-    user_id = message.from_user.id
-    if temp_block(user_id):
-        return
-
+    
     if chat_id in active_guesses:
         await message.reply_text(capsify("A guessing game is already running in this chat!"))
         return
