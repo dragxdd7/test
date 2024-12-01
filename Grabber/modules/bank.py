@@ -141,7 +141,7 @@ async def repay(client: Client, message: Message):
         return
 
     user_id = message.from_user.id
-    £if temp_block(user_id):
+    #if temp_block(user_id):
         #return
     user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'loan_amount': 1, 'loan_due_date': 1})
 
