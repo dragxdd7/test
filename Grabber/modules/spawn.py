@@ -6,7 +6,7 @@ from Grabber import collection, top_global_groups_collection, group_user_totals_
 from Grabber import application
 from Grabber.utils.bal import add, deduct, show
 from .block import block_dec_ptb
-from .capsfiy import capsify 
+from . import capsify 
 
 last_characters = {}
 first_correct_guesses = {}
