@@ -4,6 +4,7 @@ from . import user_collection, app
 from pyrogram.types import Message  
 from datetime import datetime, timedelta
 from html import escape
+from .block import block_dec, temp_block
 
 beast_list = {
     1: {'name': '𝐋𝐮𝐜𝐲', 'price': 30000, 'rarity': '🐱 𝐂𝐚𝐭', 'power': 500, 'img_url': 'https://telegra.ph/file/5c7b85cb39b2702c49816.jpg'},
@@ -28,13 +29,17 @@ async def get_user_data(user_id):
 cooldowns = {}
 
 @app.on_message(filters.command(["beastshop"]))
+@block_dec
 async def beastshop_cmd(client: Client, message: Message):
     beast_list_text = "\n".join([f"{beast_id}. {beast['name']} - 𝐑𝐚𝐜𝐞 : {beast['rarity']}, 𝐏𝐫𝐢𝐜𝐞 : Ŧ`{beast['price']}`" for beast_id, beast in beast_list.items()])
     return await message.reply_text(f"⛩「𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐓𝐨 𝐁𝐞𝐚𝐬𝐭 𝐬𝐡𝐨𝐩」\n\n{beast_list_text}\n\nUse `/buybeast <beast_id>` to purchase a beast.")
 
 @app.on_message(filters.command(["buybeast"]))
+@block_dec
 async def buybeast_cmd(client: Client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await get_user_data(user_id)
 
     beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
@@ -59,8 +64,11 @@ async def buybeast_cmd(client: Client, message: Message):
     return await message.reply_photo(photo=beast_list[beast_id]['img_url'], caption=f"You have successfully purchased a {beast_list[beast_id]['name']}! Use /beast to see your new beast.")
 
 @app.on_message(filters.command(["beast"]))
+@block_dec
 async def showbeast_cmd(client: Client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user_data = await get_user_data(user_id)
 
     if 'beasts' in user_data and user_data['beasts']:
@@ -83,8 +91,11 @@ async def showbeast_cmd(client: Client, message: Message):
 
 # Add a new command to show beast details along with an image
 @app.on_message(filters.command(["binfo"]))
+@block_dec
 async def showbeastdetails_cmd(client: Client, message: Message):
     user_id, user_data = message.from_user.id, await get_user_data(message.from_user.id)
+    if temp_block(user_id):
+        return
 
     if 'beasts' in user_data and user_data['beasts']:
         beast_id = int(message.text.split()[1]) if len(message.text.split()) > 1 else None
