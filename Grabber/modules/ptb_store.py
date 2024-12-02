@@ -127,3 +127,11 @@ async def close_callback(client, query):
         return await query.answer(capsify("This is not for you!"), show_alert=True)
 
     await query.message.delete()
+
+async def sales_list_callback(client, query):
+    user_id = query.from_user.id
+    target_user = int(query.data.split("_")[1])
+    if user_id != target_user:
+        return await query.answer(capsify("This is not for you!"), show_alert=True)
+
+    await query.message.delete()
