@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
-from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character, druby
+from . import collection, user_collection, add, deduct, show, app, db, get_image_and_caption, capsify, get_character_ids, get_character
 import random
 from .block import block_dec, block_cbq, temp_block
 
@@ -53,10 +53,9 @@ async def shop(client, message):
     photo, caption = await get_image_and_caption(ch_ids[0])
 
     keyboard = [
-    [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
-    [IKB("Refresh 🔄", callback_data=f"refresh_store_{user_id}")],
-    [IKB("Close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-]
+        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
+    ]
 
     markup = IKM(keyboard)
     await message.reply_photo(photo, caption=capsify(f"__PAGE 1__\n\n{caption}"), reply_markup=markup)
@@ -124,10 +123,9 @@ async def handle_page(query, page, origin, user_id):
     buy_buttons = ["buya", "buyb", "buyc", 'buya']
 
     keyboard = [
-    [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
-    [IKB("Refresh 🔄", callback_data=f"refresh_store_{user_id}")],
-    [IKB("Close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-]
+        [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
+    ]
 
     await query.edit_message_media(
         media=IMP(photo, caption=capsify(f"PAGE {page}\n\n{caption}")),
@@ -175,74 +173,11 @@ async def handle_char_back(query, char, user_id):
 
     photo, caption = await get_image_and_caption(char)
     keyboard = [
-    [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
-    [IKB("Refresh 🔄", callback_data=f"refresh_store_{user_id}")],
-    [IKB("Close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-]
+        [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
+    ]
 
     await query.edit_message_caption(
         capsify(f"__PAGE {ind}__\n\n{caption}"),
         reply_markup=IKM(keyboard)
     )
-
-@app.on_callback_query(filters.regex("^refresh_store"))
-async def refresh_store(client, query):
-    user_id = query.from_user.id
-    origin = int(query.data.split('_')[1])
-
-    if user_id != origin:
-        return await query.answer(capsify("This is not for you, baka."), show_alert=True)
-
-    user_balance = await get_user_balance(user_id)
-    if user_balance < 10000:
-        return await query.answer(capsify("You do not have enough rubies to refresh!"), show_alert=True)
-
-    await query.edit_message_caption(
-        capsify("Refreshing the store will cost you **10,000 rubies**.\n\nDo you want to proceed?"),
-        reply_markup=IKM([
-            [IKB("Confirm ✅", callback_data=f"refresh_confirm_{user_id}"), IKB("Cancel ❌", callback_data=f"refresh_cancel_{user_id}")]
-        ])
-    )
-
-
-@app.on_callback_query(filters.regex("^refresh_confirm"))
-async def refresh_confirm(client, query):
-    user_id = query.from_user.id
-    origin = int(query.data.split('_')[1])
-
-    if user_id != origin:
-        return await query.answer(capsify("This is not for you, baka."), show_alert=True)
-
-    await druby(user_id, 10000)
-    await clear_today(user_id)
-
-    ids = await get_character_ids()
-    ch_ids = random.sample(ids, 3)
-    await set_today_characters(user_id, [today(), ch_ids])
-
-    ch_info = [await get_character(cid) for cid in ch_ids]
-    photo, caption = await get_image_and_caption(ch_ids[0])
-
-    keyboard = [
-        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
-        [IKB("Refresh 🔄", callback_data=f"refresh_store_{user_id}")],
-        [IKB("Close 🗑️", callback_data=f"saleslist:close_{user_id}")]
-    ]
-
-    await query.edit_message_media(
-        media=IMP(photo, caption=capsify(f"__PAGE 1__\n\n{caption}")),
-        reply_markup=IKM(keyboard)
-    )
-
-    await query.answer(capsify("Store refreshed successfully!"), show_alert=True)
-
-
-@app.on_callback_query(filters.regex("^refresh_cancel"))
-async def refresh_cancel(client, query):
-    user_id = query.from_user.id
-    origin = int(query.data.split('_')[1])
-
-    if user_id != origin:
-        return await query.answer(capsify("This is not for you, baka."), show_alert=True)
-
-    await query.answer(capsify("Store refresh cancelled."), show_alert=True)
