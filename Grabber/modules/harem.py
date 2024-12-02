@@ -43,27 +43,23 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            "♦️ {} (x{})\n"
-            "   Anime: {}\n"
-            "   ID: {}\n"
-            "   {}\n\n"
-        ).format(
-            capsify(character['name']),
-            count,
-            character['anime'],
-            character['id'],
-            character.get('rarity', '')
-        )
+    "♦️ {} (x{})\n"
+    "   Anime: {}\n"
+    "   ID: {}\n"
+    "   {}\n\n"
+).format(
+    capsify(character['name']),
+    count,
+    character['anime'],
+    character['id'],
+    character.get('rarity', '')
+)
 
     harem_message += "--------------------------------------\n"
     total_count = len(characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
-    inline_query_characters = [char for char in unique_characters if char.get('rarity') == cmode]
-    inline_query = "collection." + str(user_id) + "." + cmode + "."
-
-    keyboard = [[IKB(capsify(f"Inline ({len(inline_query_characters)})"), switch_inline_query_current_chat=inline_query)]]
-    
+    keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
     if total_pages > 1:
         nav_buttons = []
         if page > 0:
