@@ -59,9 +59,10 @@ async def harem(update: Update, context: CallbackContext, page=0) -> None:
     total_count = len(characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
-    # Create inline query only with current rarity characters
     inline_query_characters = [char for char in unique_characters if char.get('rarity') == cmode]
-    keyboard = [[IKB(capsify(f"Inline ({len(inline_query_characters)})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+    inline_query = "collection." + str(user_id) + "." + cmode + "."
+
+    keyboard = [[IKB(capsify(f"Inline ({len(inline_query_characters)})"), switch_inline_query_current_chat=inline_query)]]
     
     if total_pages > 1:
         nav_buttons = []
