@@ -4,7 +4,7 @@ from pyrogram.types import Message
 import random
 from datetime import datetime
 from pytz import timezone
-from . import collection, user_collection, app, capsify
+from . import collection, user_collection, app, capsify, nopvt
 from .watchers import scrabble_watcher
 from .block import block_dec, temp_block
 
@@ -47,6 +47,7 @@ def provide_hint(word, attempts):
 
 @app.on_message(filters.command("scrabble"))
 @block_dec
+@nopvt
 async def scrabble(client, message: Message):
     user_id = message.from_user.id
     if temp_block(user_id):
