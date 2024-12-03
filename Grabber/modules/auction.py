@@ -14,9 +14,10 @@ message_counts = {}
 
 async def start_auction(chat_id, character):
     character_id = str(character['id'])
-    if character_id in active_auctions:
+    auction_key = f"{chat_id}:{character_id}"
+    if auction_key in active_auctions:
         return
-    active_auctions[character_id] = {
+    active_auctions[auction_key] = {
         'character': character,
         'highest_bid': MIN_BID,
         'highest_bidder': None,
@@ -37,11 +38,16 @@ async def start_auction(chat_id, character):
     )
     message_counts[chat_id] = 0
     await asyncio.sleep(AUCTION_TIME)
-    auction = active_auctions.get(character_id)
+    auction = active_auctions.get(auction_key)
     if auction and auction['highest_bidder']:
         winner_id = auction['highest_bidder']
         winner_data = await user_collection.find_one({'id': winner_id})
         await aruby(winner_id, auction['highest_bid'])
+        # Add character to winner's collection
+        await user_collection.update_one(
+            {'id': winner_id},
+            {'$push': {'collection': character}}
+        )
         winner_bid_message_id = auction['bid_message_id']
         if winner_bid_message_id:
             await app.send_message(
@@ -57,20 +63,7 @@ async def start_auction(chat_id, character):
             chat_id=chat_id,
             text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
         )
-    del active_auctions[character_id]
-
-@app.on_message(filters.text, group=auction_watcher)
-async def handle_message(client, message: Message):
-    chat_id = message.chat.id
-    message_counts.setdefault(chat_id, 0)
-    message_counts[chat_id] += 1
-    if message_counts[chat_id] >= 200:
-        rarity_filter = {"rarity": {"$in": ["💋 Aura", "❄️ Winter"]}}
-        characters = await collection.find(rarity_filter).to_list(None)
-        if characters:
-            character = random.choice(characters)
-            await start_auction(chat_id, character)
-        message_counts[chat_id] = 0
+    del active_auctions[auction_key]
 
 @app.on_message(filters.command("bid"))
 @block_dec
@@ -93,8 +86,8 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify(f"The minimum bid is {MIN_BID} rubies."))
         return
     active_auction = None
-    for auction in active_auctions.values():
-        if auction['end_time'] > datetime.now():
+    for key, auction in active_auctions.items():
+        if key.startswith(f"{chat_id}:") and auction['end_time'] > datetime.now():
             active_auction = auction
             break
     if not active_auction:
@@ -120,3 +113,4 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify(f"Your bid of {bid_amount} rubies has been placed successfully!"))
     else:
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
+
