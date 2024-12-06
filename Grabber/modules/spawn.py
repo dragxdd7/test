@@ -27,14 +27,14 @@ async def set_spawn_frequency(_, message):
 async def handle_message(_, message):
     chat_id = message.chat.id
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
-    frequency = spawn_frequency.get(chat_id, 100)  # Default to 100 if no limit set
+    frequency = spawn_frequency.get(chat_id, 100)
 
     if chat_id in last_characters:
-        return  # If there's already a character, do not spawn another
+        return
 
     if message_counts[chat_id] >= frequency:
         await spawn_character(chat_id)
-        message_counts[chat_id] = 0  # Reset the message count after spawning a character
+        message_counts[chat_id] = 0
 
 async def spawn_character(chat_id):
     rarity_map = {
@@ -49,14 +49,14 @@ async def spawn_character(chat_id):
         9: "🔮 Limited",
     }
 
-    allowed_rarities = [rarity_map[i] for i in range(1, 10)]  # Create a list of rarity names
+    allowed_rarities = [rarity_map[i] for i in range(1, 10)]
     all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
 
     if not all_characters:
-        return  # No characters found, exit
+        return
 
     character = random.choice(all_characters)
-    last_characters[chat_id] = character  # Store the character for the chat_id
+    last_characters[chat_id] = character
 
     keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
     await app.send_photo(
@@ -111,16 +111,17 @@ async def guess(_, message):
     name_parts = last_characters[chat_id]['name'].lower().split()
 
     if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
+        character = last_characters[chat_id]
         user = await user_collection.find_one({'id': user_id})
 
         if user:
-            await user_collection.update_one({'id': user_id}, {'$push': {'characters': last_characters[chat_id]}})
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
         else:
             await user_collection.insert_one({
                 'id': user_id,
                 'username': message.from_user.username,
                 'first_name': message.from_user.first_name,
-                'characters': [last_characters[chat_id]],
+                'characters': [character],
             })
 
         await group_user_totals_collection.update_one(
@@ -139,14 +140,14 @@ async def guess(_, message):
             capsify(
                 f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
                 f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                f"👤 NAME: {last_characters[chat_id]['name']}\n"
-                f"📺 ANIME: {last_characters[chat_id]['anime']}\n"
-                f"⭐ RARITY: {last_characters[chat_id]['rarity']}\n\n"
+                f"👤 NAME: {character['name']}\n"
+                f"📺 ANIME: {character['anime']}\n"
+                f"⭐ RARITY: {character['rarity']}\n\n"
                 "👉 CHECK YOUR HAREM NOW!"
             ),
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-        del last_characters[chat_id]  # Remove the character from the last_characters dictionary to prevent multiple claims
+        del last_characters[chat_id]
     else:
         await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
