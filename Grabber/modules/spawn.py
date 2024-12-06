@@ -3,11 +3,16 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
 from .watchers import character_watcher
+from asyncio import Lock
 
+# Dictionary to hold last characters sent
 last_characters = {}
+# Dictionary to hold message counts
 message_counts = {}
+# Dictionary to hold spawn frequencies
 spawn_frequency = {}
-is_character_spawning = {}
+# Dictionary to hold locks for spawning
+spawn_locks = {}
 
 @app.on_message(filters.command("ctime") & filters.group)
 async def set_spawn_frequency(_, message):
@@ -30,7 +35,8 @@ async def handle_message(_, message):
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
     frequency = spawn_frequency.get(chat_id, 100)
 
-    if chat_id in last_characters or is_character_spawning.get(chat_id, False):
+    # Only proceed if a character is not already being spawned
+    if chat_id in spawn_locks and spawn_locks[chat_id].locked():
         return
 
     if message_counts[chat_id] >= frequency:
@@ -38,41 +44,42 @@ async def handle_message(_, message):
         message_counts[chat_id] = 0
 
 async def spawn_character(chat_id):
-    rarity_map = {
-        1: "🟢 Common",
-        2: "🔵 Medium",
-        3: "🟠 Rare",
-        4: "🟡 Legendary",
-        5: "🪽 Celestial",
-        6: "🥵 Divine",
-        7: "🥴 Special",
-        8: "💎 Premium",
-        9: "🔮 Limited",
-    }
+    if chat_id not in spawn_locks:
+        spawn_locks[chat_id] = Lock()
+    
+    async with spawn_locks[chat_id]:
+        rarity_map = {
+            1: "🟢 Common",
+            2: "🔵 Medium",
+            3: "🟠 Rare",
+            4: "🟡 Legendary",
+            5: "🪽 Celestial",
+            6: "🥵 Divine",
+            7: "🥴 Special",
+            8: "💎 Premium",
+            9: "🔮 Limited",
+        }
 
-    allowed_rarities = [rarity_map[i] for i in range(1, 10)]
-    all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
+        allowed_rarities = [rarity_map[i] for i in range(1, 10)]
+        all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
 
-    if not all_characters:
-        return
+        if not all_characters:
+            return
 
-    character = random.choice(all_characters)
-    last_characters[chat_id] = character
-    is_character_spawning[chat_id] = True  # Set the flag to indicate a character is being sent
+        character = random.choice(all_characters)
+        last_characters[chat_id] = character
 
-    keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
-    await app.send_photo(
-        chat_id=chat_id,
-        photo=character['img_url'],
-        caption=capsify(
-            "🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
-            "USE /PICK (NAME) TO CLAIM IT.\n\n"
-            "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
-        ),
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-
-    is_character_spawning[chat_id] = False  # Reset the flag after sending
+        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
+        await app.send_photo(
+            chat_id=chat_id,
+            photo=character['img_url'],
+            caption=capsify(
+                "🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
+                "USE /PICK (NAME) TO CLAIM IT.\n\n"
+                "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
+            ),
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 @app.on_callback_query(filters.regex("name"))
 async def reveal_name(_, query):
@@ -152,6 +159,7 @@ async def guess(_, message):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
+        # Clear the character after a successful guess
         del last_characters[chat_id]
     else:
         await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
