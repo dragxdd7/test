@@ -43,7 +43,6 @@ async def start_auction(chat_id, character):
         winner_id = auction['highest_bidder']
         winner_data = await user_collection.find_one({'id': winner_id})
         await aruby(winner_id, auction['highest_bid'])
-        # Add character to winner's collection
         await user_collection.update_one(
             {'id': winner_id},
             {'$push': {'collection': character}}
@@ -64,6 +63,19 @@ async def start_auction(chat_id, character):
             text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
         )
     del active_auctions[auction_key]
+
+@app.on_message(filters.text, group=auction_watcher)
+async def handle_message(client, message: Message):
+    chat_id = message.chat.id
+    message_counts.setdefault(chat_id, 0)
+    message_counts[chat_id] += 1
+    if message_counts[chat_id] >= 200:
+        rarity_filter = {"rarity": {"$in": ["💋 Aura", "❄️ Winter"]}}
+        characters = await collection.find(rarity_filter).to_list(None)
+        if characters:
+            character = random.choice(characters)
+            await start_auction(chat_id, character)
+        message_counts[chat_id] = 0
 
 @app.on_message(filters.command("bid"))
 @block_dec
@@ -113,4 +125,3 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify(f"Your bid of {bid_amount} rubies has been placed successfully!"))
     else:
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
-
