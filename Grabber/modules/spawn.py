@@ -95,12 +95,11 @@ async def guess(_, message):
         await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
         return
 
-    guess = args.lower()
+    guess = args.strip().lower()
     all_characters = await collection.find().to_list(length=None)
 
     for character in all_characters:
-        name_parts = character['name'].lower().split()
-        if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
+        if guess == character['name'].lower():
             user = await user_collection.find_one({'id': user_id})
 
             if user:
