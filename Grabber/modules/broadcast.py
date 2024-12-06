@@ -2,10 +2,11 @@ import random
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from Grabber import application, PHOTO_URL, user_collection, group_user_totals_collection
-from . import capsify, dev_filter
+from . import capsify, devcmd
 
 photo = random.choice(PHOTO_URL)
 
+@devcmd
 async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message:
         await update.message.reply_text(capsify("Please reply to a message to broadcast."))
@@ -74,5 +75,4 @@ async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(capsify(f"An error occurred during the broadcast: {str(e)}"))
 
-# Add this handler to the application imported from Grabber
-application.add_handler(CommandHandler("broadcast", broadcast, filters=dev_filter))
+application.add_handler(CommandHandler("broadcast", broadcast))
