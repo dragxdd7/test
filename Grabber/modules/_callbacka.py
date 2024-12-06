@@ -17,7 +17,7 @@ async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
 
-    if data == 'name': 
+    if data == 'nam': 
         await bc(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
