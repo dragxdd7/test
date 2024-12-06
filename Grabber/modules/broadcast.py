@@ -3,6 +3,8 @@ from Grabber import (application, PHOTO_URL, OWNER_ID,
                     group_user_totals_collection)
 from . import capsify, devcmd
 import random
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 photo = random.choice(PHOTO_URL)
 
