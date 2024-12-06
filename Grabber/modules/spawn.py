@@ -7,6 +7,7 @@ from .watchers import character_watcher
 last_characters = {}
 message_counts = {}
 spawn_frequency = {}
+is_character_spawning = {}
 
 @app.on_message(filters.command("ctime") & filters.group)
 async def set_spawn_frequency(_, message):
@@ -29,7 +30,7 @@ async def handle_message(_, message):
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
     frequency = spawn_frequency.get(chat_id, 100)
 
-    if chat_id in last_characters:
+    if chat_id in last_characters or is_character_spawning.get(chat_id, False):
         return
 
     if message_counts[chat_id] >= frequency:
@@ -57,6 +58,7 @@ async def spawn_character(chat_id):
 
     character = random.choice(all_characters)
     last_characters[chat_id] = character
+    is_character_spawning[chat_id] = True  # Set the flag to indicate a character is being sent
 
     keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
     await app.send_photo(
@@ -69,6 +71,8 @@ async def spawn_character(chat_id):
         ),
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+    is_character_spawning[chat_id] = False  # Reset the flag after sending
 
 @app.on_callback_query(filters.regex("name"))
 async def reveal_name(_, query):
