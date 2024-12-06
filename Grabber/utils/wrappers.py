@@ -17,15 +17,17 @@ def sudocmd(func):
         return await func(client, message)
     return wrapper
 
+from telegram import Update
+from telegram.ext import CallbackContext
+
 def devcmd(func):
     @wraps(func)
-    async def wrapper(client: Client, message: Message):
-        user_id = message.from_user.id
-        dev_user = await devb.find_one({"user_id": user_id})
+    async def wrapper(update: Update, context: CallbackContext):
+        user_id = update.effective_user.id
+        dev_user = await devb.find_one({"user_id": user_id}) 
         if not dev_user:
-            await message.reply_text("You are not authorized to use this command.")
             return
-        return await func(client, message)
+        return await func(update, context)
     return wrapper
 
 def nopvt(func):
