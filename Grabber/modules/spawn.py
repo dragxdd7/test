@@ -2,7 +2,7 @@
 import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from Grabber import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
+from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
 from .watchers import character_watcher
 
 last_characters = {}
