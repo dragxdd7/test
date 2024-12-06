@@ -10,26 +10,6 @@ message_counts = {}
 spawn_frequency = {}
 spawn_locks = {}
 
-@app.on_message(filters.command("ctime") & filters.group)
-async def set_spawn_frequency(_, message):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    if not (await app.get_chat_member(chat_id, user_id)).status in ADMINS:
-        await message.reply_text(capsify("ONLY ADMINS CAN SET THE SPAWN FREQUENCY."))
-        return
-
-    try:
-        frequency = int(message.text.split(maxsplit=1)[1])
-        await group_user_totals_collection.find_one_and_update(
-            {'chat_id': chat_id},
-            {'$set': {'message_frequency': frequency}},
-            upsert=True
-        )
-        spawn_frequency[chat_id] = frequency
-        await message.reply_text(capsify(f"SPAWN FREQUENCY SET TO {frequency} MESSAGES."))
-    except (IndexError, ValueError):
-        await message.reply_text(capsify("PLEASE PROVIDE A VALID NUMBER, E.G., /CTIME 20."))
-
 @app.on_message(filters.all & filters.group, group=character_watcher)
 async def handle_message(_, message):
     chat_id = message.chat.id
