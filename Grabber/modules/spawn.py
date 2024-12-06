@@ -73,9 +73,13 @@ async def reveal_name(_, query):
     user_id = query.from_user.id
     chat_id = query.message.chat.id
     user_balance = await show(user_id)
+    
     if user_balance and user_balance >= 100:
         await deduct(user_id, 100)
         name = last_characters.get(chat_id, {}).get('name', 'UNKNOWN')
+        if name == 'UNKNOWN':
+            await query.answer(capsify("NO CHARACTER AVAILABLE."), show_alert=True)
+            return
         await query.answer(capsify(f"THE NAME IS: {name}"), show_alert=True)
     elif user_balance is None:
         await add(user_id, 50000)
