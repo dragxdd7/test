@@ -4,8 +4,7 @@ from Grabber import (application, PHOTO_URL, OWNER_ID,
 from . import capsify, devcmd
 import random
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
-
+from telegram.ext import CommandHandler, CallbackContext
 photo = random.choice(PHOTO_URL)
 
 @devcmd
