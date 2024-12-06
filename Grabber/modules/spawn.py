@@ -5,13 +5,10 @@ from . import collection, user_collection, group_user_totals_collection, top_glo
 from .watchers import character_watcher
 from asyncio import Lock
 
-# Dictionary to hold last characters sent
+# Dictionaries for tracking
 last_characters = {}
-# Dictionary to hold message counts
 message_counts = {}
-# Dictionary to hold spawn frequencies
 spawn_frequency = {}
-# Dictionary to hold locks for spawning
 spawn_locks = {}
 
 @app.on_message(filters.command("ctime") & filters.group)
@@ -35,7 +32,6 @@ async def handle_message(_, message):
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
     frequency = spawn_frequency.get(chat_id, 100)
 
-    # Only proceed if a character is not already being spawned
     if chat_id in spawn_locks and spawn_locks[chat_id].locked():
         return
 
@@ -69,7 +65,7 @@ async def spawn_character(chat_id):
         character = random.choice(all_characters)
         last_characters[chat_id] = character
 
-        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
+        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character['_id']}")]]
         await app.send_photo(
             chat_id=chat_id,
             photo=character['img_url'],
@@ -81,10 +77,12 @@ async def spawn_character(chat_id):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-@app.on_callback_query(filters.regex("name"))
+@app.on_callback_query(filters.regex(r"name_(.+)"))
 async def reveal_name(_, query):
     user_id = query.from_user.id
     chat_id = query.message.chat.id
+    character_id = query.data.split("_")[1]
+
     user_balance = await show(user_id)
 
     if user_balance is None:
@@ -97,12 +95,12 @@ async def reveal_name(_, query):
         return
 
     character = last_characters.get(chat_id)
-    if character:
+    if character and str(character['_id']) == character_id:
         await deduct(user_id, 100)
         name = character['name']
         await query.answer(capsify(f"🔑 THE NAME IS: {name}"), show_alert=True)
     else:
-        await query.answer(capsify("🚫 NO CHARACTER AVAILABLE."), show_alert=True)
+        await query.answer(capsify("🚫 CHARACTER DATA NOT FOUND."), show_alert=True)
 
 @app.on_message(filters.command("pick"))
 async def guess(_, message):
@@ -153,13 +151,13 @@ async def guess(_, message):
                 f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
                 f"👤 NAME: {character['name']}\n"
                 f"📺 ANIME: {character['anime']}\n"
-                f"⭐ RARITY: {character['rarity']}\n\n"
+                f"⭐ RARITY: {character['rarity']}\n"
+                f"🆔 CHARACTER ID: {character['_id']}\n\n"
                 "👉 CHECK YOUR HAREM NOW!"
             ),
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-        # Clear the character after a successful guess
         del last_characters[chat_id]
     else:
         await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
