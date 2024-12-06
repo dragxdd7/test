@@ -1,4 +1,3 @@
-
 import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -28,10 +27,10 @@ async def set_spawn_frequency(_, message):
 async def handle_message(_, message):
     chat_id = message.chat.id
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
-    frequency = spawn_frequency.get(chat_id, 100)  # Default to 100 if no limit set
+    frequency = spawn_frequency.get(chat_id, 100)
     if message_counts[chat_id] >= frequency:
         await spawn_character(chat_id)
-        message_counts[chat_id] = 0  # Reset the message count after spawning a character
+        message_counts[chat_id] = 0
 
 async def spawn_character(chat_id):
     allowed_rarities = ["COMMON", "MEDIUM", "RARE", "LEGENDARY", "CELESTIAL", "AURA"]
