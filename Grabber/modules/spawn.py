@@ -1,22 +1,23 @@
 import random
-from asyncio import Lock
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
 from .watchers import character_watcher
+from asyncio import Lock
 
-# Dictionaries for tracking
+# Dictionary to hold last characters sent
 last_characters = {}
+# Dictionary to hold message counts
 message_counts = {}
+# Dictionary to hold spawn frequencies
 spawn_frequency = {}
+# Dictionary to hold locks for spawning
 spawn_locks = {}
-claim_locks = {}
 
 @app.on_message(filters.command("ctime") & filters.group)
 async def set_spawn_frequency(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
-
     if not (await app.get_chat_member(chat_id, user_id)).status in ["administrator", "creator"]:
         await message.reply_text(capsify("ONLY ADMINS CAN SET THE SPAWN FREQUENCY."))
         return
@@ -34,6 +35,7 @@ async def handle_message(_, message):
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
     frequency = spawn_frequency.get(chat_id, 100)
 
+    # Only proceed if a character is not already being spawned
     if chat_id in spawn_locks and spawn_locks[chat_id].locked():
         return
 
@@ -44,7 +46,7 @@ async def handle_message(_, message):
 async def spawn_character(chat_id):
     if chat_id not in spawn_locks:
         spawn_locks[chat_id] = Lock()
-
+    
     async with spawn_locks[chat_id]:
         rarity_map = {
             1: "🟢 Common",
@@ -66,25 +68,23 @@ async def spawn_character(chat_id):
 
         character = random.choice(all_characters)
         last_characters[chat_id] = character
-        keyboard = [[InlineKeyboardButton(capsify(character['name']), callback_data=f"name_{character['id']}")]]
 
+        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
         await app.send_photo(
             chat_id=chat_id,
             photo=character['img_url'],
             caption=capsify(
                 "🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
                 "USE /PICK (NAME) TO CLAIM IT.\n\n"
-                "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING THE NAME."
+                "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
             ),
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-@app.on_callback_query(filters.regex(r"name_(.+)"))
+@app.on_callback_query(filters.regex("name"))
 async def reveal_name(_, query):
     user_id = query.from_user.id
     chat_id = query.message.chat.id
-    character_id = query.data.split("_")[1]
-
     user_balance = await show(user_id)
 
     if user_balance is None:
@@ -97,72 +97,69 @@ async def reveal_name(_, query):
         return
 
     character = last_characters.get(chat_id)
-
-    if character and character['id'] == character_id:
+    if character:
         await deduct(user_id, 100)
         name = character['name']
         await query.answer(capsify(f"🔑 THE NAME IS: {name}"), show_alert=True)
     else:
-        await query.answer(capsify("🚫 CHARACTER DATA NOT FOUND."), show_alert=True)
+        await query.answer(capsify("🚫 NO CHARACTER AVAILABLE."), show_alert=True)
 
 @app.on_message(filters.command("pick"))
-async def claim_character(_, message):
+async def guess(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
 
-    if chat_id not in claim_locks:
-        claim_locks[chat_id] = Lock()
+    if chat_id not in last_characters:
+        await message.reply_text(capsify("🚫 NO CHARACTER IS AVAILABLE TO GUESS."))
+        return
 
-    async with claim_locks[chat_id]:
-        if chat_id not in last_characters:
-            await message.reply_text(capsify("🚫 NO CHARACTER IS AVAILABLE TO CLAIM."))
-            return
+    if not args or "()" in args or "&" in args:
+        await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
+        return
 
-        if not args:
-            await message.reply_text(capsify("❌ PLEASE ENTER A CHARACTER NAME TO CLAIM."))
-            return
+    guess = args.lower()
+    name_parts = last_characters[chat_id]['name'].lower().split()
 
-        guess = args.lower()
+    if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
         character = last_characters[chat_id]
+        user = await user_collection.find_one({'id': user_id})
 
-        if character['name'].lower() == guess:
-            user = await user_collection.find_one({'id': user_id})
-            if user:
-                await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-            else:
-                await user_collection.insert_one({
-                    'id': user_id,
-                    'username': message.from_user.username,
-                    'first_name': message.from_user.first_name,
-                    'characters': [character],
-                })
-
-            await group_user_totals_collection.update_one(
-                {'user_id': user_id, 'group_id': chat_id},
-                {'$inc': {'count': 1}},
-                upsert=True
-            )
-            await top_global_groups_collection.update_one(
-                {'group_id': chat_id},
-                {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
-                upsert=True
-            )
-
-            keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
-            await message.reply_text(
-                capsify(
-                    f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
-                    f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                    f"👤 NAME: {character['name']}\n"
-                    f"📺 ANIME: {character['anime']}\n"
-                    f"⭐ RARITY: {character['rarity']}\n"
-                    f"🆔 CHARACTER ID: {character['id']}\n\n"
-                    "👉 CHECK YOUR HAREM NOW!"
-                ),
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-
-            del last_characters[chat_id]
+        if user:
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
         else:
-            await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
+            await user_collection.insert_one({
+                'id': user_id,
+                'username': message.from_user.username,
+                'first_name': message.from_user.first_name,
+                'characters': [character],
+            })
+
+        await group_user_totals_collection.update_one(
+            {'user_id': user_id, 'group_id': chat_id},
+            {'$inc': {'count': 1}},
+            upsert=True
+        )
+        await top_global_groups_collection.update_one(
+            {'group_id': chat_id},
+            {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
+            upsert=True
+        )
+
+        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+        await message.reply_text(
+            capsify(
+                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
+                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
+                f"👤 NAME: {character['name']}\n"
+                f"📺 ANIME: {character['anime']}\n"
+                f"⭐ RARITY: {character['rarity']}\n\n"
+                "👉 CHECK YOUR HAREM NOW!"
+            ),
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+        # Clear the character after a successful guess
+        del last_characters[chat_id]
+    else:
+        await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
