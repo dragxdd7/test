@@ -3,6 +3,7 @@ from asyncio import Lock
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
+from .watchers import character_watcher
 
 # Dictionaries for tracking
 last_characters = {}
@@ -27,7 +28,7 @@ async def set_spawn_frequency(_, message):
     except (IndexError, ValueError):
         await message.reply_text(capsify("PLEASE PROVIDE A VALID NUMBER, E.G., /CTIME 20."))
 
-@app.on_message(filters.all & filters.group)
+@app.on_message(filters.all & filters.group, group=character_watcher)
 async def handle_message(_, message):
     chat_id = message.chat.id
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
