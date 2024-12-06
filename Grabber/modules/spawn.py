@@ -33,11 +33,27 @@ async def handle_message(_, message):
         message_counts[chat_id] = 0  # Reset the message count after spawning a character
 
 async def spawn_character(chat_id):
-    allowed_rarities = ["COMMON", "MEDIUM", "RARE", "LEGENDARY", "CELESTIAL", "AURA"]
+    rarity_map = {
+        1: "🟢 Common",
+        2: "🔵 Medium",
+        3: "🟠 Rare",
+        4: "🟡 Legendary",
+        5: "🪽 Celestial",
+        6: "🥵 Divine",
+        7: "🥴 Special",
+        8: "💎 Premium",
+        9: "🔮 Limited",
+    }
+
+    allowed_rarities = [rarity_map[i] for i in range(1, 10)]  # Create a list of rarity names
+    print(f"Fetching characters for chat_id {chat_id} with allowed rarities: {allowed_rarities}")  # Debug statement
     all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
+    print(f"Characters found: {all_characters}")  # Debug statement
+
     if not all_characters:
         print(f"No characters found for chat_id {chat_id}.")  # Debug statement
         return
+
     character = random.choice(all_characters)
     last_characters[chat_id] = character
     keyboard = [[InlineKeyboardButton("NAME", callback_data="name")]]
@@ -57,7 +73,6 @@ async def reveal_name(_, query):
     user_id = query.from_user.id
     chat_id = query.message.chat.id
     user_balance = await show(user_id)
-    
     if user_balance and user_balance >= 100:
         await deduct(user_id, 100)
         name = last_characters.get(chat_id, {}).get('name', 'UNKNOWN')
@@ -83,14 +98,11 @@ async def guess(_, message):
     if not args or "()" in args or "&" in args:
         await message.reply_text(capsify("INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
         return
-    
     guess = args.lower()
     name_parts = last_characters[chat_id]['name'].lower().split()
-
     if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
         user = await user_collection.find_one({'id': user_id})
         character = last_characters[chat_id]
-        
         if user:
             await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
         else:
@@ -100,19 +112,16 @@ async def guess(_, message):
                 'first_name': message.from_user.first_name,
                 'characters': [character],
             })
-
         await group_user_totals_collection.update_one(
             {'user_id': user_id, 'group_id': chat_id},
             {'$inc': {'count': 1}},
             upsert=True
         )
-
         await top_global_groups_collection.update_one(
             {'group_id': chat_id},
             {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
             upsert=True
         )
-
         keyboard = [[InlineKeyboardButton("CHECK HAREM", switch_inline_query_current_chat=f"collection.{user_id}")]]
         await message.reply_text(
             capsify(
