@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message
 from pymongo import ReturnDocument
 from . import sudo_filter, app 
-from Grabber import user_totals_collection
+from Grabber import group_user_totals_collection
 
 @app.on_message(filters.command("changetime"))
 async def change_time(client: Client, message: Message):
@@ -26,7 +26,7 @@ async def change_time(client: Client, message: Message):
             await message.reply_text('That\'s too much frequency. Use below 10000')
             return
 
-        chat_frequency = await user_totals_collection.find_one_and_update(
+        chat_frequency = await group_user_totals_collection.find_one_and_update(
             {'chat_id': str(message.chat.id)},
             {'$set': {'message_frequency': new_frequency}},
             upsert=True,
@@ -55,7 +55,7 @@ async def change_time_sudo(client: Client, message: Message):
             await message.reply_text('That\'s too much frequency. Use below 10000')
             return
 
-        chat_frequency = await user_totals_collection.find_one_and_update(
+        chat_frequency = await group_user_totals_collection.find_one_and_update(
             {'chat_id': str(message.chat.id)},
             {'$set': {'message_frequency': new_frequency}},
             upsert=True,
