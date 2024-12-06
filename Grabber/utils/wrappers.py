@@ -17,6 +17,7 @@ def sudocmd(func):
         return await func(client, message)
     return wrapper
 
+from functools import wraps
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -24,8 +25,9 @@ def devcmd(func):
     @wraps(func)
     async def wrapper(update: Update, context: CallbackContext):
         user_id = update.effective_user.id
-        dev_user = await devb.find_one({"user_id": user_id}) 
+        dev_user = await devb.find_one({"user_id": user_id})  
         if not dev_user:
+            await context.bot.send_message(chat_id=update.effective_chat.id, text="You are not authorized to use this command.")
             return
         return await func(update, context)
     return wrapper
