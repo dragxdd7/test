@@ -28,6 +28,10 @@ async def handle_message(_, message):
     chat_id = message.chat.id
     message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
     frequency = spawn_frequency.get(chat_id, 100)  # Default to 100 if no limit set
+
+    if chat_id in last_characters:
+        return  # If there's already a character, do not spawn another
+
     if message_counts[chat_id] >= frequency:
         await spawn_character(chat_id)
         message_counts[chat_id] = 0  # Reset the message count after spawning a character
@@ -46,24 +50,22 @@ async def spawn_character(chat_id):
     }
 
     allowed_rarities = [rarity_map[i] for i in range(1, 10)]  # Create a list of rarity names
-    print(f"Fetching characters for chat_id {chat_id} with allowed rarities: {allowed_rarities}")  # Debug statement
     all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
-    print(f"Characters found: {all_characters}")  # Debug statement
 
     if not all_characters:
-        print(f"No characters found for chat_id {chat_id}.")  # Debug statement
-        return
+        return  # No characters found, exit
 
     character = random.choice(all_characters)
-    last_characters[chat_id] = character
-    keyboard = [[InlineKeyboardButton("NAME", callback_data="name")]]
+    last_characters[chat_id] = character  # Store the character for the chat_id
+
+    keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data="name")]]
     await app.send_photo(
         chat_id=chat_id,
         photo=character['img_url'],
         caption=capsify(
-            "A NEW CHARACTER HAS APPEARED.\n"
+            "🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
             "USE /PICK (NAME) TO CLAIM IT.\n\n"
-            "NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
+            "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
         ),
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
@@ -73,49 +75,54 @@ async def reveal_name(_, query):
     user_id = query.from_user.id
     chat_id = query.message.chat.id
     user_balance = await show(user_id)
-    
-    if user_balance and user_balance >= 100:
-        await deduct(user_id, 100)
-        name = last_characters.get(chat_id, {}).get('name', 'UNKNOWN')
-        if name == 'UNKNOWN':
-            await query.answer(capsify("NO CHARACTER AVAILABLE."), show_alert=True)
-            return
-        await query.answer(capsify(f"THE NAME IS: {name}"), show_alert=True)
-    elif user_balance is None:
+
+    if user_balance is None:
         await add(user_id, 50000)
-        name = last_characters.get(chat_id, {}).get('name', 'UNKNOWN')
-        await query.answer(
-            capsify("YOU'VE BEEN REGISTERED WITH AN INITIAL BALANCE OF 50K. ENJOY!"),
-            show_alert=True
-        )
+        await query.answer(capsify("🎉 YOU'VE BEEN REGISTERED WITH AN INITIAL BALANCE OF 50K. ENJOY!"), show_alert=True)
+        return
+
+    if user_balance < 100:
+        await query.answer(capsify("❌ INSUFFICIENT BALANCE. PLEASE TOP UP."), show_alert=True)
+        return
+
+    character = last_characters.get(chat_id)
+    if character:
+        await deduct(user_id, 100)
+        name = character['name']
+        await query.answer(capsify(f"🔑 THE NAME IS: {name}"), show_alert=True)
     else:
-        await query.answer(capsify("INSUFFICIENT BALANCE. PLEASE TOP UP."))
+        await query.answer(capsify("🚫 NO CHARACTER AVAILABLE."), show_alert=True)
 
 @app.on_message(filters.command("pick"))
 async def guess(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
+
     if chat_id not in last_characters:
-        await message.reply_text(capsify("NO CHARACTER IS AVAILABLE TO GUESS."))
+        await message.reply_text(capsify("🚫 NO CHARACTER IS AVAILABLE TO GUESS."))
         return
+
     if not args or "()" in args or "&" in args:
-        await message.reply_text(capsify("INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
+        await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
         return
+
     guess = args.lower()
     name_parts = last_characters[chat_id]['name'].lower().split()
+
     if sorted(name_parts) == sorted(guess.split()) or any(part == guess for part in name_parts):
         user = await user_collection.find_one({'id': user_id})
-        character = last_characters[chat_id]
+
         if user:
-            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': last_characters[chat_id]}})
         else:
             await user_collection.insert_one({
                 'id': user_id,
                 'username': message.from_user.username,
                 'first_name': message.from_user.first_name,
-                'characters': [character],
+                'characters': [last_characters[chat_id]],
             })
+
         await group_user_totals_collection.update_one(
             {'user_id': user_id, 'group_id': chat_id},
             {'$inc': {'count': 1}},
@@ -126,17 +133,20 @@ async def guess(_, message):
             {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
             upsert=True
         )
-        keyboard = [[InlineKeyboardButton("CHECK HAREM", switch_inline_query_current_chat=f"collection.{user_id}")]]
+
+        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
         await message.reply_text(
             capsify(
-                f"CONGRATULATIONS, {message.from_user.first_name}!\n"
-                f"YOU'VE CLAIMED A NEW CHARACTER.\n\n"
-                f"NAME: {character['name']}\n"
-                f"ANIME: {character['anime']}\n"
-                f"RARITY: {character['rarity']}\n\n"
-                "CHECK YOUR HAREM NOW!"
+                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
+                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
+                f"👤 NAME: {last_characters[chat_id]['name']}\n"
+                f"📺 ANIME: {last_characters[chat_id]['anime']}\n"
+                f"⭐ RARITY: {last_characters[chat_id]['rarity']}\n\n"
+                "👉 CHECK YOUR HAREM NOW!"
             ),
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
+        del last_characters[chat_id]  # Remove the character from the last_characters dictionary to prevent multiple claims
     else:
-        await message.reply_text(capsify("WRONG GUESS. PLEASE TRY AGAIN."))
+        await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
