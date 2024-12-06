@@ -1,8 +1,7 @@
 from typing import Optional
 from telegram import Update
 from telegram.ext import CallbackContext
-from Grabber.modules.spawn import last_characters 
-
+last_characters = {}
 from Grabber import user_collection
 
 
