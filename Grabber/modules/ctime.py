@@ -7,8 +7,8 @@ from Grabber import user_totals_collection
 @app.on_message(filters.command("changetime"))
 async def change_time(client: Client, message: Message):
     try:
-        user = await client.get_chat_member(message.chat.id, message.from_user.id)
-        if user.status not in ('administrator', 'creator'):
+        user = await Client.get_chat_member(message.chat.id, message.from_user.id)
+        if user.status not in ADMINS :
             await message.reply_text('You do not have permission to use this command.')
             return
 
