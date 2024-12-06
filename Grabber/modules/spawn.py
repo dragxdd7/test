@@ -9,6 +9,7 @@ from pymongo import ReturnDocument
 message_counts = {}
 spawn_frequency = {}
 spawn_locks = {}
+spawned_characters = {}
 
 @app.on_message(filters.all & filters.group, group=character_watcher)
 async def handle_message(_, message):
@@ -48,6 +49,7 @@ async def spawn_character(chat_id):
             return
 
         character = random.choice(all_characters)
+        spawned_characters[chat_id] = character
         character_id = character['_id']
 
         keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character_id}")]]
@@ -62,29 +64,6 @@ async def spawn_character(chat_id):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-@app.on_callback_query(filters.regex("^name_"))
-async def reveal_name(_, query):
-    user_id = query.from_user.id
-    character_id = query.data.split("_")[1]
-    user_balance = await show(user_id)
-
-    if user_balance is None:
-        await add(user_id, 50000)
-        await query.answer(capsify("🎉 YOU'VE BEEN REGISTERED WITH AN INITIAL BALANCE OF 50K. ENJOY!"), show_alert=True)
-        return
-
-    if user_balance < 100:
-        await query.answer(capsify("❌ INSUFFICIENT BALANCE. PLEASE TOP UP."), show_alert=True)
-        return
-
-    character = await collection.find_one({'_id': character_id})
-    if character:
-        await deduct(user_id, 100)
-        name = character['name']
-        await query.answer(capsify(f"🔑 THE NAME IS: {name}"), show_alert=True)
-    else:
-        await query.answer(capsify("🚫 CHARACTER DATA NOT FOUND. PLEASE TRY AGAIN LATER."), show_alert=True)
-
 @app.on_message(filters.command("pick"))
 async def guess(_, message):
     chat_id = message.chat.id
@@ -96,45 +75,49 @@ async def guess(_, message):
         return
 
     guess = args.strip().lower()
-    all_characters = await collection.find().to_list(length=None)
 
-    for character in all_characters:
-        if guess == character['name'].lower():
-            user = await user_collection.find_one({'id': user_id})
+    if chat_id not in spawned_characters:
+        await message.reply_text(capsify("❌ NO CHARACTER HAS SPAWNED YET. PLEASE WAIT FOR THE NEXT SPAWN."))
+        return
 
-            if user:
-                await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-            else:
-                await user_collection.insert_one({
-                    'id': user_id,
-                    'username': message.from_user.username,
-                    'first_name': message.from_user.first_name,
-                    'characters': [character],
-                })
+    character = spawned_characters[chat_id]
+    if guess in character['name'].lower():
+        user = await user_collection.find_one({'id': user_id})
 
-            await group_user_totals_collection.update_one(
-                {'user_id': user_id, 'group_id': chat_id},
-                {'$inc': {'count': 1}},
-                upsert=True
-            )
-            await top_global_groups_collection.update_one(
-                {'group_id': chat_id},
-                {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
-                upsert=True
-            )
+        if user:
+            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
+        else:
+            await user_collection.insert_one({
+                'id': user_id,
+                'username': message.from_user.username,
+                'first_name': message.from_user.first_name,
+                'characters': [character],
+            })
 
-            keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
-            await message.reply_text(
-                capsify(
-                    f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
-                    f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                    f"👤 NAME: {character['name']}\n"
-                    f"📺 ANIME: {character['anime']}\n"
-                    f"⭐ RARITY: {character['rarity']}\n\n"
-                    "👉 CHECK YOUR HAREM NOW!"
-                ),
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-            return
+        await group_user_totals_collection.update_one(
+            {'user_id': user_id, 'group_id': chat_id},
+            {'$inc': {'count': 1}},
+            upsert=True
+        )
+        await top_global_groups_collection.update_one(
+            {'group_id': chat_id},
+            {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
+            upsert=True
+        )
+
+        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+        await message.reply_text(
+            capsify(
+                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
+                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
+                f"👤 NAME: {character['name']}\n"
+                f"📺 ANIME: {character['anime']}\n"
+                f"⭐ RARITY: {character['rarity']}\n\n"
+                "👉 CHECK YOUR HAREM NOW!"
+            ),
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        del spawned_characters[chat_id]
+        return
 
     await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
