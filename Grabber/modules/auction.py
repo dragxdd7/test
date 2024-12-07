@@ -47,6 +47,10 @@ async def start_auction(chat_id, character):
             {'id': winner_id},
             {'$push': {'collection': character}}
         )
+        await collection.update_one(
+            {'id': character_id},
+            {'$set': {'owner_id': winner_id, 'is_in_auction': False}}
+        )
         winner_bid_message_id = auction['bid_message_id']
         if winner_bid_message_id:
             await app.send_message(
