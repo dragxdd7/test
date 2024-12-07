@@ -4,7 +4,6 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
 from .watchers import character_watcher
 from asyncio import Lock
-from pymongo import ReturnDocument
 
 message_counts = {}
 spawn_frequency = {}
@@ -18,14 +17,10 @@ async def handle_message(_, message):
     chat_data = await group_user_totals_collection.find_one({'chat_id': chat_id})
     frequency = chat_data['message_frequency'] if chat_data and 'message_frequency' in chat_data else 100
 
-    print(f"[DEBUG] Chat ID: {chat_id}, Message Count: {message_counts[chat_id]}, Frequency: {frequency}")
-
     if chat_id in spawn_locks and spawn_locks[chat_id].locked():
-        print(f"[DEBUG] Spawn lock active for chat {chat_id}.")
         return
 
     if message_counts[chat_id] >= frequency:
-        print(f"[DEBUG] Spawning character for chat {chat_id}.")
         await spawn_character(chat_id)
         message_counts[chat_id] = 0
 
@@ -57,6 +52,8 @@ async def spawn_character(chat_id):
         character_id = character['_id']
 
         keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character_id}")]]
+        markup = InlineKeyboardMarkup(keyboard)
+
         await app.send_photo(
             chat_id=chat_id,
             photo=character['img_url'],
@@ -65,8 +62,8 @@ async def spawn_character(chat_id):
                 "USE /PICK (NAME) TO CLAIM IT.\n\n"
                 "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
             ),
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            spoiler=True  
+            reply_markup=markup,
+            has_spoiler=True
         )
 
 @app.on_message(filters.command("pick"))
