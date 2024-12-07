@@ -4,6 +4,7 @@ import time
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler
 from Grabber import application, user_collection, collection
+
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
         pipeline = [
@@ -62,7 +63,6 @@ async def handle_dice(context, update, receiver_id):
     except Exception as e:
         print(e)
 
-@disable('marry')
 async def dice_command(update: Update, context):
     chat_id = update.message.chat_id
     mention = update.message.from_user.mention_html()
