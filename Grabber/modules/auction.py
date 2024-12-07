@@ -45,7 +45,7 @@ async def start_auction(chat_id, character):
         await aruby(winner_id, auction['highest_bid'])
         await user_collection.update_one(
             {'id': winner_id},
-            {'$push': {'collection': character}}
+            {'$push': {'characters': character}}
         )
         await collection.update_one(
             {'id': character_id},
