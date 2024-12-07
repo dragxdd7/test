@@ -131,4 +131,3 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
 
 
-In this bot is trying to give the winner character even before deciding one that's why it's not being added to the winners collection robi when the winner is announced 
