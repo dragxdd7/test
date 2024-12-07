@@ -18,10 +18,14 @@ async def handle_message(_, message):
     chat_data = await group_user_totals_collection.find_one({'chat_id': chat_id})
     frequency = chat_data['message_frequency'] if chat_data and 'message_frequency' in chat_data else 100
 
+    print(f"[DEBUG] Chat ID: {chat_id}, Message Count: {message_counts[chat_id]}, Frequency: {frequency}")
+
     if chat_id in spawn_locks and spawn_locks[chat_id].locked():
+        print(f"[DEBUG] Spawn lock active for chat {chat_id}.")
         return
 
     if message_counts[chat_id] >= frequency:
+        print(f"[DEBUG] Spawning character for chat {chat_id}.")
         await spawn_character(chat_id)
         message_counts[chat_id] = 0
 
