@@ -61,7 +61,8 @@ async def spawn_character(chat_id):
                 "USE /PICK (NAME) TO CLAIM IT.\n\n"
                 "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
             ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            spoiler=True  
         )
 
 @app.on_message(filters.command("pick"))
