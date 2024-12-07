@@ -6,24 +6,18 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta
 import random
 import time
-import logging
-import traceback
 import asyncio
 from Grabber import user_collection, collection, application, safari_cooldown_collection, safari_users_collection
 from . import app
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 sessions = {}
 safari_users = {}
 allowed_group_id = -1002225496870
 current_hunts = {}
 current_engagements = {}
-  
+
 async def get_random_waifu():
-    target_rarities = ['🔮 Limited', '🪽 Celestial', '💎 Premium','🥴 Special']  # Example rarities
+    target_rarities = ['🔮 Limited', '🪽 Celestial', '💎 Premium', '🥴 Special']  # Example rarities
     selected_rarity = random.choice(target_rarities)
     try:
         pipeline = [
@@ -35,7 +29,6 @@ async def get_random_waifu():
         if characters:
             waifu = characters[0]
             waifu_id = waifu['id']
-            # Add waifu to sessions
             sessions[waifu_id] = waifu
             return waifu
         else:
@@ -64,7 +57,6 @@ async def safe_edit_message(callback_query, new_text=None, new_markup=None):
     try:
         current_text = callback_query.message.text or callback_query.message.caption
         if current_text == new_text and callback_query.message.reply_markup == new_markup:
-            logger.info("Attempted to edit message with the same content. No edit performed.")
             return
 
         if callback_query.message.text:
@@ -72,12 +64,12 @@ async def safe_edit_message(callback_query, new_text=None, new_markup=None):
         elif callback_query.message.caption:
             await callback_query.message.edit_caption(caption=new_text, reply_markup=new_markup)
         else:
-            logger.warning("No text or caption to edit in the message.")
+            pass
 
     except pyrogram.errors.exceptions.bad_request_400.MessageNotModified as e:
-        logger.warning(f"MessageNotModified: {e}. No change in content or markup.")
+        pass
     except Exception as e:
-        logger.error(f"Error in safe_edit_message: {e}")
+        pass
 
 async def enter_safari(update: Update, context: CallbackContext):
     message = update.message
@@ -88,7 +80,6 @@ async def enter_safari(update: Update, context: CallbackContext):
         return
 
     current_time = time.time()
-
     cooldown_doc = await safari_cooldown_collection.find_one({'user_id': user_id})
 
     if cooldown_doc:
@@ -126,7 +117,7 @@ async def enter_safari(update: Update, context: CallbackContext):
         'safari_balls': 30,
         'hunt_limit': 30,
         'used_hunts': 0
-  }
+    }
     await save_safari_user(user_id)
 
     await message.reply_html(f"<b>Welcome to the pick Zone!\nEntry fee deducted: {entry_fee} Tokens\n\nBegin your /explore for rare slave.</b>")
@@ -190,7 +181,7 @@ async def hunt(update: Update, context: CallbackContext):
 
     await save_safari_user(user_id)
 
-    text = f"<b>A wild {waifu_name} ( {waifu_rarity} ) has appeared!</b>\n\n<b>/explore limit: {user_data['used_hunts']}/{user_data['hunt_limit']}\🔮¸ contract crystals: {user_data['safari_balls']}</b>"
+    text = f"<b>A wild {waifu_name} ( {waifu_rarity} ) has appeared!</b>\n\n<b>/explore limit: {user_data['used_hunts']}/{user_data['hunt_limit']}\🔮 contract crystals: {user_data['safari_balls']}</b>"
     keyboard = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("contract", callback_data=f"engage_{waifu_id}_{user_id}")]
@@ -200,9 +191,9 @@ async def hunt(update: Update, context: CallbackContext):
 
     if user_id in current_engagements:
         del current_engagements[user_id]
+
 async def typing_animation(callback_query, text):
     try:
-        # 10% chance to get 3 dots
         if random.random() < 0.25:
             duration = 3
         else:
@@ -215,190 +206,5 @@ async def typing_animation(callback_query, text):
 
         return dots
     except Exception as e:
-        logger.error(f"Error in typing_animation: {e}")
-        logger.error(traceback.format_exc())
-        return "🔮🔮🔮"  # Fallback to ensure flow continues
+        return "🔮🔮🔮"
 
-async def throw_ball(callback_query):
-    try:
-        data = callback_query.data.split("_")
-        waifu_id = data[1]
-        user_id = int(data[2])
-
-        if user_id != callback_query.from_user.id:
-            await callback_query.answer("This hunt does not belong to you.", show_alert=True)
-            return
-
-        if user_id not in safari_users:
-            await callback_query.answer("You are not in the safari zone!", show_alert=True)
-            return
-
-        if waifu_id not in sessions:
-            await callback_query.answer("The wild pick has fled!", show_alert=True)
-            return
-
-        user_data = safari_users[user_id]
-        user_data['safari_balls'] -= 1
-        safari_users[user_id] = user_data
-
-        await save_safari_user(user_id)
-
-        outcome = await typing_animation(callback_query, "Attempting to capture the waifu.\n\n")
-      
-
-        if outcome == "🔮🔮🔮":
-            await callback_query.message.edit_caption(caption=f"<b>âœ¨ congratulation âœ¨\nyou caught the wild slave!</b>", parse_mode="HTML")
-
-            character = sessions[waifu_id]
-            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-
-            del sessions[waifu_id]
-
-        else:
-            await callback_query.message.edit_caption(caption=f"<b>Your contract crystal failed.</b>\n<b>The wild slave fled.</b>", parse_mode="HTML")
-            del sessions[waifu_id]
-
-        if user_data['safari_balls'] <= 0:
-            await callback_query.message.edit_caption(caption="You have run out of contract crystals.")
-            del safari_users[user_id]
-            await safari_users_collection.delete_one({'user_id': user_id})
-
-        del current_hunts[user_id]
-
-    except Exception as e:
-        logger.error(f"An error occurred in throw_ball: {e}")
-        logger.error(traceback.format_exc())
-        await callback_query.answer("An error occurred. Please try again later.", show_alert=True)
-async def run_away(callback_query):
-    try:
-        data = callback_query.data.split("_")
-        waifu_id = data[1]
-        user_id = int(data[2])
-
-        if user_id != callback_query.from_user.id:
-            await callback_query.answer("This hunt does not belong to you.", show_alert=True)
-            return
-
-        if user_id not in safari_users:
-            await callback_query.answer("You are not in the safari zone!", show_alert=True)
-            return
-
-        del sessions[waifu_id]
-        del current_hunts[user_id]
-
-        await callback_query.message.edit_caption(caption="You escaped from the wild pick.")
-        await callback_query.answer()
-
-    except Exception as e:
-        print(f"Error handling run_away: {e}")
-
-async def engage(callback_query):
-    try:
-        data = callback_query.data.split("_")
-        waifu_id = data[1]
-        user_id = int(data[2])
-
-        if user_id != callback_query.from_user.id:
-            await callback_query.answer("This hunt does not belong to you.", show_alert=True)
-            return
-
-        if user_id not in safari_users:
-            await callback_query.answer("You are not in the safari zone!", show_alert=True)
-            return
-
-        if waifu_id not in sessions:
-            await callback_query.answer("The wild slave has fled!", show_alert=True)
-            return
-
-        if user_id in current_engagements:
-            del current_engagements[user_id]
-
-        if user_id in current_hunts and current_hunts[user_id] == waifu_id:
-            waifu = sessions[waifu_id]
-            text = f"Choose your action:"
-            keyboard = InlineKeyboardMarkup(
-                [
-                    [
-                        InlineKeyboardButton("Throw crystal", callback_data=f"throw_{waifu_id}_{user_id}"),
-                        InlineKeyboardButton("Run", callback_data=f"run_{waifu_id}_{user_id}")
-                    ]
-                ]
-            )
-            await safe_edit_message(callback_query, new_text=text, new_markup=keyboard)
-
-            current_engagements[user_id] = waifu_id
-
-        else:
-            await callback_query.answer("The wild pick has fled!", show_alert=True)
-
-    except Exception as e:
-        print(f"Error handling engage: {e}")
-
-
-async def hunt_callback_query(update: Update, context: CallbackContext):
-    callback_query = update.callback_query
-    data = callback_query.data.split("_")
-    action = data[0]
-    waifu_id = data[1]
-    user_id = int(data[2])
-
-    if action == "engage":
-        await engage(callback_query)
-    elif action == "throw":
-        await throw_ball(callback_query)
-    elif action == "run":
-        await run_away(callback_query)
-
-async def dc_command(update: Update, context: CallbackContext):
-    # Check if the command is a reply to a message
-    if not update.message.reply_to_message:
-        await update.message.reply_text("You need to reply to a message to reset that user's cooldown.")
-        return
-    
-    # Extract user_id of the replied user
-    replied_user_id = update.message.reply_to_message.from_user.id
-    
-    # Replace with your authorized user_id
-    authorized_user_id = 7185106962
-    
-    if update.message.from_user.id != authorized_user_id:
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
-    
-    try:
-        # Delete the cooldown document for the replied user
-        result = await safari_cooldown_collection.delete_one({'user_id': replied_user_id})
-        
-        if result.deleted_count == 1:
-            await update.message.reply_text(f"The tour cooldown for user {replied_user_id} has been reset.")
-        else:
-            await update.message.reply_text(f"The user {replied_user_id} doesn't have an active tour cooldown.")
-    
-    except Exception as e:
-        print(f"Error resetting safari cooldown for user {replied_user_id}: {e}")
-        await update.message.reply_text("An error occurred while resetting the tour cooldown. Please try again later.")
-
-# Add the following function to handle the /soja command
-async def reset_hunt(update: Update, context: CallbackContext):
-    message = update.message
-    user_id = message.from_user.id
-
-    if user_id not in safari_users:
-        await message.reply_text("You are not in the safari zone! Use /ptour to enter.")
-        return
-
-    if user_id in current_hunts:
-        del current_hunts[user_id]
-    
-    if user_id in current_engagements:
-        del current_engagements[user_id]
-
-    await message.reply_text("Your current hunt has been reset. You can now explore again!")
-
-# Add the handler for the /soja command
-application.add_handler(CommandHandler("soja", reset_hunt))
-application.add_handler(CommandHandler("dc", dc_command))
-application.add_handler(CommandHandler("ptour", enter_safari))
-application.add_handler(CommandHandler("exit", exit_safari))
-application.add_handler(CommandHandler("explore", hunt))
-application.add_handler(CallbackQueryHandler(hunt_callback_query, pattern="^(engage|throw|run)_", block=False))
