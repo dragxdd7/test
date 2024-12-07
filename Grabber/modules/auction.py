@@ -17,7 +17,6 @@ async def start_auction(chat_id, character):
     auction_key = f"{chat_id}:{character_id}"
     if auction_key in active_auctions:
         return
-
     active_auctions[auction_key] = {
         'character': character,
         'highest_bid': MIN_BID,
@@ -25,8 +24,6 @@ async def start_auction(chat_id, character):
         'end_time': datetime.now() + timedelta(seconds=AUCTION_TIME),
         'bid_message_id': None,
     }
-
-    # Send the auction announcement
     auction_message = await app.send_photo(
         chat_id=chat_id,
         photo=character['img_url'],
@@ -39,48 +36,37 @@ async def start_auction(chat_id, character):
             f"Auction ends in {AUCTION_TIME} seconds!"
         )
     )
-
-    # Wait for the auction to complete
+    message_counts[chat_id] = 0
     await asyncio.sleep(AUCTION_TIME)
-
-    # Fetch the latest auction details
-    auction = active_auctions.pop(auction_key, None)
+    auction = active_auctions.get(auction_key)
     if auction and auction['highest_bidder']:
         winner_id = auction['highest_bidder']
-        highest_bid = auction['highest_bid']
-
-        # Retrieve winner data
         winner_data = await user_collection.find_one({'id': winner_id})
-        if not winner_data:
-            await app.send_message(chat_id, capsify("Error: Winner's data could not be retrieved."))
-            return
-
-        # Deduct rubies and assign character
-        await aruby(winner_id, highest_bid)
+        await aruby(winner_id, auction['highest_bid'])
         await user_collection.update_one(
             {'id': winner_id},
-            {'$push': {'characters': character}}
+            {'$push': {'collection': character}}
         )
         await collection.update_one(
             {'id': character_id},
             {'$set': {'owner_id': winner_id, 'is_in_auction': False}}
         )
-
-        # Announce winner
-        await app.send_message(
-            chat_id=chat_id,
-            text=capsify(
-                f"**Auction Over!**\n\n"
-                f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {highest_bid} rubies!"
-            ),
-            reply_to_message_id=auction['bid_message_id']
-        )
+        winner_bid_message_id = auction['bid_message_id']
+        if winner_bid_message_id:
+            await app.send_message(
+                chat_id=chat_id,
+                text=capsify(
+                    f"**Auction Over!**\n\n"
+                    f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
+                ),
+                reply_to_message_id=winner_bid_message_id
+            )
     else:
-        # No bids placed
         await app.send_message(
             chat_id=chat_id,
             text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
         )
+    del active_auctions[auction_key]
 
 @app.on_message(filters.text, group=auction_watcher)
 async def handle_message(client, message: Message):
@@ -143,3 +129,6 @@ async def place_bid(client, message: Message):
         await message.reply_text(capsify(f"Your bid of {bid_amount} rubies has been placed successfully!"))
     else:
         await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
+
+
+In this bot is trying to give the winner character even before deciding one that's why it's not being added to the winners collection robi when the winner is announced 
