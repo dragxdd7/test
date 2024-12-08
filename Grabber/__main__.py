@@ -24,4 +24,5 @@ def main() -> None:
 
 if __name__ == '__main__':
     Grabberu.start()
+    print('Bot Started')
     main()
