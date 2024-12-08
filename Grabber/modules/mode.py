@@ -32,17 +32,33 @@ async def mode_command(_, message):
     keyboard = [
         [
             InlineKeyboardButton(
-                capsify(f"CHARACTER {'✅' if chat_modes['character'] else '❌'}"),
+                capsify("CHARACTER"),
                 callback_data="toggle_character"
             ),
             InlineKeyboardButton(
-                capsify(f"WORDS {'✅' if chat_modes['words'] else '❌'}"),
+                capsify("✅" if chat_modes['character'] else "❌"),
+                callback_data="toggle_character_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("WORDS"),
                 callback_data="toggle_words"
             ),
             InlineKeyboardButton(
-                capsify(f"MATHS {'✅' if chat_modes['maths'] else '❌'}"),
+                capsify("✅" if chat_modes['words'] else "❌"),
+                callback_data="toggle_words_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("MATHS"),
                 callback_data="toggle_maths"
             ),
+            InlineKeyboardButton(
+                capsify("✅" if chat_modes['maths'] else "❌"),
+                callback_data="toggle_maths_status"
+            )
         ]
     ]
 
@@ -83,17 +99,33 @@ async def toggle_mode(_, callback_query):
     keyboard = [
         [
             InlineKeyboardButton(
-                capsify(f"CHARACTER {'✅' if updated_chat_modes['character'] else '❌'}"),
+                capsify("CHARACTER"),
                 callback_data="toggle_character"
             ),
             InlineKeyboardButton(
-                capsify(f"WORDS {'✅' if updated_chat_modes['words'] else '❌'}"),
+                capsify("✅" if updated_chat_modes['character'] else "❌"),
+                callback_data="toggle_character_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("WORDS"),
                 callback_data="toggle_words"
             ),
             InlineKeyboardButton(
-                capsify(f"MATHS {'✅' if updated_chat_modes['maths'] else '❌'}"),
+                capsify("✅" if updated_chat_modes['words'] else "❌"),
+                callback_data="toggle_words_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("MATHS"),
                 callback_data="toggle_maths"
             ),
+            InlineKeyboardButton(
+                capsify("✅" if updated_chat_modes['maths'] else "❌"),
+                callback_data="toggle_maths_status"
+            )
         ]
     ]
 
