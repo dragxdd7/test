@@ -40,7 +40,7 @@ async def harem(client, message, page=0):
         )
 
     harem_message += "--------------------------------------\n"
-    total_count = len(characters)
+    total_count = len(unique_characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
     keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
@@ -59,10 +59,8 @@ async def harem(client, message, page=0):
             skip_buttons.append(IKB(capsify("▶5x"), callback_data=f"harem:{page + 5}:{user_id}"))
         keyboard.append(skip_buttons)
 
-    chat_id = message.chat.id
-    if chat_id != -1002225496870:
-        close_button = [IKB(capsify("Close"), callback_data=f"harem:close_{user_id}")]
-        keyboard.append(close_button)
+    close_button = [IKB(capsify("Close"), callback_data=f"harem:close_{user_id}")]
+    keyboard.append(close_button)
 
     markup = IKM(keyboard)
 
@@ -72,7 +70,7 @@ async def harem(client, message, page=0):
 
         if fav_character and 'img_url' in fav_character:
             await app.send_photo(
-                chat_id,
+                message.chat.id,
                 photo=fav_character['img_url'],
                 caption=harem_message,
                 reply_markup=markup,
@@ -139,7 +137,7 @@ async def harem_callback(client, callback_query):
         )
 
     harem_message += "--------------------------------------\n"
-    total_count = len(characters)
+    total_count = len(unique_characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
     keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
@@ -158,10 +156,8 @@ async def harem_callback(client, callback_query):
             skip_buttons.append(IKB(capsify("▶5x"), callback_data=f"harem:{page + 5}:{user_id}"))
         keyboard.append(skip_buttons)
 
-    chat_id = callback_query.message.chat.id
-    if chat_id != -1002225496870:
-        close_button = [IKB(capsify("Close"), callback_data=f"harem:close_{user_id}")]
-        keyboard.append(close_button)
+    close_button = [IKB(capsify("Close"), callback_data=f"harem:close_{user_id}")]
+    keyboard.append(close_button)
 
     markup = IKM(keyboard)
 
