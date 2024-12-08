@@ -71,7 +71,7 @@ async def harem(client, message, page=0):
         close_button = [IKB(capsify("Close"), callback_data=f"harem:close_{user_id}")]
         keyboard.append(close_button)
 
-    reply_markup = IKM(keyboard)
+    markup = IKM(keyboard)
 
     if 'favorites' in user and user['favorites']:
         fav_character_id = user['favorites'][0]
@@ -82,12 +82,11 @@ async def harem(client, message, page=0):
                 chat_id,
                 photo=fav_character['img_url'],
                 caption=harem_message,
-                parse_mode='HTML',
-                reply_markup=reply_markup
+                markup=markup
             )
             return
 
-    await message.reply_text(harem_message, parse_mode='HTML', reply_markup=reply_markup)
+    await message.reply_text(harem_message, markup=markup)
 
 @app.on_callback_query(filters.regex(r"harem:"))
 async def harem_callback(client, callback_query):
