@@ -19,8 +19,6 @@ async def cbq(update: Update, context: CallbackContext):
 
     if data.startswith('cmode'):
         await cmode_callback(update, context)
-    """elif data.startswith('harem'):
-        await hc(update, context)"""
     elif data.startswith(('help', 'back')):
         await button(update, context)
     elif data.startswith('check_'):
