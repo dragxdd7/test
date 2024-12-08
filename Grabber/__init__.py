@@ -1,5 +1,3 @@
-import logging
-
 from pyrogram import Client as PyrogramClient
 from telegram.ext import Application
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,22 +11,10 @@ class Client(PyrogramClient):
         obj = ResolvePeer(self)
         return await obj.resolve_peer(id)
 
-logging.basicConfig(
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-    handlers=[logging.FileHandler("log.txt"), logging.StreamHandler()],
-    level=logging.INFO,
-)
-
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger("apscheduler").setLevel(logging.ERROR)
-logging.getLogger('httpx').setLevel(logging.WARNING)
-logging.getLogger("pyrate_limiter").setLevel(logging.ERROR)
-LOGGER = logging.getLogger(__name__)
-
 OWNER_ID = "7185106962"
 GROUP_ID = "-1002225496870"
-TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"
-#TOKEN = "8178036633:AAGienDJzVplXSKW__0IWEbcPf8RQpv-d5w"
+#TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"
+TOKEN = "7872640132:AAFrIY4CCYQBMr-yQncD59_r2xBysmsk0xE"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
     "https://graph.org/file/f10bec6ec695bba69037d.jpg",
