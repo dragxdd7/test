@@ -80,9 +80,9 @@ async def spawn_character(chat_id):
 
         caption = (
             f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
-            f"USE /pick (NAME) TO CLAIM IT.\n\n"
-            f"💰 {capsify('PRICE')}: {character_price} COINS\n"
-            f"{capsify('💰 NOTE')}: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
+            f"{capsify(USE)} /pick {capsify((NAME) TO CLAIM IT}.\n\n"
+            f"💰 {capsify('PRICE'): {character_price} COINS\n}"
+            f"{capsify('💰 NOTE'): 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'}."
         )
 
         await app.send_photo(
