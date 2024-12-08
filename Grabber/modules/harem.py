@@ -33,16 +33,10 @@ async def harem(client, message, page=0):
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            "♦️ {} (x{})\n"
-            "   Anime: {}\n"
-            "   ID: {}\n"
-            "   {}\n\n"
-        ).format(
-            capsify(character['name']),
-            count,
-            character['anime'],
-            character['id'],
-            character.get('rarity', '')
+            f"♦️ {capsify(character['name'])} (x{count})\n"
+            f"   Anime: {character['anime']}\n"
+            f"   ID: {character['id']}\n"
+            f"   {character.get('rarity', '')}\n\n"
         )
 
     harem_message += "--------------------------------------\n"
@@ -138,16 +132,10 @@ async def harem_callback(client, callback_query):
     for character in current_characters:
         count = character_counts[character['id']]
         harem_message += (
-            "♦️ {} (x{})\n"
-            "   Anime: {}\n"
-            "   ID: {}\n"
-            "   {}\n\n"
-        ).format(
-            capsify(character['name']),
-            count,
-            character['anime'],
-            character['id'],
-            character.get('rarity', '')
+            f"♦️ {capsify(character['name'])} (x{count})\n"
+            f"   Anime: {character['anime']}\n"
+            f"   ID: {character['id']}\n"
+            f"   {character.get('rarity', '')}\n\n"
         )
 
     harem_message += "--------------------------------------\n"
