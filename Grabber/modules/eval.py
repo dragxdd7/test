@@ -31,7 +31,7 @@ async def edit_or_reply(msg: Message, **kwargs):
 
 
 @Client.on_message(
-    filters.command("ev","eval")
+    filters.command("eval")
     & dev_filter
 )
 async def executor(client, message):
