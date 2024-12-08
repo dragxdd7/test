@@ -54,7 +54,7 @@ async def marry_command(update: Update, context):
     if target_user_id:
         marriage_status[user_id] = target_user_id
         await context.bot.send_message(chat_id=update.message.chat_id, text=f"You have proposed to user ID {target_user_id}. Waiting for their response...")
-        # You can add logic here to send a proposal message to the target user if desired.
+        
     else:
         await context.bot.send_message(chat_id=update.message.chat_id, text="Please provide the user ID of the person you want to marry.")
 
