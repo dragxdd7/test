@@ -13,6 +13,7 @@ async def rpay(client, message: Message):
     payer_id = message.from_user.id
     if temp_block(payer_id):
         return
+
     if not message.reply_to_message:
         await message.reply_text(capsify("Please reply to the user you want to pay."))
         return
@@ -43,7 +44,9 @@ async def rpay(client, message: Message):
         return
 
     await druby(payer_id, amount)
-    await aruby(payee_id, amount)  # Fixed the function call here
+    await aruby(payee_id, amount)
     app.payment_cooldowns[payer_id] = time.time()
 
-    await message.reply_text(capsify(f"Successfully paid {amount} rubies to {payee.mention}."))
+    await message.reply_text(
+        capsify(f"Successfully paid {amount} rubies to {payee.mention}.")
+    )
