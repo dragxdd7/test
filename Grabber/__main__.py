@@ -6,7 +6,7 @@ from telegram import Update
 from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters
 
 from Grabber import collection, Grabberu, top_global_groups_collection, group_user_totals_collection, user_collection, user_totals_collection
-from Grabber import application, LOGGER
+from Grabber import application
 from Grabber.modules import ALL_MODULES
 
 for module_name in ALL_MODULES:
@@ -24,5 +24,4 @@ def main() -> None:
 
 if __name__ == '__main__':
     Grabberu.start()
-    LOGGER.info("Bot started")
     main()
