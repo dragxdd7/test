@@ -97,13 +97,19 @@ async def dice_command(update: Update, context):
 
     if user_id in cooldowns and time.time() - cooldowns[user_id] < 3600:
         cooldown_time = int(3600 - (time.time() - cooldowns[user_id]))
-        await context.bot.send_message(chat_id=chat_id, text=f"Please wait {cooldown_time} seconds before rolling again.", reply_to_message_id=update.message.message_id)
+        hours, remainder = divmod(cooldown_time, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        await context.bot.send_message(chat_id=chat_id, 
+                                       text=f"Please wait {hours} hours, {minutes} minutes, and {seconds} seconds before rolling again.", 
+                                       reply_to_message_id=update.message.message_id)
         return
 
     cooldowns[user_id] = time.time()
 
     if user_id == 7162166061:
-        await context.bot.send_message(chat_id=chat_id, text="You are banned from using this command.", reply_to_message_id=update.message.message_id)
+        await context.bot.send_message(chat_id=chat_id, 
+                                       text="You are banned from using this command.", 
+                                       reply_to_message_id=update.message.message_id)
         return
 
     receiver_id = update.message.from_user.id
