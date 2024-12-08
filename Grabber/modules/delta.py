@@ -10,7 +10,12 @@ from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudo_f
 from .watchers import delta_watcher
 
 BG_IMAGE_PATH = "Images/blue.jpg"
-DEFAULT_MESSAGE_LIMIT = 30
+DEFAULT_MESSAGE_LIMIT = 45
+DEFAULT_MODE_SETTINGS = {
+    "character": True,
+    "words": True,
+    "maths": True
+}
 group_message_counts = {}
 math_questions = {}
 
@@ -74,6 +79,14 @@ async def delta(client, message):
     if group_message_counts[chat_id]['limit'] and group_message_counts[chat_id]['count'] >= group_message_counts[chat_id]['limit']:
         group_message_counts[chat_id]['count'] = 0
 
+        chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
+        if not chat_modes:
+            chat_modes = DEFAULT_MODE_SETTINGS.copy()
+            await group_user_totals_collection.insert_one(chat_modes)
+
+        if not chat_modes.get('maths', True):
+            return
+
         image_bytes, answer = generate_random_math_equation_image()
         math_questions[chat_id] = answer
 
@@ -87,7 +100,6 @@ async def delta(client, message):
 
         reply_markup = IKM([[keyboard[0][0], keyboard[1][0]], [keyboard[2][0], keyboard[3][0]]])
 
-        # Use BytesIO as the file object
         img_byte_arr = io.BytesIO(image_bytes)
 
         await client.send_photo(
