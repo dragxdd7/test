@@ -20,14 +20,18 @@ async def mode_command(_, message):
         return
 
     chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
+    
     if not chat_modes:
-        chat_modes = {
-            "chat_id": chat_id,
-            "character": True,
-            "words": True,
-            "maths": True
-        }
+        chat_modes = {"chat_id": chat_id, "character": True, "words": True, "maths": True}
         await group_user_totals_collection.insert_one(chat_modes)
+    else:
+        for key in ["character", "words", "maths"]:
+            if key not in chat_modes:
+                chat_modes[key] = True
+        await group_user_totals_collection.update_one(
+            {"chat_id": chat_id},
+            {"$set": chat_modes}
+        )
 
     keyboard = [
         [
