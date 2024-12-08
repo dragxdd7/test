@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from . import user_collection, capsify, app
 from .block import block_dec, temp_block
 
-@block_dec
+
 @app.on_message(filters.command("harem"))
 async def harem(client, message, page=0):
     user_id = message.from_user.id
@@ -82,7 +82,7 @@ async def harem(client, message, page=0):
                 chat_id,
                 photo=fav_character['img_url'],
                 caption=harem_message,
-                markup=markup
+                reply_markup=markup
             )
             return
 
