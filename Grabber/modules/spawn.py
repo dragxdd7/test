@@ -32,6 +32,13 @@ async def spawn_character(chat_id):
         if chat_id in spawned_characters:
             return
 
+        chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
+
+        character_enabled = chat_modes.get('character', True)
+
+        if not character_enabled:
+            return  
+
         rarity_map = {
             1: "🟢 Common",
             2: "🔵 Medium",
