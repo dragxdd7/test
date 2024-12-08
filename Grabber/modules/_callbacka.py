@@ -3,7 +3,7 @@ from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from Grabber import application
 from .cmode import cmode_callback
 from Grabber.utils.button import button_click as bc
-from .harem import harem_callback as hc
+#from .harem import harem_callback as hc
 from .info import check
 from .ptb_store import sales_list_callback
 from .sgift import confirm_gift, cancel_gift
@@ -17,12 +17,10 @@ async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
 
-    if data == 'nam': 
-        await bc(update, context)
-    elif data.startswith('cmode'):
+    if data.startswith('cmode'):
         await cmode_callback(update, context)
-    elif data.startswith('harem'):
-        await hc(update, context)
+    ""elif data.startswith('harem'):
+        await hc(update, context)""
     elif data.startswith(('help', 'back')):
         await button(update, context)
     elif data.startswith('check_'):
