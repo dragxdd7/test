@@ -81,12 +81,17 @@ async def spawn_character(chat_id):
         await app.send_photo(
             chat_id=chat_id,
             photo=character['img_url'],
-            caption=capsify(
-                f"🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
-                f"USE /PICK (NAME) TO CLAIM IT.\n\n"
-                f"💰 PRICE: {character_price} COINS\n"
-                "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
-            ),
+            caption = (
+            f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
+            f"USE /pick (NAME) TO CLAIM IT.\n\n"
+            f"💰 {capsify('PRICE')}: {character_price} COINS\n"
+            f"{capsify('💰 NOTE')}: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
+        )
+
+        await app.send_photo(
+            chat_id=chat_id,
+            photo=character['img_url'],
+            caption=caption,
             reply_markup=markup,
             has_spoiler=True
         )
