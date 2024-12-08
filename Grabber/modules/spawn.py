@@ -94,10 +94,11 @@ async def guess(_, message):
 
         character = spawned_characters[chat_id]
         character_name = character['name'].strip().lower()
+        name_parts = character_name.split()
 
-        if guess != character_name:
+        if guess not in name_parts:
             await message.reply_text(
-                capsify(f"❌ INCORRECT NAME. THE CHARACTER'S NAME IS NOT '{guess.upper()}'. TRY AGAIN!")
+                capsify(f"❌ INCORRECT NAME. '{guess.upper()}' DOES NOT MATCH ANY PART OF THE CHARACTER'S NAME.")
             )
             return
 
@@ -108,7 +109,6 @@ async def guess(_, message):
             await message.reply_text(capsify("❌ NOT ENOUGH COINS TO CLAIM THIS CHARACTER."))
             return
 
-        # Deduct balance and add character to the user's collection
         await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
         await deduct(user_id, character_price)
         await group_user_totals_collection.update_one(
@@ -135,7 +135,6 @@ async def guess(_, message):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-        # Remove the spawned character after it's claimed
         del spawned_characters[chat_id]
 
 @app.on_callback_query(filters.regex("^name_"))
