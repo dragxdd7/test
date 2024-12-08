@@ -1,7 +1,7 @@
 import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, show, deduct, add, app, capsify
+from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, deduct 
 from .watchers import character_watcher
 from asyncio import Lock
 
@@ -9,6 +9,7 @@ message_counts = {}
 spawn_frequency = {}
 spawn_locks = {}
 spawned_characters = {}
+active_spawns = {}
 
 @app.on_message(filters.all & filters.group, group=character_watcher)
 async def handle_message(_, message):
@@ -29,45 +30,44 @@ async def spawn_character(chat_id):
         spawn_locks[chat_id] = Lock()
 
     async with spawn_locks[chat_id]:
-        rarity_map = {
-            1: "🟢 Common",
-            2: "🔵 Medium",
-            3: "🟠 Rare",
-            4: "🟡 Legendary",
-            5: "🪽 Celestial",
-            6: "🥵 Divine",
-            7: "🥴 Special",
-            8: "💎 Premium",
-            9: "🔮 Limited",
-        }
+        if chat_id in active_spawns and active_spawns[chat_id]:
+            return
 
-        allowed_rarities = [rarity_map[i] for i in range(1, 10)]
-        all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
+        active_spawns[chat_id] = True
 
+        all_characters = await collection.find({}).to_list(length=None)
         if not all_characters:
+            active_spawns[chat_id] = False
             return
 
         character = random.choice(all_characters)
         spawned_characters[chat_id] = character
-        character_id = character['_id']
 
-        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character_id}")]]
-        markup = InlineKeyboardMarkup(keyboard)
+        # Create a button to show the character's name
+        name_button = InlineKeyboardButton(
+            capsify(name),
+            callback_data=f"name_{character['_id']}"  # Callback data for the name button
+        )
+
+        keyboard = InlineKeyboardMarkup([[name_button]])
 
         await app.send_photo(
             chat_id=chat_id,
             photo=character['img_url'],
             caption=capsify(
-                "🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
-                "USE /PICK (NAME) TO CLAIM IT.\n\n"
-                "💰 NOTE: 100 COINS WILL BE DEDUCTED FOR CLICKING 'NAME'."
+                f"🌟 A NEW CHARACTER HAS APPEARED! 🌟\n"
+                f"💰 PRICE: {character.get('price', 100)} COINS\n"
+                f"🆔 ID: {character['_id']}\n"
+                "USE THE `/pick <guess>` COMMAND TO CLAIM IT!"
             ),
-            reply_markup=markup,
+            reply_markup=keyboard,
             has_spoiler=True
         )
 
+        active_spawns[chat_id] = False
+
 @app.on_message(filters.command("pick"))
-async def guess(_, message):
+async def pick_character(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
@@ -83,44 +83,42 @@ async def guess(_, message):
         return
 
     character = spawned_characters[chat_id]
+    price = character.get('price', 100)
+
     if guess in character['name'].lower():
         user = await user_collection.find_one({'id': user_id})
 
         if user:
-            await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-        else:
-            await user_collection.insert_one({
-                'id': user_id,
-                'username': message.from_user.username,
-                'first_name': message.from_user.first_name,
-                'characters': [character],
-            })
+            if user.get('balance', 0) >= price:
+                await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
+                await deduct(user_id, price)
+                await group_user_totals_collection.update_one(
+                    {'user_id': user_id, 'group_id': chat_id},
+                    {'$inc': {'count': 1}},
+                    upsert=True
+                )
+                await top_global_groups_collection.update_one(
+                    {'group_id': chat_id},
+                    {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
+                    upsert=True
+                )
 
-        await group_user_totals_collection.update_one(
-            {'user_id': user_id, 'group_id': chat_id},
-            {'$inc': {'count': 1}},
-            upsert=True
-        )
-        await top_global_groups_collection.update_one(
-            {'group_id': chat_id},
-            {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
-            upsert=True
-        )
-
-        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
-        await message.reply_text(
-            capsify(
-                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
-                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                f"👤 NAME: {character['name']}\n"
-                f"📺 ANIME: {character['anime']}\n"
-                f"⭐ RARITY: {character['rarity']}\n\n"
-                "👉 CHECK YOUR HAREM NOW!"
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        del spawned_characters[chat_id]
-        return
+                keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+                await message.reply_text(
+                    capsify(
+                        f"🎊 YOU BOUGHT A NEW CHARACTER FOR {price} COINS! 🎉\n\n"
+                        f"👤 NAME: {character['name']}\n"
+                        f"🆔 ID: {character['_id']}\n"
+                        f"📺 ANIME: {character['anime']}\n"
+                        f"⭐ RARITY: {character['rarity']}\n\n"
+                        "👉 CHECK YOUR HAREM NOW!"
+                    ),
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+                del spawned_characters[chat_id]
+                return
+            else:
+                await message.reply_text(capsify("❌ YOU DON'T HAVE ENOUGH COINS TO CLAIM THIS CHARACTER."))
 
     await message.reply_text(capsify("❌ WRONG GUESS. PLEASE TRY AGAIN."))
 
