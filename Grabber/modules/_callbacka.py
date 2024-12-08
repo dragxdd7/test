@@ -16,7 +16,7 @@ from .block import block_cbq_ptb
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
-    elif data.startswith(('help', 'back')):
+    if data.startswith(('help', 'back')):
         await button(update, context)
     elif data.startswith('check_'):
         await check(update, context)
