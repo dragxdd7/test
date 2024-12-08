@@ -4,7 +4,6 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import user_collection, capsify, app
-from .block import block_dec
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
@@ -47,7 +46,6 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img_path = f'/tmp/cmode_{user_id}.png'
     img.save(img_path)
     return img_path
-
 
 @app.on_message(filters.command("cmode"))
 async def cmode(client: Client, message):
@@ -106,13 +104,8 @@ async def cmode_callback(client: Client, callback_query):
 
     username = callback_query.from_user.username
 
-    profile_photos = await client.get_profile_photos(user_id)
-    if profile_photos.total_count > 0:
-        file_id = profile_photos.photos[0][-1].file_id
-        user_dp_url = await client.get_file(file_id)
-        user_dp_url = user_dp_url.file_path
-    else:
-        user_dp_url = None
+    user = await client.get_users(user_id)
+    user_dp_url = user.photo.small_file_id if user.photo else None
 
     img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
 
