@@ -50,18 +50,12 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 
 
 @app.on_message(filters.command("cmode"))
-@block_dec
 async def cmode(client: Client, message):
     user_id = message.from_user.id
     username = message.from_user.username
 
-    profile_photos = await client.get_profile_photos(user_id)
-    if profile_photos.total_count > 0:
-        file_id = profile_photos.photos[0][-1].file_id
-        user_dp_url = await client.get_file(file_id)
-        user_dp_url = user_dp_url.file_path
-    else:
-        user_dp_url = None
+    user = await client.get_users(user_id)
+    user_dp_url = user.photo.small_file_id if user.photo else None
 
     user_data = await user_collection.find_one({'id': user_id})
     current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
