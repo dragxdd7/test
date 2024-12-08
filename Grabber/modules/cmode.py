@@ -1,10 +1,10 @@
-from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, Update, InputMediaPhoto
-from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import application, user_collection, capsify 
-from .block import block_dec_ptb, block_cbq
+from . import user_collection, capsify, app
+from .block import block_dec
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
@@ -48,18 +48,18 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     img.save(img_path)
     return img_path
 
-@block_dec_ptb
-async def cmode(update: Update, context: CallbackContext) -> None:
-    user_id = update.effective_user.id
-    #if temp_block(user_id):
-        #return
-    username = update.effective_user.username
 
-    profile_photos = await context.bot.get_user_profile_photos(update.effective_user.id)
+@app.on_message(filters.command("cmode"))
+@block_dec
+async def cmode(client: Client, message):
+    user_id = message.from_user.id
+    username = message.from_user.username
+
+    profile_photos = await client.get_profile_photos(user_id)
     if profile_photos.total_count > 0:
         file_id = profile_photos.photos[0][-1].file_id
-        file = await context.bot.get_file(file_id)
-        user_dp_url = file.file_path
+        user_dp_url = await client.get_file(file_id)
+        user_dp_url = user_dp_url.file_path
     else:
         user_dp_url = None
 
@@ -79,12 +79,11 @@ async def cmode(update: Update, context: CallbackContext) -> None:
     ]
     reply_markup = IKM(cmode_buttons)
 
-    await update.message.reply_photo(photo=open(img_path, 'rb'), caption="Choose your collection mode:", reply_markup=reply_markup)
+    await client.send_photo(chat_id=message.chat.id, photo=open(img_path, 'rb'), caption="Choose your collection mode:", reply_markup=reply_markup)
 
-async def cmode_callback(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    data = query.data
-
+@app.on_callback_query(filters.regex(r"cmode:"))
+async def cmode_callback(client: Client, callback_query):
+    data = callback_query.data
     rarity_modes = {
         'rare': '🟠 Rare',
         'spacial': '🥴 Spacial',
@@ -105,30 +104,27 @@ async def cmode_callback(update: Update, context: CallbackContext) -> None:
     user_id = int(user_id)
     collection_mode = rarity_modes.get(rarity)
 
-    if update.effective_user.id != user_id:
-        await query.answer("You cannot change someone else's collection mode.", show_alert=True)
+    if callback_query.from_user.id != user_id:
+        await callback_query.answer("You cannot change someone else's collection mode.", show_alert=True)
         return
 
     await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
 
-    username = update.effective_user.username
+    username = callback_query.from_user.username
 
-    profile_photos = await context.bot.get_user_profile_photos(update.effective_user.id)
+    profile_photos = await client.get_profile_photos(user_id)
     if profile_photos.total_count > 0:
         file_id = profile_photos.photos[0][-1].file_id
-        file = await context.bot.get_file(file_id)
-        user_dp_url = file.file_path
+        user_dp_url = await client.get_file(file_id)
+        user_dp_url = user_dp_url.file_path
     else:
         user_dp_url = None
 
     img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
 
     new_caption = f"Rarity edited to: {collection_mode}"
-
     reply_markup = IKM([])
 
-    await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
-    await query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
-    await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
-
-application.add_handler(CommandHandler("cmode", cmode, block=False))
+    await callback_query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
+    await callback_query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
+    await callback_query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
