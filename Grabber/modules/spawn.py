@@ -78,10 +78,7 @@ async def spawn_character(chat_id):
         keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character_id}")]]
         markup = InlineKeyboardMarkup(keyboard)
 
-        await app.send_photo(
-            chat_id=chat_id,
-            photo=character['img_url'],
-            caption = (
+        caption = (
             f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
             f"USE /pick (NAME) TO CLAIM IT.\n\n"
             f"💰 {capsify('PRICE')}: {character_price} COINS\n"
