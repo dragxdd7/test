@@ -62,5 +62,5 @@ async def dice_command(update: Update, context: CallbackContext):
     receiver_id = update.message.from_user.id
     await handle_dice(context, update, receiver_id)
 
-application.add_handler(CommandHandler("dice", dice_command))
+application.add_handler(CommandHandler("marry", dice_command))
 
