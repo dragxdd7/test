@@ -29,6 +29,21 @@ def clear_all_caches():
 
 clear_all_caches()
 
+rarity_map = {
+    "common": "🟢 Common",
+    "medium": "🔵 Medium",
+    "rare": "🟠 Rare",
+    "legendary": "🟡 Legendary",
+    "celestial": "🪽 Celestial",
+    "divine": "🥵 Divine",
+    "special": "🥴 Special",
+    "premium": "💎 Premium",
+    "limited": "🔮 Limited",
+    "cosplay": "🍭 Cosplay",
+    "aura": "💋 Aura",
+    "winter": "❄️ Winter"
+}
+
 @block_inl_ptb
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
@@ -39,21 +54,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
-
-        rarity_map = {
-            "common": "🟢 Common",
-            "medium": "🔵 Medium",
-            "rare": "🟠 Rare",
-            "legendary": "🟡 Legendary",
-            "celestial": "🪽 Celestial",
-            "divine": "🥵 Divine",
-            "special": "🥴 Special",
-            "premium": "💎 Premium",
-            "limited": "🔮 Limited",
-            "cosplay": "🍭 Cosplay",
-            "aura": "💋 Aura",
-            "winter": "❄️ Winter"
-        }
 
         if query.startswith('collection.'):
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
@@ -66,17 +66,14 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
-                    rarity_filter = None
 
-                    # Check if there is a rarity specified in the search terms
-                    for term in search_terms:
-                        if term.lower() in rarity_map:
-                            rarity_filter = rarity_map[term.lower()]
-                            break
-
-                    if rarity_filter:
-                        all_characters = [character for character in all_characters if character.get('rarity') == rarity_filter]
-
+                    # Handle rarity filtering
+                    rarity_filter = search_terms[-1].lower() if search_terms else None
+                    if rarity_filter and rarity_filter in rarity_map:
+                        all_characters = [character for character in all_characters if character.get('rarity', '').lower() == rarity_filter]
+                    
+                    if len(search_terms) > 1:
+                        search_terms = search_terms[:-1]  # Exclude rarity from search terms
                     if search_terms:
                         if search_terms[0].isdigit():
                             all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
@@ -166,3 +163,16 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )
 
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
+
+application.add_handler(InlineQueryHandler(inlinequery, block=False))
+
+async def check(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    user_id = query.from_user.id
+    character_id = query.data.split('_')[1]
+
+    user_data = await user_collection.find_one({'id': user_id}, {'characters': 1})
+    characters = user_data.get('characters', [])
+    quantity = sum(1 for char in characters if char['id'] == character_id)
+
+    await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
