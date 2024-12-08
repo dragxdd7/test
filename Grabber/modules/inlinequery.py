@@ -29,30 +29,31 @@ def clear_all_caches():
 
 clear_all_caches()
 
-rarity_map = {
-    "common": "🟢 Common",
-    "medium": "🔵 Medium",
-    "rare": "🟠 Rare",
-    "legendary": "🟡 Legendary",
-    "celestial": "🪽 Celestial",
-    "divine": "🥵 Divine",
-    "special": "🥴 Special",
-    "premium": "💎 Premium",
-    "limited": "🔮 Limited",
-    "cosplay": "🍭 Cosplay",
-    "aura": "💋 Aura",
-    "winter": "❄️ Winter"
-}
-
 @block_inl_ptb
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
         query = update.inline_query.query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
+
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
+
+        rarity_map = {
+            "common": "🟢 Common",
+            "medium": "🔵 Medium",
+            "rare": "🟠 Rare",
+            "legendary": "🟡 Legendary",
+            "celestial": "🪽 Celestial",
+            "divine": "🥵 Divine",
+            "special": "🥴 Special",
+            "premium": "💎 Premium",
+            "limited": "🔮 Limited",
+            "cosplay": "🍭 Cosplay",
+            "aura": "💋 Aura",
+            "winter": "❄️ Winter"
+        }
 
         if query.startswith('collection.'):
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
@@ -65,16 +66,23 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
+                    rarity_filter = None
+
+                    # Check if there is a rarity specified in the search terms
+                    for term in search_terms:
+                        if term.lower() in rarity_map:
+                            rarity_filter = rarity_map[term.lower()]
+                            break
+
+                    if rarity_filter:
+                        all_characters = [character for character in all_characters if character.get('rarity') == rarity_filter]
+
                     if search_terms:
-                        rarity_filter = search_terms[0].lower()
-                        if rarity_filter in rarity_map:
-                            all_characters = [character for character in all_characters if character.get('rarity') == rarity_map[rarity_filter]]
+                        if search_terms[0].isdigit():
+                            all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
                         else:
-                            if search_terms[0].isdigit():
-                                all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
-                            else:
-                                regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
+                            regex = re.compile(' '.join(search_terms), re.IGNORECASE)
+                            all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
                 else:
                     all_characters = []
             else:
@@ -91,6 +99,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
+
         character_ids = [character['id'] for character in characters]
         anime_names = list(set(character['anime'] for character in characters))
 
@@ -115,7 +124,8 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         for character in characters:
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
-            price = character.get('price', 'Unknown')
+
+            price = character.get('price', 'Unknown')  # Get the price, default to 'Unknown'
 
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
@@ -126,7 +136,8 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     f"{capsify('Character from')} {capsify(user_first_name)}'s {capsify('collection')}:\n\n"
                     f"{capsify('Name')}: {character['name']} (x{user_character_count})\n"
                     f"{capsify('Anime')}: {character['anime']} ({user_anime_characters}/{anime_characters})\n"
-                    f"{capsify('Rarity')}: {price}\n"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}\n"
                     f"{capsify('ID')}: {character['id']}"
                 )
             else:
@@ -135,7 +146,8 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     f"{capsify('Name')}: {character['name']}\n"
                     f"{capsify('Anime')}: {character['anime']}\n"
                     f"{capsify('ID')}: {character['id']}\n"
-                    f"{capsify('Rarity')}: {price}"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}"
                 )
 
             keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
@@ -154,16 +166,3 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )
 
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
-
-application.add_handler(InlineQueryHandler(inlinequery, block=False))
-
-async def check(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    user_id = query.from_user.id
-    character_id = query.data.split('_')[1]
-
-    user_data = await user_collection.find_one({'id': user_id}, {'characters': 1})
-    characters = user_data.get('characters', [])
-    quantity = sum(1 for char in characters if char['id'] == character_id)
-
-    await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
