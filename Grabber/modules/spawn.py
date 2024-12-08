@@ -1,13 +1,14 @@
 import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show , deduct 
+from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show, deduct
 from .watchers import character_watcher
 from asyncio import Lock
 
 message_counts = {}
 spawn_locks = {}
 spawned_characters = {}
+chat_locks = {}
 
 @app.on_message(filters.all & filters.group, group=character_watcher)
 async def handle_message(_, message):
@@ -74,52 +75,60 @@ async def spawn_character(chat_id):
 async def guess(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
-    args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
 
-    if not args or "()" in args or "&" in args:
-        await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
-        return
+    if chat_id not in chat_locks:
+        chat_locks[chat_id] = Lock()
 
-    guess = args.strip().lower()
+    async with chat_locks[chat_id]:
+        args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
 
-    if chat_id not in spawned_characters:
-        await message.reply_text(capsify("❌ NO CHARACTER HAS SPAWNED YET. PLEASE WAIT FOR THE NEXT SPAWN."))
-        return
+        if not args or "()" in args or "&" in args:
+            await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
+            return
 
-    character = spawned_characters[chat_id]
-    character_price = character['price']
+        guess = args.strip().lower()
 
-    user_balance = await show(user_id)
-    if user_balance >= character_price:
-        await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-        await deduct(user_id, character_price)
-        await group_user_totals_collection.update_one(
-            {'user_id': user_id, 'group_id': chat_id},
-            {'$inc': {'count': 1}},
-            upsert=True
-        )
-        await top_global_groups_collection.update_one(
-            {'group_id': chat_id},
-            {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
-            upsert=True
-        )
+        if chat_id not in spawned_characters:
+            await message.reply_text(capsify("❌ NO CHARACTER HAS SPAWNED YET. PLEASE WAIT FOR THE NEXT SPAWN."))
+            return
 
-        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
-        await message.reply_text(
-            capsify(
-                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
-                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                f"👤 NAME: {character['name']}\n"
-                f"📺 ANIME: {character['anime']}\n"
-                f"⭐ RARITY: {character['rarity']}\n\n"
-                "👉 CHECK YOUR HAREM NOW!"
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-        del spawned_characters[chat_id]
-        return
+        character = spawned_characters[chat_id]
+        character_price = character['price']
 
-    await message.reply_text(capsify("❌ NOT ENOUGH COINS TO CLAIM THIS CHARACTER."))
+        user_balance = await show(user_id)
+        if user_balance >= character_price:
+            if character and chat_id in spawned_characters and spawned_characters[chat_id] == character:
+                await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
+                await deduct(user_id, character_price)
+                await group_user_totals_collection.update_one(
+                    {'user_id': user_id, 'group_id': chat_id},
+                    {'$inc': {'count': 1}},
+                    upsert=True
+                )
+                await top_global_groups_collection.update_one(
+                    {'group_id': chat_id},
+                    {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
+                    upsert=True
+                )
+
+                keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+                await message.reply_text(
+                    capsify(
+                        f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
+                        f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
+                        f"👤 NAME: {character['name']}\n"
+                        f"📺 ANIME: {character['anime']}\n"
+                        f"⭐ RARITY: {character['rarity']}\n\n"
+                        "👉 CHECK YOUR HAREM NOW!"
+                    ),
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+
+                del spawned_characters[chat_id]
+            else:
+                await message.reply_text(capsify("❌ CHARACTER NOT AVAILABLE. IT MAY HAVE BEEN CLAIMED BY ANOTHER USER."))
+        else:
+            await message.reply_text(capsify("❌ NOT ENOUGH COINS TO CLAIM THIS CHARACTER."))
 
 @app.on_callback_query(filters.regex("^name_"))
 async def handle_name_button(_, callback_query):
