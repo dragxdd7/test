@@ -8,7 +8,6 @@ from . import add, deduct, show, app, capsify
 from .block import block_dec, temp_block
 
 last_payment_times = {}
-last_loan_times = {}
 
 def format_timedelta(td: timedelta) -> str:
     seconds = td.total_seconds()
@@ -60,7 +59,9 @@ async def mpay(client, message):
 
     last_payment_times[sender_id] = datetime.now()
 
+    recipient_name = message.reply_to_message.from_user.first_name  # Get the recipient's name
+
     await client.send_message(
         message.chat.id,
-        capsify(f"Payment Successful! You Paid Ŧ{amount} Tokens to {message.reply_to_message.from_user.username}.")
+        capsify(f"Payment Successful! You Paid Ŧ{amount} Tokens to {recipient_name}.")
     )
