@@ -6,7 +6,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from .block import block_cbq
 
 from Grabber import user_collection, collection
-from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudo_filter
+from . import add, deduct, show, abank, dbank, sbank, sudb, capsify, app, sudo_filter, group_user_totals_collection
 from .watchers import delta_watcher
 
 BG_IMAGE_PATH = "Images/blue.jpg"
