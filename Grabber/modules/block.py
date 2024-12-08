@@ -123,6 +123,13 @@ async def blocklist_command(client: Client, message: Message):
 
 @app.on_callback_query(filters.regex("close_blocklist") & sudo_filter)
 async def close_callback(client: Client, callback_query: CallbackQuery):
+    command_user_id = callback_query.message.reply_to_message.from_user.id
+    caller_user_id = callback_query.from_user.id
+
+    if command_user_id != caller_user_id:
+        await callback_query.answer(capsify("Who are you to tell me what to do?"), show_alert=True)
+        return
+
     await callback_query.message.delete()
     await callback_query.answer(capsify("Closed"), show_alert=False)
 
