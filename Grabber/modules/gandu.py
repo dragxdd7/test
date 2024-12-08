@@ -5,10 +5,14 @@ import random
 import io
 import time
 from . import add, deduct, show, sudb, app, gend_watcher
+from . import group_user_totals_collection
 from words import words
 
 BG_IMAGE_PATH = "Images/blue.jpg"
 DEFAULT_MESSAGE_LIMIT = 30
+DEFAULT_MODE_SETTINGS = {
+    "words": True
+}
 group_message_counts = {}
 alpha_dict = {}
 guess_start_time = {}
@@ -82,6 +86,14 @@ async def handle_messages(client: Client, message):
 
     if group_message_counts[chat_id]['limit'] and group_message_counts[chat_id]['count'] >= group_message_counts[chat_id]['limit']:
         group_message_counts[chat_id]['count'] = 0
+
+        chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
+        if not chat_modes:
+            chat_modes = DEFAULT_MODE_SETTINGS.copy()
+            await group_user_totals_collection.insert_one(chat_modes)
+
+        if not chat_modes.get('words', True):
+            return
 
         random_word = random.choice(words)
         image_bytes = generate_random_image(random_word)
