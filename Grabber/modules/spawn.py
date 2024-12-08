@@ -34,6 +34,19 @@ async def spawn_character(chat_id):
 
         chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
 
+        if chat_modes is None:
+            chat_modes = {
+                "chat_id": chat_id,
+                "character": True,
+                "words": True,
+                "maths": True
+            }
+            await group_user_totals_collection.update_one(
+                {"chat_id": chat_id}, 
+                {"$set": chat_modes}, 
+                upsert=True
+            )
+
         character_enabled = chat_modes.get('character', True)
 
         if not character_enabled:
