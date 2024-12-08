@@ -5,7 +5,6 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from . import user_collection, capsify, app
 from .block import temp_block
 
-
 @app.on_message(filters.command("harem"))
 async def harem(client, message, page=0):
     user_id = message.from_user.id
@@ -82,7 +81,8 @@ async def harem(client, message, page=0):
                 chat_id,
                 photo=fav_character['img_url'],
                 caption=harem_message,
-                reply_markup=markup
+                reply_markup=markup,
+                reply_to_message_id=message.message_id
             )
             return
 
@@ -131,7 +131,7 @@ async def harem_callback(client, callback_query):
 
     if page < 0 or page >= total_pages:
         await callback_query.answer()
-        page = 0  # Reset to first page if out of bounds
+        page = 0
 
     harem_message = capsify(f"Collection - Page {page + 1}/{total_pages}\n--------------------------------------\n\n")
     current_characters = unique_characters[page * 7:(page + 1) * 7]
