@@ -81,7 +81,7 @@ async def spawn_character(chat_id):
         caption = (
             f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
             f"{capsify('USE ')}/pick {capsify('(NAME) TO CLAIM IT.')}\n\n"
-            f"💰 {capsify('PRICE')}: {character_price} {capsify({capsify('COINS')}\n"
+            f"💰 {capsify('PRICE')}: {character_price} {capsify('COINS')}\n"
             f"{capsify('💰 NOTE')}: {capsify('100 COINS WILL BE DEDUCTED FOR CLICKING NAME')}."
         )
 
