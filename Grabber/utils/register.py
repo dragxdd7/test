@@ -2,10 +2,10 @@ from functools import wraps
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.error import Unauthorized
-from . import user_collection, capsify
+from Grabber import user_collection, app
 from functools import wraps
 from pyrogram.errors import Forbidden
-from . import app, user_collection, capsify
+from Grabber capsify
 
 def start_ptb(func):
     @wraps(func)
