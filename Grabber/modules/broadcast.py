@@ -1,5 +1,5 @@
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram.errors import PeerIdInvalid
 from . import user_collection, app, capsify, dev_filter
 
 @app.on_message(filters.command("broadcast") & dev_filter)
@@ -36,10 +36,12 @@ async def broadcast(_, message):
                 await app.send_video(user_id, replied_message.video.file_id, caption=media_caption)
 
             success_count += 1
+        except PeerIdInvalid:
+            fail_count += 1
+            user_collection.delete_one({"id": user_id})  # Remove deleted accounts
         except Exception as e:
             fail_count += 1
-            print(f"Failed to send message to {user_id}: {e}")
-            user_collection.delete_one({"id": user_id})
+            print(f"Failed to send message to {user_id}: {e}")  # Log other failures
 
     await message.reply_text(capsify(f"✅ Broadcast completed!\n"
                                        f"Success: {success_count}\n"
