@@ -9,16 +9,14 @@ from .ptb_store import sales_list_callback
 from .sgift import confirm_gift, cancel_gift
 from .trade import confirm_trade, cancel_trade
 from .rps import rps_button 
-from .start import button
+#from .start import button
 from .block import block_cbq_ptb
 
 @block_cbq_ptb
 async def cbq(update: Update, context: CallbackContext):
     query = update.callback_query
     data = query.data
-    if data.startswith(('help', 'back')):
-        await button(update, context)
-    elif data.startswith('check_'):
+    if data.startswith('check_'):
         await check(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
