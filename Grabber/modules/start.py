@@ -13,13 +13,11 @@ async def start_command_private(_, message):
     username = message.from_user.username
     name = message.from_user.first_name
 
-    existing_user = user_collection.find_one({"id": user_id})
-    if not existing_user:
-        user_collection.insert_one({
-            "id": user_id,
-            "username": username,
-            "name": name
-        })
+    user_collection.update_one(
+        {"id": user_id},
+        {"$set": {"username": username, "name": name}},
+        upsert=True
+    )
 
     random_image = random.choice(PHOTO_URL)
     await app.send_photo(
