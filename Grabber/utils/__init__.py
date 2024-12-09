@@ -5,6 +5,7 @@ from .character import *
 from .gban import *
 from .disable import *
 from .error import *
+from .register import *
 
 ALPHABETS = "abcdefghijklmnopqrstuvwxyz"
 ALL_CAPS = "ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ"
