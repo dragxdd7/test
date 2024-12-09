@@ -5,7 +5,6 @@ import psutil
 from . import user_collection, app, capsify
 from Grabber import *
 
-
 VPS_NAME = "Delta's VPS"  
 
 @app.on_message(filters.command("start"))
@@ -14,11 +13,11 @@ async def start_command(_, message):
     username = message.from_user.username
     name = message.from_user.first_name
 
-    if not message.chat.type == "private":
+    if message.chat.type != "private":
         await message.reply_text(
             capsify("🚀 To start using me, please click the button below to initiate in DM."),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Start in DM", url=f"t.me/{BOT_USERNAME}")]
+                [InlineKeyboardButton("Start in DM", url=f"https://t.me/{BOT_USERNAME}")]
             ])
         )
         return
@@ -28,8 +27,7 @@ async def start_command(_, message):
         user_collection.insert_one({
             "id": user_id,
             "username": username,
-            "name": name,
-            "credits": 0
+            "name": name
         })
 
     random_image = random.choice(PHOTO_URL)
@@ -39,7 +37,7 @@ async def start_command(_, message):
         caption=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
-             InlineKeyboardButton(capsify ("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
+             InlineKeyboardButton(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
             [InlineKeyboardButton(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
             [InlineKeyboardButton(capsify("Help"), callback_data="show_help"),
              InlineKeyboardButton(capsify("Stats"), callback_data="show_stats")]
@@ -50,7 +48,7 @@ async def start_command(_, message):
 async def help_command(_, callback_query):
     help_text = (
         "🆘 **Help Commands:**\n"
-        "Comming soon"
+        "Coming soon"
     )
     await callback_query.answer()
     await callback_query.message.reply_text(help_text)
@@ -68,7 +66,7 @@ async def stats_command(_, callback_query):
         f"📁 **Used Storage:** {storage.used // (1024 * 1024)} MB\n"
         f"📭 **Free Storage:** {storage.free // (1024 * 1024)} MB\n"
     )
-    
+
     await callback_query.answer()
     await callback_query.message.reply_text(
         stats_info,
