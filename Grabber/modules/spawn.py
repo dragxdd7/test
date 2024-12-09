@@ -1,172 +1,89 @@
-import random
 from pyrogram import filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show, deduct
-from .watchers import character_watcher
-from asyncio import Lock
+from pyrogram.errors import PeerIdInvalid
+from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
 
-message_counts = {}
-spawn_locks = {}
-spawned_characters = {}
-chat_locks = {}
-
-@app.on_message(filters.all & filters.group, group=character_watcher)
-async def handle_message(_, message):
-    chat_id = message.chat.id
-    message_counts[chat_id] = message_counts.get(chat_id, 0) + 1
-    chat_data = await group_user_totals_collection.find_one({'chat_id': chat_id})
-    frequency = chat_data['message_frequency'] if chat_data and 'message_frequency' in chat_data else 100
-
-    if chat_id in spawn_locks and spawn_locks[chat_id].locked():
+@app.on_message(filters.command("broadcast") & dev_filter)
+async def broadcast(_, message):
+    replied_message = message.reply_to_message
+    if not replied_message:
+        await message.reply_text(capsify("❌ Please reply to a message to broadcast it."))
         return
 
-    if message_counts[chat_id] >= frequency:
-        await spawn_character(chat_id)
-        message_counts[chat_id] = 0
+    command_parts = message.command[1:]  # Get the command arguments
+    target_users = '-users' in command_parts
+    target_groups = '-groups' in command_parts or '-all' in command_parts
 
-async def spawn_character(chat_id):
-    if chat_id not in spawn_locks:
-        spawn_locks[chat_id] = Lock()
-
-    async with spawn_locks[chat_id]:
-        if chat_id in spawned_characters:
-            return
-
-        chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
-
-        if chat_modes is None:
-            chat_modes = {
-                "chat_id": chat_id,
-                "character": True,
-                "words": True,
-                "maths": True
-            }
-            await group_user_totals_collection.update_one(
-                {"chat_id": chat_id}, 
-                {"$set": chat_modes}, 
-                upsert=True
-            )
-
-        character_enabled = chat_modes.get('character', True)
-
-        if not character_enabled:
-            return  
-
-        rarity_map = {
-            1: "🟢 Common",
-            2: "🔵 Medium",
-            3: "🟠 Rare",
-            4: "🟡 Legendary",
-            5: "🪽 Celestial",
-            6: "🥵 Divine",
-            7: "🥴 Special",
-            8: "💎 Premium",
-            9: "🔮 Limited",
-        }
-
-        allowed_rarities = [rarity_map[i] for i in range(1, 10)]
-        all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
-
-        if not all_characters:
-            return
-
-        character = random.choice(all_characters)
-        spawned_characters[chat_id] = character
-        character_id = character['_id']
-        character_price = character['price']
-
-        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character_id}")]]
-        markup = InlineKeyboardMarkup(keyboard)
-
-        caption = (
-            f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
-            f"{capsify('USE ')}/pick {capsify('(NAME) TO CLAIM IT.')}\n\n"
-            f"💰 {capsify('PRICE')}: {character_price} {capsify('COINS')}\n"
-            f"{capsify('💰 NOTE')}: {capsify('100 COINS WILL BE DEDUCTED FOR CLICKING NAME')}."
-        )
-
-        await app.send_photo(
-            chat_id=chat_id,
-            photo=character['img_url'],
-            caption=caption,
-            reply_markup=markup,
-            has_spoiler=True
-        )
-
-@app.on_message(filters.command("pick"))
-async def guess(_, message):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-
-    if chat_id not in chat_locks:
-        chat_locks[chat_id] = Lock()
-
-    async with chat_locks[chat_id]:
-        args = message.text.split(maxsplit=1)[1] if len(message.text.split()) > 1 else None
-
-        if not args or "()" in args or "&" in args:
-            await message.reply_text(capsify("❌ INVALID INPUT. PLEASE AVOID USING SYMBOLS LIKE '()' OR '&'."))
-            return
-
-        guess = args.strip().lower()
-
-        if chat_id not in spawned_characters:
-            await message.reply_text(capsify("❌ NO CHARACTER HAS SPAWNED YET. PLEASE WAIT FOR THE NEXT SPAWN."))
-            return
-
-        character = spawned_characters[chat_id]
-        character_name = character['name'].strip().lower()
-        name_parts = character_name.split()
-
-        if guess not in name_parts:
-            await message.reply_text(
-                capsify(f"❌ INCORRECT NAME. '{guess.upper()}' DOES NOT MATCH ANY PART OF THE CHARACTER'S NAME.")
-            )
-            return
-
-        character_price = character['price']
-        user_balance = await show(user_id)
-
-        if user_balance < character_price:
-            await message.reply_text(capsify("❌ NOT ENOUGH COINS TO CLAIM THIS CHARACTER."))
-            return
-
-        await user_collection.update_one({'id': user_id}, {'$push': {'characters': character}})
-        await deduct(user_id, character_price)
-        await group_user_totals_collection.update_one(
-            {'user_id': user_id, 'group_id': chat_id},
-            {'$inc': {'count': 1}},
-            upsert=True
-        )
-        await top_global_groups_collection.update_one(
-            {'group_id': chat_id},
-            {'$inc': {'count': 1}, '$set': {'group_name': message.chat.title}},
-            upsert=True
-        )
-
-        keyboard = [[InlineKeyboardButton(capsify("CHECK HAREM"), switch_inline_query_current_chat=f"collection.{user_id}")]]
-        await message.reply_text(
-            capsify(
-                f"🎊 CONGRATULATIONS, {message.from_user.first_name}! 🎊\n"
-                f"YOU'VE CLAIMED A NEW CHARACTER! 🎉\n\n"
-                f"👤 NAME: {character['name']}\n"
-                f"📺 ANIME: {character['anime']}\n"
-                f"⭐ RARITY: {character['rarity']}\n\n"
-                "👉 CHECK YOUR HAREM NOW!"
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-        del spawned_characters[chat_id]
-
-@app.on_callback_query(filters.regex("^name_"))
-async def handle_name_button(_, callback_query):
-    chat_id = callback_query.message.chat.id
-    character_id = callback_query.data.split("_")[1]
-
-    character = spawned_characters.get(chat_id)
-    if not character or str(character['_id']) != character_id:
-        await callback_query.answer("❌ Character not available anymore.", show_alert=True)
+    if not target_users and not target_groups:
+        await message.reply_text(capsify("❌ Please specify a target: -users, -groups, or -all."))
         return
 
-    await callback_query.answer(f"👤 {character['name']}", show_alert=True)
+    await message.reply_text(capsify("📢 Broadcast started! Sending message..."))
+
+    success_count = 0
+    blocked_count = 0
+    deleted_count = 0
+
+    if target_users:
+        user_cursor = user_collection.find({})
+        async for user in user_cursor:
+            user_id = user.get('id')
+            if user_id is None:
+                deleted_count += 1
+                continue
+
+            try:
+                if replied_message.text:
+                    await app.send_message(user_id, replied_message.text, 
+                                           reply_to_message_id=replied_message.message_id)
+
+                media_caption = replied_message.caption if replied_message.caption else ""
+                
+                if replied_message.document:
+                    await app.send_document(user_id, replied_message.document.file_id, caption=media_caption)
+                elif replied_message.photo:
+                    await app.send_photo(user_id, replied_message.photo.file_id, caption=media_caption)
+                elif replied_message.video:
+                    await app.send_video(user_id, replied_message.video.file_id, caption=media_caption)
+
+                success_count += 1
+            except PeerIdInvalid:
+                blocked_count += 1
+                print(f"Failed to send message to {user_id}: Peer ID is invalid.")
+            except Exception as e:
+                blocked_count += 1
+                print(f"Failed to send message to {user_id}: {e}")
+
+    if target_groups:
+        group_cursor = group_user_totals_collection.find({})
+        async for group in group_cursor:
+            chat_id = group.get('chat_id')
+            if chat_id is None:
+                deleted_count += 1
+                continue
+
+            try:
+                if replied_message.text:
+                    await app.send_message(chat_id, replied_message.text, 
+                                           reply_to_message_id=replied_message.message_id)
+
+                media_caption = replied_message.caption if replied_message.caption else ""
+                
+                if replied_message.document:
+                    await app.send_document(chat_id, replied_message.document.file_id, caption=media_caption)
+                elif replied_message.photo:
+                    await app.send_photo(chat_id, replied_message.photo.file_id, caption=media_caption)
+                elif replied_message.video:
+                    await app.send_video(chat_id, replied_message.video.file_id, caption=media_caption)
+
+                success_count += 1
+            except PeerIdInvalid:
+                blocked_count += 1
+                print(f"Failed to send message to group {chat_id}: Peer ID is invalid.")
+            except Exception as e:
+                blocked_count += 1
+                print(f"Failed to send message to group {chat_id}: {e}")
+
+    await message.reply_text(capsify(f"✅ Broadcast completed!\n"
+                                       f"Total Success: {success_count}\n"
+                                       f"Total Blocked: {blocked_count}\n"
+                                       f"Total Deleted: {deleted_count}"))
