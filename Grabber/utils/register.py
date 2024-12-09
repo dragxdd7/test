@@ -5,7 +5,7 @@ from telegram.error import Unauthorized
 from Grabber import user_collection, app
 from functools import wraps
 from pyrogram.errors import Forbidden
-from Grabber capsify
+from . import capsify
 
 def start_ptb(func):
     @wraps(func)
