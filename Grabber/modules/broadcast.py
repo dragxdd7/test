@@ -38,10 +38,11 @@ async def broadcast(_, message):
             success_count += 1
         except PeerIdInvalid:
             fail_count += 1
-            user_collection.delete_one({"id": user_id})  # Remove deleted accounts
+            # Do not remove the user; just log the error
+            print(f"Failed to send message to {user_id}: Peer ID is invalid.")
         except Exception as e:
             fail_count += 1
-            print(f"Failed to send message to {user_id}: {e}")  # Log other failures
+            print(f"Failed to send message to {user_id}: {e}")
 
     await message.reply_text(capsify(f"✅ Broadcast completed!\n"
                                        f"Success: {success_count}\n"
