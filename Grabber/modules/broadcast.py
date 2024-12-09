@@ -1,66 +1,38 @@
-from Grabber import (application, PHOTO_URL, OWNER_ID,
-                     user_collection, top_global_groups_collection, 
-                     group_user_totals_collection)
-from . import capsify, devcmd
-import random
-from telegram import Update
-from telegram.ext import CommandHandler, CallbackContext
+from pyrogram import filters
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from . import user_collection, app, capsify, dev_filter
 
-photo = random.choice(PHOTO_URL)
+@app.on_message(filters.command("broadcast") & dev_filter)
+async def broadcast(_, message):
+    replied_message = message.reply_to_message
+    if not replied_message:
+        await message.reply_text(capsify("❌ Please reply to a message to broadcast it."))
+        return
 
-@devcmd
-async def broadcast(update: Update, context: CallbackContext) -> None:
-    try:
-        if update.message.reply_to_message is None:
-            await update.message.reply_text('Please reply to a message to broadcast.')
-            return
+    await message.reply_text(capsify("📢 Broadcast started! Sending message to all users..."))
+    
+    user_cursor = user_collection.find({})
+    success_count = 0
+    fail_count = 0
 
-        mode = 'all'
-        if context.args:
-            if context.args[0] == '-users':
-                mode = 'users'
-                print("Broadcast mode set to 'users'.")
-            elif context.args[0] == '-groups':
-                mode = 'groups'
-                print("Broadcast mode set to 'groups'.")
+    async for user in user_cursor:
+        user_id = user.get('id')
+        try:
+            await app.send_message(user_id, replied_message.text if replied_message.text else "", 
+                                    reply_to_message_id=replied_message.message_id if replied_message.message_id else None)
+            if replied_message.media:
+                if replied_message.document:
+                    await app.send_document(user_id, replied_message.document.file_id)
+                if replied_message.photo:
+                    await app.send_photo(user_id, replied_message.photo.file_id)
+                if replied_message.video:
+                    await app.send_video(user_id, replied_message.video.file_id)
 
-        all_users = await user_collection.find({}).to_list(length=None)
-        all_groups = await group_user_totals_collection.find({}).to_list(length=None)
+            success_count += 1
+        except Exception as e:
+            fail_count += 1
+            print(f"Failed to send message to {user_id}: {e}")
 
-        unique_user_ids = set(user['id'] for user in all_users)
-        unique_group_ids = set(group['group_id'] for group in all_groups)
-
-        print(f"Unique user IDs: {unique_user_ids}")
-        print(f"Unique group IDs: {unique_group_ids}")
-
-        total_sent = 0
-        total_failed = 0
-
-        if mode in ['all', 'users']:
-            print("Sending messages to users...")
-            for user_id in unique_user_ids:
-                try:
-                    await context.bot.forward_message(chat_id=user_id, from_chat_id=update.effective_chat.id, message_id=update.message.reply_to_message.message_id)
-                    total_sent += 1
-                    print(f"Message sent to user ID: {user_id}")
-                except Exception as e:
-                    total_failed += 1
-                    print(f"Failed to send message to user ID: {user_id}. Error: {e}")
-
-        if mode in ['all', 'groups']:
-            print("Sending messages to groups...")
-            for group_id in unique_group_ids:
-                try:
-                    await context.bot.forward_message(chat_id=group_id, from_chat_id=update.effective_chat.id, message_id=update.message.reply_to_message.message_id)
-                    total_sent += 1
-                    print(f"Message sent to group ID: {group_id}")
-                except Exception as e:
-                    total_failed += 1
-                    print(f"Failed to send message to group ID: {group_id}. Error: {e}")
-
-        await context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f'Broadcast report:\n\nTotal messages sent successfully: {total_sent}\nTotal messages failed to send: {total_failed}'
-        )
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    await message.reply_text(capsify(f"✅ Broadcast completed!\n"
+                                       f"Success: {success_count}\n"
+                                       f"Failures: {fail_count}"))
