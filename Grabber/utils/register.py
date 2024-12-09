@@ -1,4 +1,4 @@
-from functools import wraps
+"""from functools import wraps
 from telegram import Update
 from telegram.ext import CallbackContext
 from telegram.error import Unauthorized
@@ -47,4 +47,4 @@ def start(func):
                 await message.reply_text(capsify("❌ PLEASE START THE BOT IN YOUR DM FIRST."))
             return
         return await func(client, message, *args, **kwargs)
-    return wrapper
+    return wrapper"""
