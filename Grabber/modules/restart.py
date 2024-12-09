@@ -28,7 +28,7 @@ async def git_pull(client, message: Message):
                 "url": "https://github.com/Geektyper/PICK2.0.git",
                 "version": "master"
             },
-            "buildpacks": [{"url": "heroku/python"}] 
+            "buildpacks": [{"url": "heroku/python"}]
         }
     )
 
@@ -61,13 +61,16 @@ async def send_logs(client, message: Message):
     if response.status_code == 200:
         log_session_url = response.json().get("logplex_url")
         if log_session_url:
-            logs_response = requests.get(log_session_url, headers=headers, stream=True)
+            logs_response = requests.get(log_session_url, headers={
+                'Authorization': f'Bearer {HEROKU_API_KEY}',
+                'Accept': 'application/vnd.heroku.v3+json; version=3'
+            }, stream=True)
             logs_text = logs_response.text
 
             with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp_file:
                 temp_file.write(logs_text.encode())
                 temp_file_path = temp_file.name
-            
+
             await message.reply_document(temp_file_path, caption=capsify("Here are the Heroku logs:"))
             os.remove(temp_file_path)
         else:
