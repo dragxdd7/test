@@ -13,7 +13,7 @@ async def start_command(_, message):
     username = message.from_user.username
     name = message.from_user.first_name
 
-    if message.chat.type != "PRIVATE":
+    if message.chat.type != "ChatType.PRIVATE":
         await message.reply_text(
             capsify("🚀 To start using me, please click the button below to initiate in DM."),
             reply_markup=InlineKeyboardMarkup([
