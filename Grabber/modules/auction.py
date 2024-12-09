@@ -12,8 +12,10 @@ MIN_BID = 10000
 active_auctions = {}
 message_counts = {}
 
+# Start Auction Function
 async def start_auction(chat_id, character):
     auction_id = f"{chat_id}:{datetime.now().timestamp()}"
+    print(f"Initializing auction with ID: {auction_id} for character: {character['name']}")
     active_auctions[auction_id] = {
         'character': character,
         'highest_bid': MIN_BID,
@@ -64,20 +66,30 @@ async def start_auction(chat_id, character):
             text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
         )
 
+# Handle Messages
 @app.on_message(filters.text, group=auction_watcher)
 async def handle_message(client, message: Message):
     chat_id = message.chat.id
+    print(f"Message received in chat {chat_id}")
     for auction_id, auction in list(active_auctions.items()):
+        print(f"Processing auction: {auction_id}")
         if auction_id.startswith(f"{chat_id}:") and auction['end_time'] > datetime.now():
+            if auction_id not in message_counts:
+                message_counts[auction_id] = 0
             message_counts[auction_id] += 1
+            print(f"Message count for {auction_id}: {message_counts[auction_id]}")
             if message_counts[auction_id] >= 200:
                 rarity_filter = {"rarity": {"$in": ["💋 Aura", "❄️ Winter"]}}
                 characters = await collection.find(rarity_filter).to_list(None)
                 if characters:
                     character = random.choice(characters)
+                    print(f"Starting auction for character: {character['name']}")
                     await start_auction(chat_id, character)
+                else:
+                    print("No characters available to start an auction.")
                 message_counts[auction_id] = 0
 
+# Place Bid Command
 @app.on_message(filters.command("bid"))
 @block_dec
 @nopvt
