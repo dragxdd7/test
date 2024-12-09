@@ -6,7 +6,7 @@ from . import user_collection, app, capsify
 from Grabber import *
 
 
-VPS_NAME = "Deltas VPS"  
+VPS_NAME = "Delta's VPS"  
 
 @app.on_message(filters.command("start"))
 async def start_command(_, message):
