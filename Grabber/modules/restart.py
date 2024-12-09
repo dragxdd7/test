@@ -14,7 +14,7 @@ from pyrogram import Client, filters
 @app.on_message(filters.command("gitpull") & dev_filter)
 async def git_pull(client, message):
     try:
-        git_access_token = os.getenv('GIT_ACCESS_TOKEN')
+        git_access_token = os.getenv('GIT_TOKEN')
         if not git_access_token:
             await message.reply_text(capsify("Error: Git access token not found in environment variables."))
             return
