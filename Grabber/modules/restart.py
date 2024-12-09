@@ -23,7 +23,13 @@ async def git_pull(client, message: Message):
     response = requests.post(
         f'https://api.heroku.com/apps/{HEROKU_APP_NAME}/builds',
         headers=headers,
-        json={"source_blob": {"url": "https://github.com/Geektyper/PICK2.0.git", "version": "master"}}
+        json={
+            "source_blob": {
+                "url": "https://github.com/Geektyper/PICK2.0.git",
+                "version": "master"
+            },
+            "buildpacks": [{"url": "heroku/python"}] 
+        }
     )
 
     if response.status_code == 201:
