@@ -30,7 +30,7 @@ async def start_command_private(_, message):
             [InlineKeyboardButton(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
              InlineKeyboardButton(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
             [InlineKeyboardButton(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
-            [InlineKeyboardButton(capsify("Help"), callback_data="show_help"),
+            [InlineKeyboardButton(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
              InlineKeyboardButton(capsify("Stats"), callback_data="show_stats")]
         ])
     )
@@ -43,15 +43,6 @@ async def start_command_group(_, message):
             [InlineKeyboardButton("Start in DM", url=f"https://t.me/{BOT_USERNAME}")]
         ])
     )
-
-@app.on_callback_query(filters.regex("show_help"))
-async def help_command(_, callback_query):
-    help_text = (
-        "🆘 **Help Commands:**\n"
-        "Coming soon"
-    )
-    await callback_query.answer()
-    await callback_query.message.reply_text(help_text)
 
 @app.on_callback_query(filters.regex("show_stats"))
 async def stats_command(_, callback_query):
@@ -67,15 +58,4 @@ async def stats_command(_, callback_query):
         f"📭 **Free Storage:** {storage.free // (1024 * 1024)} MB\n"
     )
 
-    await callback_query.answer()
-    await callback_query.message.reply_text(
-        stats_info,
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Back", callback_data="back_to_start")]
-        ])
-    )
-
-@app.on_callback_query(filters.regex("back_to_start"))
-async def back_to_start(_, callback_query):
-    await callback_query.answer()
-    await start_command_private(_, callback_query.message) 
+    await callback_query.answer(text=stats_info, show_alert=True)
