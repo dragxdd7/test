@@ -7,20 +7,11 @@ from Grabber import *
 
 VPS_NAME = "Delta's VPS"  
 
-@app.on_message(filters.command("start"))
-async def start_command(_, message):
+@app.on_message(filters.command("start") & filters.private)
+async def start_command_private(_, message):
     user_id = message.from_user.id
     username = message.from_user.username
     name = message.from_user.first_name
-
-    if message.chat.type != "ChatType.PRIVATE":
-        await message.reply_text(
-            capsify("🚀 To start using me, please click the button below to initiate in DM."),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Start in DM", url=f"https://t.me/{BOT_USERNAME}")]
-            ])
-        )
-        return
 
     existing_user = user_collection.find_one({"id": user_id})
     if not existing_user:
@@ -41,6 +32,15 @@ async def start_command(_, message):
             [InlineKeyboardButton(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
             [InlineKeyboardButton(capsify("Help"), callback_data="show_help"),
              InlineKeyboardButton(capsify("Stats"), callback_data="show_stats")]
+        ])
+    )
+
+@app.on_message(filters.command("start") & filters.group)
+async def start_command_group(_, message):
+    await message.reply_text(
+        capsify("🚀 To start using me, please click the button below to initiate in DM."),
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Start in DM", url=f"https://t.me/{BOT_USERNAME}")]
         ])
     )
 
@@ -78,4 +78,4 @@ async def stats_command(_, callback_query):
 @app.on_callback_query(filters.regex("back_to_start"))
 async def back_to_start(_, callback_query):
     await callback_query.answer()
-    await start_command(_, callback_query.message)
+    await start_command_private(_, callback_query.message) 
