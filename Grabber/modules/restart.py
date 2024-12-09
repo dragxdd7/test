@@ -16,7 +16,7 @@ async def git_pull(client, message):
     try:
         git_access_token = os.getenv('GIT_ACCESS_TOKEN')
         if not git_access_token:
-            await message.reply_text("Error: Git access token not found in environment variables.")
+            await message.reply_text(capsify("Error: Git access token not found in environment variables."))
             return
         
         repo_url = f"https://{git_access_token}@github.com/Geektyper/PICK2.0.git"
@@ -29,8 +29,8 @@ async def git_pull(client, message):
             check=True
         )
 
-        await message.reply_text(f"Git Pull Successful:\n{result.stdout}")
+        await message.reply_text(capsify(f"Git Pull Successful:\n{result.stdout}"))
     except subprocess.CalledProcessError as e:
-        await message.reply_text(f"Error during git pull:\n{e.stderr}")
+        await message.reply_text(capsify(f"Error during git pull:\n{e.stderr}"))
     except Exception as e:
-        await message.reply_text(f"An unexpected error occurred:\n{str(e)}")
+        await message.reply_text(capsify(f"An unexpected error occurred:\n{str(e)}"))
