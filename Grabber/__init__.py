@@ -25,7 +25,7 @@ PHOTO_URL = [
     "https://telegra.ph/file/765c9474d372cf40621da.jpg",
     "https://telegra.ph/file/1e55c00d0be79b7ca614d.jpg"
 ]
-SUPPORT_CHAT = "dragons_support"
+SUPPORT_CHAT = "dragona_support"
 UPDATE_CHAT = "PickBotUpdatesHQ"
 BOT_USERNAME = "Guess_Yourr_Waifu_bot"
 CHARA_CHANNEL_ID = -1002235251549
