@@ -25,7 +25,7 @@ async def git_pull(client, message: Message):
         headers=headers,
         json={
             "source_blob": {
-                "url": "https://github.com/Geektyper/PICK2.0.git",
+                "url": "https://git.heroku.com/pickgamebot.git",
                 "version": "main"
             },
             "buildpacks": [{"url": "heroku/python"}]
