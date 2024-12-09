@@ -53,7 +53,7 @@ async def send_logs(client, message: Message):
 
     headers = {
         'Authorization': f'Bearer {HEROKU_API_KEY}',
-        'Accept': 'application/vnd.heroku.v3+json; version=3',  # Added version here
+        'Accept': 'application/vnd.heroku.v3+json; version=3',  
     }
 
     response = requests.get(f'https://api.heroku.com/apps/{HEROKU_APP_NAME}/log-sessions', headers=headers)
@@ -61,10 +61,7 @@ async def send_logs(client, message: Message):
     if response.status_code == 200:
         log_session_url = response.json().get("logplex_url")
         if log_session_url:
-            logs_response = requests.get(log_session_url, headers={
-                'Authorization': f'Bearer {HEROKU_API_KEY}',
-                'Accept': 'application/vnd.heroku.v3+json; version=3'  # Ensure this is correct as well
-            }, stream=True)
+            logs_response = requests.get(log_session_url, headers=headers, stream=True)  
             logs_text = logs_response.text
 
             with tempfile.NamedTemporaryFile(delete=False, suffix='.txt') as temp_file:
