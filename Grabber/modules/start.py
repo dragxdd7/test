@@ -50,9 +50,7 @@ async def start_command(_, message):
 async def help_command(_, callback_query):
     help_text = (
         "🆘 **Help Commands:**\n"
-        "/start - Start the bot\n"
-        "/broadcast - Send messages to all users or groups\n"
-        "..."
+        "Comming soon"
     )
     await callback_query.answer()
     await callback_query.message.reply_text(help_text)
