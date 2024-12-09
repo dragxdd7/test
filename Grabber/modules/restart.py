@@ -17,7 +17,7 @@ async def git_pull(client, message: Message):
 
     headers = {
         'Authorization': f'Bearer {HEROKU_API_KEY}',
-        'Accept': 'application/vnd.heroku.v3+json',
+        'Accept': 'application/vnd.heroku.v3+json; version=3',  # Added version here
     }
 
     response = requests.post(
@@ -53,7 +53,7 @@ async def send_logs(client, message: Message):
 
     headers = {
         'Authorization': f'Bearer {HEROKU_API_KEY}',
-        'Accept': 'application/vnd.heroku.v3+json',
+        'Accept': 'application/vnd.heroku.v3+json; version=3',  # Added version here
     }
 
     response = requests.get(f'https://api.heroku.com/apps/{HEROKU_APP_NAME}/log-sessions', headers=headers)
@@ -63,7 +63,7 @@ async def send_logs(client, message: Message):
         if log_session_url:
             logs_response = requests.get(log_session_url, headers={
                 'Authorization': f'Bearer {HEROKU_API_KEY}',
-                'Accept': 'application/vnd.heroku.v3+json; version=3'
+                'Accept': 'application/vnd.heroku.v3+json; version=3'  # Ensure this is correct as well
             }, stream=True)
             logs_text = logs_response.text
 
