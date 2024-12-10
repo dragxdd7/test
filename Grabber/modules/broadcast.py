@@ -25,11 +25,10 @@ async def broadcast(_, message):
 
         try:
             if replied_message.text:
-                await app.send_message(user_id, replied_message.text, 
-                                       reply_to_message_id=replied_message.message_id)
+                await app.send_message(user_id, replied_message.text)
 
             media_caption = replied_message.caption if replied_message.caption else ""
-            
+
             if replied_message.document:
                 await app.send_document(user_id, replied_message.document.file_id, caption=media_caption)
             elif replied_message.photo:
@@ -40,10 +39,8 @@ async def broadcast(_, message):
             success_count += 1
         except PeerIdInvalid:
             fail_count += 1
-            print(f"Failed to send message to {user_id}: Peer ID is invalid.")
-        except Exception as e:
+        except Exception:
             fail_count += 1
-            print(f"Failed to send message to {user_id}: {e}")
 
         await asyncio.sleep(random.uniform(3, 6))
 
