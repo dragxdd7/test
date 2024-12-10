@@ -87,5 +87,3 @@ async def broadcast(_, message):
                                        f"Total Success: {success_count}\n"
                                        f"Total Blocked: {blocked_count}\n"
                                        f"Total Deleted: {deleted_count}"))
-
-In this the ram went full and bot restarted
