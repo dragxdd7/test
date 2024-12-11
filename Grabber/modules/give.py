@@ -82,7 +82,7 @@ async def add_all_characters_for_user(user_id):
     else:
         return f"User with ID {user_id} not found."
 
-@app.on_message(filters.command(["add"]) & dev_filter)
+@app.on_message(filters.command(["add"]) & sudo_filter)
 async def add_characters_command(client, message):
     if not message.reply_to_message:
         await message.reply_text("You need to reply to a user's message to add characters!")
