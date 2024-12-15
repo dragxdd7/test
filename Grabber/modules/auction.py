@@ -3,6 +3,7 @@ import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from . import app, collection, user_collection, capsify, druby, sruby
+from .watchers import auction_watcher
 
 DEFAULT_MODE_SETTINGS = {
     "auction": True
@@ -13,7 +14,7 @@ ongoing_auctions = {}
 auction_locks = {}
 auction_bids = {}
 
-@app.on_message(filters.group, group=200)
+@app.on_message(filters.group, group=auction_watcher)
 async def check_auction_trigger(_, message):
     chat_id = message.chat.id
     chat_modes = await user_collection.find_one({"chat_id": chat_id})
