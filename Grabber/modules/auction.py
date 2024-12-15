@@ -1,129 +1,109 @@
 import asyncio
-from datetime import datetime, timedelta
 import random
-from pyrogram import Client, filters
-from pyrogram.types import Message
-from . import user_collection, collection, app, capsify, nopvt, sruby, druby, aruby
-from .block import block_dec, temp_block
-from .watchers import auction_watcher
+from pyrogram import filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from . import app, collection, user_collection, capsify, druby, sruby
 
-AUCTION_TIME = 60
-MIN_BID = 10000
-active_auctions = {}
-message_counts = {}
+DEFAULT_MODE_SETTINGS = {
+    "auction": True
+}
 
-async def start_auction(chat_id, character):
-    auction_id = f"{chat_id}:{datetime.now().timestamp()}"
-    active_auctions[auction_id] = {
-        'character': character,
-        'highest_bid': MIN_BID,
-        'highest_bidder': None,
-        'end_time': datetime.now() + timedelta(seconds=AUCTION_TIME),
-        'bid_message_id': None,
-    }
-    auction_message = await app.send_photo(
-        chat_id=chat_id,
-        photo=character['img_url'],
-        caption=capsify(
-            f"**Auction started for {character['name']}**\n"
-            f"Anime: {character['anime']}\n"
-            f"Rarity: {character['rarity']}\n\n"
-            f"Place your bid using /bid amount\n"
-            f"Minimum bid: {MIN_BID} rubies\n"
-            f"Auction ends in {AUCTION_TIME} seconds!"
-        )
-    )
-    message_counts[auction_id] = 0
-    await asyncio.sleep(AUCTION_TIME)
-    auction = active_auctions.pop(auction_id, None)
-    if auction and auction['highest_bidder']:
-        winner_id = auction['highest_bidder']
-        winner_data = await user_collection.find_one({'id': winner_id})
-        await aruby(winner_id, auction['highest_bid'])
-        await user_collection.update_one(
-            {'id': winner_id},
-            {'$push': {'characters': character}}
-        )
-        await collection.update_one(
-            {'id': str(character['id'])},
-            {'$set': {'owner_id': winner_id, 'is_in_auction': False}}
-        )
-        winner_bid_message_id = auction['bid_message_id']
-        if winner_bid_message_id:
-            await app.send_message(
-                chat_id=chat_id,
-                text=capsify(
-                    f"**Auction Over!**\n\n"
-                    f"**{winner_data['first_name']}** won the auction for **{character['name']}** with a bid of {auction['highest_bid']} rubies!"
-                ),
-                reply_to_message_id=winner_bid_message_id
-            )
-    else:
-        await app.send_message(
-            chat_id=chat_id,
-            text=capsify(f"**Auction Over!**\n\nNo winner for {character['name']} as no bids were placed.")
-        )
+auction_message_counts = {}
+ongoing_auctions = {}
+auction_locks = {}
+auction_bids = {}
 
-@app.on_message(filters.text, group=auction_watcher)
-async def handle_message(client, message: Message):
+@app.on_message(filters.group, group=200)
+async def check_auction_trigger(_, message):
     chat_id = message.chat.id
-    for auction_id, auction in list(active_auctions.items()):
-        if auction_id.startswith(f"{chat_id}:") and auction['end_time'] > datetime.now():
-            message_counts[auction_id] += 1
-            if message_counts[auction_id] >= 200:
-                rarity_filter = {"rarity": {"$in": ["💋 Aura", "❄️ Winter"]}}
-                characters = await collection.find(rarity_filter).to_list(None)
-                if characters:
-                    character = random.choice(characters)
-                    await start_auction(chat_id, character)
-                message_counts[auction_id] = 0
+    chat_modes = await user_collection.find_one({"chat_id": chat_id})
+    if not chat_modes:
+        chat_modes = DEFAULT_MODE_SETTINGS.copy()
+        chat_modes["chat_id"] = chat_id
+        await user_collection.insert_one(chat_modes)
+    if not chat_modes.get('auction', True):
+        return
+    auction_message_counts[chat_id] = auction_message_counts.get(chat_id, 0) + 1
+    if auction_message_counts[chat_id] >= 200:
+        success = await start_auction(chat_id)
+        if success:
+            auction_message_counts[chat_id] = 0
+
+async def start_auction(chat_id):
+    if chat_id in auction_locks and auction_locks[chat_id].locked():
+        return False
+    if chat_id in ongoing_auctions:
+        return False
+    if chat_id not in auction_locks:
+        auction_locks[chat_id] = asyncio.Lock()
+    async with auction_locks[chat_id]:
+        rarities = ["💋 Aura", "❄️ Winter"]
+        characters = await collection.find({'rarity': {'$in': rarities}}).to_list(length=None)
+        if not characters:
+            return False
+        character = random.choice(characters)
+        ongoing_auctions[chat_id] = character
+        auction_bids[chat_id] = {'user_id': None, 'amount': 0}
+        caption = (
+            f"🎉 {capsify('A SPECIAL CHARACTER HAS ARRIVED FOR AUCTION!')} 🎉\n\n"
+            f"👤 {capsify('NAME')}: {character['name']}\n"
+            f"📺 {capsify('ANIME')}: {character['anime']}\n"
+            f"⭐ {capsify('RARITY')}: {character['rarity']}\n"
+            f"🆔 {capsify('ID')}: {character['_id']}\n\n"
+            f"{capsify('USE /bid (AMOUNT) TO PLACE YOUR BID!')}\n"
+            f"💰 {capsify('MINIMUM BID')}: 10000\n"
+            f"⏳ {capsify('AUCTION LASTS FOR 60 SECONDS!')}"
+        )
+        await app.send_photo(chat_id, photo=character['img_url'], caption=caption)
+        await asyncio.sleep(60)
+        await finalize_auction(chat_id)
+        return True
 
 @app.on_message(filters.command("bid"))
-@block_dec
-@nopvt
-async def place_bid(client, message: Message):
-    user_id = message.from_user.id
-    if temp_block(user_id):
-        return
+async def place_bid(_, message):
     chat_id = message.chat.id
-    args = message.text.split()
-    if len(args) < 2:
-        await message.reply_text(capsify("Please provide a bid amount."))
+    user_id = message.from_user.id
+    if chat_id not in ongoing_auctions:
+        await message.reply_text(capsify("❌ NO AUCTION IS CURRENTLY ACTIVE. PLEASE WAIT FOR THE NEXT AUCTION."))
         return
-    try:
-        bid_amount = int(args[1])
-    except ValueError:
-        await message.reply_text(capsify("Bid amount must be a number."))
+    args = message.text.split(maxsplit=1)
+    if len(args) != 2 or not args[1].isdigit():
+        await message.reply_text(capsify("❌ INVALID BID AMOUNT. PLEASE USE /bid (AMOUNT)."))
         return
-    if bid_amount < MIN_BID:
-        await message.reply_text(capsify(f"The minimum bid is {MIN_BID} rubies."))
+    bid_amount = int(args[1])
+    if bid_amount < 10000:
+        await message.reply_text(capsify("❌ BID AMOUNT MUST BE AT LEAST 10000."))
         return
-    active_auction = None
-    for key, auction in active_auctions.items():
-        if key.startswith(f"{chat_id}:") and auction['end_time'] > datetime.now():
-            active_auction = auction
-            break
-    if not active_auction:
-        await message.reply_text(capsify("No active auctions at the moment."))
+    user_balance = await sruby(user_id)
+    if user_balance < bid_amount:
+        await message.reply_text(capsify("❌ YOU DO NOT HAVE ENOUGH BALANCE TO PLACE THIS BID."))
         return
-    user_rubies = await sruby(user_id)
-    if user_rubies < bid_amount:
-        await message.reply_text(capsify("You do not have enough rubies to place this bid."))
+    current_bid = auction_bids[chat_id]
+    if bid_amount <= current_bid['amount']:
+        await message.reply_text(capsify("❌ YOUR BID MUST BE HIGHER THAN THE CURRENT BID."))
         return
-    if bid_amount > active_auction['highest_bid']:
-        active_auction['highest_bid'] = bid_amount
-        active_auction['highest_bidder'] = user_id
-        active_auction['bid_message_id'] = message.id
-        await druby(user_id, bid_amount)
-        await client.send_message(
-            chat_id=chat_id,
-            text=capsify(
-                f"**{message.from_user.first_name}** bid {bid_amount} rubies on **{active_auction['character']['name']}**.\n"
-                f"Time left: {max(0, (active_auction['end_time'] - datetime.now()).seconds)} seconds.\n"
-                f"Current highest bid: {bid_amount} rubies."
-            )
-        )
-        await message.reply_text(capsify(f"Your bid of {bid_amount} rubies has been placed successfully!"))
-    else:
-        await message.reply_text(capsify("Your bid is lower than the current highest bid. Try again."))
+    auction_bids[chat_id] = {'user_id': user_id, 'amount': bid_amount}
+    await message.reply_text(capsify(f"✅ YOUR BID OF {bid_amount} HAS BEEN ACCEPTED!"))
 
+async def finalize_auction(chat_id):
+    if chat_id not in ongoing_auctions:
+        return
+    auction_data = ongoing_auctions.pop(chat_id)
+    bid_data = auction_bids.pop(chat_id)
+    if not bid_data['user_id']:
+        await app.send_message(chat_id, capsify("❌ NO VALID BIDS WERE PLACED. THE AUCTION HAS ENDED."))
+        return
+    winner_id = bid_data['user_id']
+    winning_bid = bid_data['amount']
+    await druby(winner_id, winning_bid)
+    await user_collection.update_one({'id': winner_id}, {'$push': {'characters': auction_data}})
+    winner_name = (await app.get_users(winner_id)).first_name
+    caption = (
+        f"🎉 {capsify('AUCTION ENDED!')} 🎉\n\n"
+        f"👤 {capsify('WINNER')}: {winner_name}\n"
+        f"💰 {capsify('WINNING BID')}: {winning_bid}\n\n"
+        f"👤 {capsify('NAME')}: {auction_data['name']}\n"
+        f"📺 {capsify('ANIME')}: {auction_data['anime']}\n"
+        f"⭐ {capsify('RARITY')}: {auction_data['rarity']}\n"
+    )
+    await app.send_message(chat_id, caption)
