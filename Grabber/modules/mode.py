@@ -22,10 +22,10 @@ async def mode_command(_, message):
     chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
     
     if not chat_modes:
-        chat_modes = {"chat_id": chat_id, "character": True, "words": True, "maths": True}
+        chat_modes = {"chat_id": chat_id, "character": True, "words": True, "maths": True, "auction": True}
         await group_user_totals_collection.insert_one(chat_modes)
     else:
-        for key in ["character", "words", "maths"]:
+        for key in ["character", "words", "maths", "auction"]:
             if key not in chat_modes:
                 chat_modes[key] = True
         await group_user_totals_collection.update_one(
@@ -63,6 +63,22 @@ async def mode_command(_, message):
                 capsify("✅" if chat_modes['maths'] else "❌"),
                 callback_data="toggle_maths_status"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("AUCTION"),
+                callback_data="toggle_auction"
+            ),
+            InlineKeyboardButton(
+                capsify("✅" if chat_modes['auction'] else "❌"),
+                callback_data="toggle_auction_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("CLOSE"),
+                callback_data="close_settings"
+            )
         ]
     ]
 
@@ -78,14 +94,14 @@ async def toggle_mode(_, callback_query):
     user_status = (await app.get_chat_member(chat_id, user_id)).status
 
     if user_status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR]:
-        await callback_query.answer("❌ Who are you to tell me what to do?", show_alert=True)
+        await callback_query.answer("❌ WHO ARE YOU TO TELL ME WHAT TO DO?", show_alert=True)
         return
 
     mode_key = callback_query.data.split("_")[1]
     chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
 
     if not chat_modes:
-        await callback_query.answer("❌ Settings not found. Use /mode to initialize.", show_alert=True)
+        await callback_query.answer("❌ SETTINGS NOT FOUND. USE /MODE TO INITIALIZE.", show_alert=True)
         return
 
     if mode_key in chat_modes:
@@ -94,9 +110,9 @@ async def toggle_mode(_, callback_query):
             {"chat_id": chat_id},
             {"$set": {mode_key: new_value}}
         )
-        await callback_query.answer("✅ Mode updated.")
+        await callback_query.answer("✅ MODE UPDATED.")
     else:
-        await callback_query.answer("❌ Invalid option.", show_alert=True)
+        await callback_query.answer("❌ INVALID OPTION.", show_alert=True)
         return
 
     updated_chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
@@ -130,6 +146,22 @@ async def toggle_mode(_, callback_query):
                 capsify("✅" if updated_chat_modes['maths'] else "❌"),
                 callback_data="toggle_maths_status"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("AUCTION"),
+                callback_data="toggle_auction"
+            ),
+            InlineKeyboardButton(
+                capsify("✅" if updated_chat_modes['auction'] else "❌"),
+                callback_data="toggle_auction_status"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                capsify("CLOSE"),
+                callback_data="close_settings"
+            )
         ]
     ]
 
@@ -137,3 +169,15 @@ async def toggle_mode(_, callback_query):
         capsify("🔧 MODE SETTINGS 🔧\nTOGGLE THE OPTIONS BELOW."),
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+@app.on_callback_query(filters.regex("^close_settings$"))
+async def close_settings(_, callback_query):
+    user_id = callback_query.from_user.id
+    user_status = (await app.get_chat_member(callback_query.message.chat.id, user_id)).status
+
+    if user_status not in [ChatMemberStatus.OWNER, ChatMemberStatus.ADMINISTRATOR]:
+        await callback_query.answer("❌ YOU ARE NOT AUTHORIZED TO CLOSE THIS MENU.", show_alert=True)
+        return
+
+    await callback_query.message.delete()
+    await callback_query.answer("✅ SETTINGS MENU CLOSED.")
