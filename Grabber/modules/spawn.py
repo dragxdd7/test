@@ -53,7 +53,7 @@ async def spawn_character(chat_id):
             return False
         character = random.choice(all_characters)
         spawned_characters[chat_id] = character
-        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character['_id']}")]]
+        keyboard = [[InlineKeyboardButton(capsify("NAME"), callback_data=f"name_{character['id']}")]]
         markup = InlineKeyboardMarkup(keyboard)
         caption = (
             f"🌟 {capsify('A NEW CHARACTER HAS APPEARED!')} 🌟\n"
@@ -74,17 +74,19 @@ async def spawn_character(chat_id):
 async def remove_spawn_after_timeout(chat_id, character, timeout):
     await asyncio.sleep(timeout)
     if chat_id in spawned_characters and spawned_characters[chat_id] == character:
-        await app.send_message(
+        keyboard = [[InlineKeyboardButton(capsify("HOW MANY I HAVE"), callback_data=f"count_{character['id']}")]]
+        await app.send_photo(
             chat_id,
-            capsify(
+            photo=character['img_url'],
+            caption=capsify(
                 f"❌ OOPS, THE WAIFU JUST ESCAPED! 🏃‍♀️\n\n"
                 f"👤 {capsify('NAME')}: {character['name']}\n"
                 f"📺 {capsify('ANIME')}: {character['anime']}\n"
                 f"⭐ {capsify('RARITY')}: {character['rarity']}\n"
-                f"🆔 {capsify('ID')}: {character['_id']}\n\n"
+                f"🆔 {capsify('ID')}: {character['id']}\n\n"
                 f"🌌 {capsify('BETTER LUCK NEXT TIME!')} 🌌"
             ),
-            reply_to_message_id=None
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
         del spawned_characters[chat_id]
 
@@ -142,12 +144,13 @@ async def guess(_, message):
         )
         del spawned_characters[chat_id]
 
-@app.on_callback_query(filters.regex("^name_"))
-async def handle_name_button(_, callback_query):
-    chat_id = callback_query.message.chat.id
+@app.on_callback_query(filters.regex("^count_"))
+async def handle_count_button(_, callback_query):
+    user_id = callback_query.from_user.id
     character_id = callback_query.data.split("_")[1]
-    character = spawned_characters.get(chat_id)
-    if not character or str(character['_id']) != character_id:
-        await callback_query.answer("❌ Character not available anymore.", show_alert=True)
+    user_data = await user_collection.find_one({"id": user_id})
+    if not user_data or "characters" not in user_data:
+        await callback_query.answer(capsify("YOU DON'T OWN THIS CHARACTER."), show_alert=True)
         return
-    await callback_query.answer(f"👤 {character['name']}", show_alert=True)
+    count = sum(1 for char in user_data["characters"] if char["id"] == character_id)
+    await callback_query.answer(capsify(f"YOU HAVE {count} OF THIS CHARACTER."), show_alert=True)
