@@ -24,16 +24,19 @@ async def handle_message(_, message):
             message_counts[chat_id] = 0
 
 async def spawn_character(chat_id):
+    log_chat_id = -1002203193964
     if chat_id not in spawn_locks:
         spawn_locks[chat_id] = Lock()
     async with spawn_locks[chat_id]:
         if chat_id in spawned_characters:
+            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: Character already spawned.")
             return False
         chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
         if chat_modes is None:
             chat_modes = {"chat_id": chat_id, "character": True, "words": True, "maths": True}
             await group_user_totals_collection.update_one({"chat_id": chat_id}, {"$set": chat_modes}, upsert=True)
         if not chat_modes.get('character', True):
+            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: Character spawning is disabled.")
             return False
         rarity_map = {
             1: "🟢 Common",
@@ -49,6 +52,7 @@ async def spawn_character(chat_id):
         allowed_rarities = [rarity_map[i] for i in range(1, 10)]
         all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
         if not all_characters:
+            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: No characters found with allowed rarities.")
             return False
         character = random.choice(all_characters)
         spawned_characters[chat_id] = character
