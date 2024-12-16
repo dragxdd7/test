@@ -1,8 +1,8 @@
 import random
+import asyncio
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show, deduct
-from .watchers import character_watcher
 from asyncio import Lock
 
 message_counts = {}
@@ -24,19 +24,16 @@ async def handle_message(_, message):
             message_counts[chat_id] = 0
 
 async def spawn_character(chat_id):
-    log_chat_id = -1002203193964
     if chat_id not in spawn_locks:
         spawn_locks[chat_id] = Lock()
     async with spawn_locks[chat_id]:
         if chat_id in spawned_characters:
-            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: Character already spawned.")
             return False
         chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
         if chat_modes is None:
             chat_modes = {"chat_id": chat_id, "character": True, "words": True, "maths": True}
             await group_user_totals_collection.update_one({"chat_id": chat_id}, {"$set": chat_modes}, upsert=True)
         if not chat_modes.get('character', True):
-            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: Character spawning is disabled.")
             return False
         rarity_map = {
             1: "🟢 Common",
@@ -52,7 +49,6 @@ async def spawn_character(chat_id):
         allowed_rarities = [rarity_map[i] for i in range(1, 10)]
         all_characters = await collection.find({'rarity': {'$in': allowed_rarities}}).to_list(length=None)
         if not all_characters:
-            await app.send_message(log_chat_id, f"Spawning failed in chat {chat_id}: No characters found with allowed rarities.")
             return False
         character = random.choice(all_characters)
         spawned_characters[chat_id] = character
@@ -71,7 +67,25 @@ async def spawn_character(chat_id):
             reply_markup=markup,
             has_spoiler=True
         )
+        asyncio.create_task(remove_spawn_after_timeout(chat_id, character, timeout=300))
         return True
+
+async def remove_spawn_after_timeout(chat_id, character, timeout):
+    await asyncio.sleep(timeout)
+    if chat_id in spawned_characters and spawned_characters[chat_id] == character:
+        await app.send_message(
+            chat_id,
+            capsify(
+                f"❌ OOPS, THE WAIFU JUST ESCAPED! 🏃‍♀️\n\n"
+                f"👤 {capsify('NAME')}: {character['name']}\n"
+                f"📺 {capsify('ANIME')}: {character['anime']}\n"
+                f"⭐ {capsify('RARITY')}: {character['rarity']}\n"
+                f"🆔 {capsify('ID')}: {character['_id']}\n\n"
+                f"🌌 {capsify('BETTER LUCK NEXT TIME!')} 🌌"
+            ),
+            reply_to_message_id=None
+        )
+        del spawned_characters[chat_id]
 
 @app.on_message(filters.command("pick"))
 async def guess(_, message):
