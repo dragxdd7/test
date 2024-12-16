@@ -4,6 +4,7 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show, deduct
 from asyncio import Lock
+from .watchers import character_watcher
 
 message_counts = {}
 spawn_locks = {}
