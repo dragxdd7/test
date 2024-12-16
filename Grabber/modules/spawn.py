@@ -162,7 +162,7 @@ async def handle_name_button(_, callback_query):
     chat_id = callback_query.message.chat.id
     character_id = callback_query.data.split("_")[1]
     character = spawned_characters.get(chat_id)
-    if not character or str(character['_id']) != character_id:
+    if not character or str(character['id']) != character_id:
         await callback_query.answer("❌ Character not available anymore.", show_alert=True)
         return
     await callback_query.answer(f"👤 {character['name']}", show_alert=True)
