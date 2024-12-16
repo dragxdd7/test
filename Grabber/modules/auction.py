@@ -50,7 +50,7 @@ async def start_auction(chat_id):
             f"👤 {capsify('NAME')}: {character['name']}\n"
             f"📺 {capsify('ANIME')}: {character['anime']}\n"
             f"⭐ {capsify('RARITY')}: {character['rarity']}\n"
-            f"🆔 {capsify('ID')}: {character['_id']}\n\n"
+            f"🆔 {capsify('ID')}: {character['id']}\n\n"
             f"{capsify('USE /bid (AMOUNT) TO PLACE YOUR BID!')}\n"
             f"💰 {capsify('MINIMUM BID')}: 10000\n"
             f"⏳ {capsify('AUCTION LASTS FOR 60 SECONDS!')}"
