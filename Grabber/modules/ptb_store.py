@@ -29,10 +29,8 @@ async def get_user_bought(user_id: int):
     return x["data"] if x else None
 
 async def get_user_balance(user_id: int):
-    user = await show(user_id)
-    if user:
-        return user.get('balance', 0)
-    return 0
+    return await show(user_id)
+    
 
 @app.on_message(filters.command("store"))
 @block_dec
