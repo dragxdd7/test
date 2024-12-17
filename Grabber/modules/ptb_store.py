@@ -1,12 +1,21 @@
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
+from pyrogram import Client
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
-from . import app, db, add, deduct, show
-from .block import temp_block
+from Grabber import app, db, collection, user_collection
+from . import add, deduct, show
 
 # Database setup
 sdb = db.new_store
 user_db = db.bought
+
+async def sales_list_callback(query: CallbackQuery):
+    data = query.data
+    if data.startswith("saleslist:close"):
+        end_user = int(data.split('_')[1])
+        if end_user == query.from_user.id:
+            await query.message.delete()
+        else:
+            await query.answer('This is not for you baka.', show_alert=True)
 
 # Helper functions
 async def set_today_characters(user_id: int, data):
@@ -17,18 +26,23 @@ async def get_today_characters(user_id: int):
     return x["data"] if x else None
 
 async def clear_today(user_id):
-    await sdb.delete_one({"user_id": user_id})
+    await sdb.delete_one({'user_id': user_id})
+
+async def get_image_and_caption(id: int):
+    char = await get_character(id)
+    price = char['price']  # Get the price directly from the database
+    form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
+    return char['img_url'], form.format(char['name'], char['anime'], char['id'], price)
+
+def today():
+    return str(dt.now()).split()[0]
 
 async def get_character(id: int):
-    return await db.collection.find_one({"id": id})
+    return await collection.find_one({'id': id})
 
-async def get_character_ids():
-    all_characters = await db.collection.find({}).to_list(length=None)
-    return [x["id"] for x in all_characters]
-
-async def get_character_price(id: int):
-    char = await get_character(id)
-    return char.get("price", 0)  # Fetch price from the database
+async def get_character_ids() -> list:
+    all_characters = await collection.find({}).to_list(length=None)
+    return [x['id'] for x in all_characters]
 
 async def update_user_bought(user_id: int, data):
     await user_db.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
@@ -37,14 +51,15 @@ async def get_user_bought(user_id: int):
     x = await user_db.find_one({"user_id": user_id})
     return x["data"] if x else None
 
-def today():
-    return str(dt.now()).split()[0]
+async def get_user_balance(user_id: int):
+    user = await show(user_id)
+    if user:
+        return user.get('balance', 0)
+    return 0
 
 @app.on_message(filters.command("store"))
-async def shop(_, message):
+async def shop(client: Client, message: Message):
     user_id = message.from_user.id
-    if temp_block(user_id):
-        return
     x = await get_today_characters(user_id)
 
     if not x or x[0] != today():
@@ -54,76 +69,109 @@ async def shop(_, message):
     else:
         ch_ids = x[1]
 
-    char = await get_character(ch_ids[0])
-    photo, price = char["img_url"], await get_character_price(ch_ids[0])
-    caption = f"ɴᴀᴍᴇ: {char['name']}\nᴀɴɪᴍᴇ: {char['anime']}\nɪᴅ: {char['id']}\nᴘʀɪᴄᴇ: {price} coins\n"
+    photo, caption = await get_image_and_caption(ch_ids[0])
 
     markup = IKM([
-        [IKB("⬅️", f"pg3_{user_id}"), IKB("buy 🔖", f"buya_{user_id}"), IKB("➡️", f"pg2_{user_id}")],
-        [IKB("close 🗑️", f"saleslist:close_{user_id}")]
+        [IKB("⬅️", callback_data=f"pg3_{user_id}"), IKB("buy 🔖", callback_data=f"buya_{user_id}"), IKB("➡️", callback_data=f"pg2_{user_id}")],
+        [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
     ])
 
     await message.reply_photo(photo, caption=f"__PAGE 1__\n\n{caption}", reply_markup=markup)
 
-@app.on_callback_query(filters.regex(r"saleslist:close_(\d+)"))
-async def sales_list_close(_, query):
-    user_id = int(query.matches[0].group(1))
-    if user_id == query.from_user.id:
-        await query.message.delete()
-    else:
-        await query.answer("This is not for you baka.", show_alert=True)
+@app.on_callback_query()
+async def store_callback_handler(client: Client, query: CallbackQuery):
+    query_data = query.data
+    spl = query_data.split('_')
+    origin = int(spl[1])
+    user_id = query.from_user.id
 
-@app.on_callback_query(filters.regex(r"buy([a-c])_(\d+)"))
-async def handle_buy(_, query):
-    char_index = {"a": 0, "b": 1, "c": 2}[query.data[3]]
-    user_id = int(query.data.split("_")[1])
-    if query.from_user.id != user_id:
+    user = await user_collection.find_one({'id': user_id})
+    if not user or origin != user_id:
         return await query.answer("This is not for you baka.", show_alert=True)
 
-    y = await get_today_characters(user_id)
-    char_id = y[1][char_index]
-    price = await get_character_price(char_id)
+    if query_data.startswith("buy"):
+        await handle_buy(query, spl[0], origin, user_id)
+    elif query_data.startswith("pg"):
+        await handle_page(query, int(query_data[2]), origin, user_id)
+    elif query_data.startswith("charcnf/"):
+        await handle_char_confirm(query, spl[0].split("/")[1], user_id)
+    elif query_data.startswith("charback/"):
+        await handle_char_back(query, spl[0].split("/")[1], user_id)
+
+async def handle_buy(query, buy_type, origin, user_id):
+    char_index = "abc".index(buy_type[-1])
+    y = await get_today_characters(origin)
+    char = y[1][char_index]
     user_balance = await show(user_id)
 
-    if user_balance < price:
+    if user_balance <= 0:
         return await query.answer("You do not have enough coins", show_alert=True)
 
+    await query.answer()
     await query.edit_message_caption(
         f"{query.message.caption}\n\n__Click on button below to purchase!__",
         reply_markup=IKM([
-            [IKB("purchase 💵", f"charcnf/{char_id}_{user_id}")],
-            [IKB("ʙᴀᴄᴋ 🔙", f"charback/{char_id}_{user_id}")]
+            [IKB("purchase 💵", callback_data=f"charcnf/{char}_{user_id}")],
+            [IKB("ʙᴀᴄᴋ 🔙", callback_data=f"charback/{char}_{user_id}")]
         ])
     )
 
-@app.on_callback_query(filters.regex(r"charcnf/(\d+)_(\d+)"))
-async def handle_char_confirm(_, query):
-    char_id, user_id = map(int, query.data.split("/")[1].split("_"))
-    if query.from_user.id != user_id:
-        return await query.answer("This is not for you baka.", show_alert=True)
+async def handle_page(query, page, origin, user_id):
+    if str(query.message.date).split()[0] != today():
+        return await query.answer("Query expired, use /store to continue!", show_alert=True)
 
-    char = await get_character(char_id)
-    price = await get_character_price(char_id)
+    await query.answer()
+    y = await get_today_characters(origin)
+    char = y[1][page - 1]
+    photo, caption = await get_image_and_caption(char)
+    nav_buttons = ["pg1", "pg2", "pg3", 'pg1']
+    buy_buttons = ["buya", "buyb", "buyc", 'buya']
+
+    await query.edit_message_media(
+        media=IMP(photo, caption=f"PAGE {page}\n\n{caption}"),
+        reply_markup=IKM([
+            [IKB("⬅️", callback_data=f"{nav_buttons[page-2]}_{user_id}"), IKB("buy 🔖", callback_data=f"{buy_buttons[page-1]}_{user_id}"), IKB("➡️", callback_data=f"{nav_buttons[page]}_{user_id}")],
+            [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
+        ])
+    )
+
+async def handle_char_confirm(query, char, user_id):
+    det = await get_character(char)
+    price = det['price']  # Get price from database
     user_balance = await show(user_id)
 
-    if user_balance < price:
+    if price > user_balance:
         return await query.answer("You do not have enough coins", show_alert=True)
 
     bought = await get_user_bought(user_id)
-    if bought and bought[0] == today() and char_id in bought[1]:
+    if bought and bought[0] == today() and char in bought[1]:
         return await query.answer("You've already bought it!", show_alert=True)
 
-    await update_user_bought(user_id, [today(), (bought[1] if bought and bought[0] == today() else []) + [char_id]])
-    await deduct(user_id, price)
     await query.edit_message_caption(
-        f"You've successfully purchased {char['name']} for {price} coins.",
-        reply_markup=IKM([[IKB("ʙᴀᴄᴋ 🔙", f"charback/{char_id}_{user_id}")]])
+        f"You've successfully purchased {det['name']} for {price} coins.",
+        reply_markup=IKM([[IKB("back 🔙", callback_data=f"charback/{char}_{user_id}")]])
     )
+
+    new_bought = bought[1] if bought and bought[0] == today() else []
+    new_bought.append(char)
+    await update_user_bought(user_id, [today(), new_bought])
+    await deduct(user_id, price)
+    await user_collection.update_one({'id': user_id}, {'$addToSet': {'characters': det}})
     await query.answer("Character bought successfully!", show_alert=True)
 
-async def sales_list_callback(_, query):
-    user_id = int(query.matches[0].group(1))
-    if user_id == query.from_user.id:
-        await query.message.delete()
-    else:
-        await query.answer("This is not for you baka.", show_alert=True)
+async def handle_char_back(query, char, user_id):
+    await query.answer()
+    y = await get_today_characters(user_id)
+    ch_ids = y[1]
+    ind = ch_ids.index(char) + 1
+    nav_buttons = {1: [3, 2], 2: [1, 3], 3: [2, 1]}
+    buy_buttons = {1: "a", 2: "b", 3: "c"}
+
+    photo, caption = await get_image_and_caption(char)
+    await query.edit_message_caption(
+        f"__PAGE {ind}__\n\n{caption}",
+        reply_markup=IKM([
+            [IKB("⬅️", callback_data=f"pg{nav_buttons[ind][0]}_{user_id}"), IKB("buy 🔖", callback_data=f"buy{buy_buttons[ind]}_{user_id}"), IKB("➡️", callback_data=f"pg{nav_buttons[ind][1]}_{user_id}")],
+            [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
+        ])
+    )
