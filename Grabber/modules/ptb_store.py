@@ -120,3 +120,10 @@ async def handle_char_confirm(_, query):
         reply_markup=IKM([[IKB("ʙᴀᴄᴋ 🔙", f"charback/{char_id}_{user_id}")]])
     )
     await query.answer("Character bought successfully!", show_alert=True)
+
+async def sales_list_callback(_, query):
+    user_id = int(query.matches[0].group(1))
+    if user_id == query.from_user.id:
+        await query.message.delete()
+    else:
+        await query.answer("This is not for you baka.", show_alert=True)
