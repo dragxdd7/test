@@ -120,5 +120,3 @@ async def handle_char_confirm(_, query):
         reply_markup=IKM([[IKB("ʙᴀᴄᴋ 🔙", f"charback/{char_id}_{user_id}")]])
     )
     await query.answer("Character bought successfully!", show_alert=True)
-
-app.run()
