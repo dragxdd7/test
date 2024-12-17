@@ -1,4 +1,4 @@
-from pyrogram import Client, filters
+"""from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
 from Grabber import app, db, collection, user_collection
@@ -175,3 +175,4 @@ async def handle_char_back(query, char, user_id):
             [IKB("close 🗑️", callback_data=f"saleslist:close_{user_id}")]
         ])
     )
+"""
