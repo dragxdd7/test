@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
 from . import app, db, add, deduct, show
-from .block import and temp_block
+from .block import temp_block
 
 # Database setup
 sdb = db.new_store
