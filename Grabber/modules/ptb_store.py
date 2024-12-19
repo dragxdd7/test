@@ -182,4 +182,4 @@ async def handle_char_back(query, char, user_id):
         ])
     )
 
-application.add_handler(CommandHandler("store", shop))
+application.add_handler(CommandHandler("store", shop, block=False))
