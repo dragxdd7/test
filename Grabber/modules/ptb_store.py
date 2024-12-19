@@ -19,7 +19,6 @@ async def sales_list_callback(update: Update, context: CallbackContext):
             await query.message.delete()
         else:
             await query.answer('This is not for you baka.', show_alert=True)
-        return
 
 async def set_today_characters(user_id: int, data):
     await sdb.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
