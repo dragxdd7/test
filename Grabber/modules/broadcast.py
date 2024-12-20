@@ -42,7 +42,7 @@ async def broadcast(_, message):
         except Exception:
             fail_count += 1
 
-        await asyncio.sleep(random.uniform(3, 6))
+        await asyncio.sleep(random.uniform(1, 2))
 
     await message.reply_text(capsify(f"✅ Broadcast completed!\n"
                                      f"Success: {success_count}\n"
