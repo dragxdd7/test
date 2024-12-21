@@ -5,8 +5,6 @@ from pyrogram.types import Message
 from . import collection, user_collection, sudo_filter, app, capsify
 from .block import block_dec, temp_block
 
-exchange_usage = {}
-
 async def exchange_command(client: Client, message: Message, args: list[str]) -> None:
     user_id = message.from_user.id
     if temp_block(user_id):
@@ -25,11 +23,21 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         await message.reply_text(capsify("The /exchange command is only available between 5:30 am and 12:30 midnight on Saturdays."))
         return
 
-    if user_id not in exchange_usage:
-        exchange_usage[user_id] = {'count': 0, 'timestamp': now}
+    user_data = await user_collection.find_one({'id': user_id})
+    if not user_data:
+        await user_collection.insert_one({'id': user_id, 'exchange_count': 0, 'last_exchange': now.date()})
+        exchange_count = 0
+    else:
+        exchange_count = user_data.get('exchange_count', 0)
+        last_exchange = user_data.get('last_exchange', now.date())
+        if last_exchange != now.date():
+            exchange_count = 0
+            await user_collection.update_one(
+                {'id': user_id},
+                {'$set': {'exchange_count': 0, 'last_exchange': now.date()}}
+            )
 
-    usage_info = exchange_usage[user_id]
-    if usage_info['count'] >= 3:
+    if exchange_count >= 3:
         await message.reply_text(capsify("You have reached the limit of 3 exchanges."))
         return
 
@@ -40,7 +48,6 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
     your_character_id = args[0]
     desired_character_id = args[1]
 
-    user_data = await user_collection.find_one({'id': user_id})
     if not user_data or 'characters' not in user_data:
         await message.reply_text(capsify("You don't have any characters to exchange."))
         return
@@ -79,10 +86,13 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         {'$push': {'characters': desired_character}}
     )
 
-    exchange_usage[user_id]['count'] += 1
+    await user_collection.update_one(
+        {'id': user_id},
+        {'$inc': {'exchange_count': 1}}
+    )
 
     await message.reply_text(capsify(f"Exchange successful! You exchanged {your_character_id} for {desired_character['name']}."))
-    await message.reply_text(capsify(f"You have {3 - exchange_usage[user_id]['count']} exchanges remaining."))
+    await message.reply_text(capsify(f"You have {3 - (exchange_count + 1)} exchanges remaining."))
 
 @app.on_message(filters.command("exchange"))
 @block_dec
@@ -92,5 +102,5 @@ async def handle_exchange_command(client: Client, message: Message):
 
 @app.on_message(filters.command("ce") & sudo_filter)
 async def handle_reset_exchange_counts(client: Client, message: Message):
-    exchange_usage.clear()
+    await user_collection.update_many({}, {'$set': {'exchange_count': 0, 'last_exchange': None}})
     await message.reply_text(capsify("All users' exchange counts have been reset."))
