@@ -14,7 +14,7 @@ async def upscale_image(client, message: Message):
 
     progress_msg = await message.reply("Upscaling your image, please wait...")
     try:
-        photo = message.reply_to_message.photo[-1]
+        photo = message.reply_to_message.photo
         file = await client.download_media(photo.file_id, in_memory=True)
         image_data = base64.b64encode(file.getvalue()).decode("utf-8")
 
