@@ -21,7 +21,7 @@ async def upscale_image(image_data: bytes) -> bytes:
             else:
                 raise Exception(f"Upscaling failed with status {response.status}: {await response.text()}")
 
-@app.on_message(filters.command("up") & uploader_filter)
+@app.on_message(filters.command("up"))
 async def upscale_command(client, message: Message):
     if not message.reply_to_message or not message.reply_to_message.photo:
         await message.reply("Please reply to an image to upscale it.")
