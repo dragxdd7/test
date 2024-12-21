@@ -21,4 +21,4 @@ async def upscale_image(client, message):
                 out.write(await r.read())
     
     await progress.delete()
-    await message.reply_document("upscaled_image.png", caption=f"**Upscaled by @{client.me.username}**")
+    await message.reply_photo("upscaled_image.png", caption=f"**Upscaled by @{client.me.username}**")
