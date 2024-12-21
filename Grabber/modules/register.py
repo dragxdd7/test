@@ -4,10 +4,10 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import user_collection, capsify
 
-def generate_unique_password(user_id):
+async def generate_unique_password(user_id):
     while True:
         password = f"{user_id}_" + ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        existing_user = await user_collection.find_one({'password': password})
+        existing_user = await user_collection.find_one({'password': password})  # Use await here
         if not existing_user:
             return password
 
@@ -29,7 +29,7 @@ async def register_private(client, message):
         await message.reply_text(capsify("You already have a password."))
         return
 
-    password = generate_unique_password(user_id)
+    password = await generate_unique_password(user_id)  # Await the async function
     await user_collection.update_one(
         {'id': user_id},
         {'$set': {'password': password}},
