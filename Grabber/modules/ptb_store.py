@@ -1,23 +1,24 @@
 from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from datetime import datetime as dt
-from Grabber import db, collection, user_collection
-from . import add, deduct, show, application 
-
+import random
+from Grabber import application, db, collection, user_collection
+from . import add, deduct, show
 
 sdb = db.new_store
 user_db = db.bought
 
-async def sales_list_callback(update: Update, context):
-    message = update.message
-    data = message.text
+async def sales_list_callback(update: Update, context: CallbackContext):
+    query = update.callback_query
+    data = query.data
 
     if data.startswith("saleslist:close"):
         end_user = int(data.split('_')[1])
-        if end_user == message.from_user.id:
-            await message.delete()
+        if end_user == update.effective_user.id:
+            await query.answer()
+            await query.message.delete()
         else:
-            await message.reply('This is not for you baka.', show_alert=True)
+            await query.answer('This is not for you baka.', show_alert=True)
         return
 
 async def set_today_characters(user_id: int, data):
@@ -32,7 +33,7 @@ async def clear_today(user_id):
 
 async def get_image_and_caption(id: int):
     char = await get_character(id)
-    price = char.get('price', 0)  # Fetching price from the character data
+    price = random.randint(60000, 90000)
     form = 'ɴᴀᴍᴇ : {}\n\nᴀɴɪᴍᴇ : {}\n\nɪᴅ: {}\n\nᴘʀɪᴄᴇ : {} coins\n'
     return char['img_url'], form.format(char['name'], char['anime'], char['id'], price)
 
@@ -59,21 +60,16 @@ async def get_user_balance(user_id: int):
         return user.get('balance', 0)
     return 0
 
-async def shop(update: Update, context):
+async def shop(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     x = await get_today_characters(user_id)
 
     if not x or x[0] != today():
         ids = await get_character_ids()
-        if len(ids) < 3:
-            return await update.message.reply("Not enough characters available.")
         ch_ids = random.sample(ids, 3)
         await set_today_characters(user_id, [today(), ch_ids])
     else:
         ch_ids = x[1]
-
-    if not ch_ids:
-        return await update.message.reply("No characters available today.")
 
     ch_info = [await get_character(cid) for cid in ch_ids]
     photo, caption = await get_image_and_caption(ch_ids[0])
@@ -85,15 +81,10 @@ async def shop(update: Update, context):
 
     await update.message.reply_photo(photo, caption=f"__PAGE 1__\n\n{caption}", reply_markup=markup)
 
-
-async def store_callback_handler(update: Update, context):
+async def store_callback_handler(update: Update, context: CallbackContext):
     query = update.callback_query
     query_data = query.data
     spl = query_data.split('_')
-
-    if len(spl) < 2:
-        return await query.answer("Invalid callback data.", show_alert=True)
-
     origin = int(spl[1])
     user_id = query.from_user.id
 
@@ -104,15 +95,15 @@ async def store_callback_handler(update: Update, context):
     if query_data.startswith("buy"):
         await handle_buy(query, spl[0], origin, user_id)
     elif query_data.startswith("pg"):
-        await handle_page(query, int(spl[2]) if len(spl) > 2 else 1, origin, user_id)
+        await handle_page(query, int(query_data[2]), origin, user_id)
     elif query_data.startswith("charcnf/"):
         await handle_char_confirm(query, spl[0].split("/")[1], user_id)
     elif query_data.startswith("charback/"):
         await handle_char_back(query, spl[0].split("/")[1], user_id)
     elif query_data == 'terminate':
-        await terminate(query, context)
+        await terminate(update, context)
     elif query_data == 'startwordle':
-        await start_ag(query, context)
+        await start_ag(update, context)
 
 async def handle_buy(query, buy_type, origin, user_id):
     char_index = "abc".index(buy_type[-1])
@@ -153,7 +144,7 @@ async def handle_page(query, page, origin, user_id):
 
 async def handle_char_confirm(query, char, user_id):
     det = await get_character(char)
-    price = det.get('price', 0)  # Fetching price from the character data
+    price = random.randint(60000, 90000)
     user_balance = await show(user_id)
 
     if price > user_balance:
@@ -198,6 +189,5 @@ async def handle_char_back(query, char, user_id):
         ])
     )
 
-application.add_handler(CommandHandler("shop", shop, block=False))
-application.add_handler(CallbackQueryHandler(store_callback_handler))
-
+application.add_handler(CommandHandler("store", shop, block=False))
+application.add_handler(CallbackQueryHandler(store_callback_handler, pattern=r'.*'))
