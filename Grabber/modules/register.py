@@ -2,7 +2,7 @@ import random
 import string
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import user_collection, capsify
+from . import user_collection, capsify, app
 
 async def generate_unique_password(user_id):
     while True:
