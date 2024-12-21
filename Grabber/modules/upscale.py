@@ -3,7 +3,6 @@ import base64
 from pyrogram import filters
 from pyrogram.types import Message
 from . import app
-from .block import block_dec
 
 API_URL = "https://lexica.qewertyy.dev/upscale"
 
@@ -15,8 +14,9 @@ async def upscale_image(client, message: Message):
 
     progress_msg = await message.reply("Upscaling your image, please wait...")
     try:
-        photo = await message.reply_to_message.photo[-1].download(in_memory=True)
-        image_data = base64.b64encode(photo.getvalue()).decode("utf-8")
+        photo = message.reply_to_message.photo[-1]
+        file = await client.download_media(photo.file_id, in_memory=True)
+        image_data = base64.b64encode(file.getvalue()).decode("utf-8")
 
         async with aiohttp.ClientSession() as session:
             response = await session.post(
