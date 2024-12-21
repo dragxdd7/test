@@ -3,7 +3,7 @@ import io
 from pyrogram import filters
 from pyrogram.types import Message
 from . import app
-from .block import uploader_filter
+from .block import block_dec
 
 API_URL = "https://lexica.qewertyy.dev/upscale"
 MODEL_ID = 37
