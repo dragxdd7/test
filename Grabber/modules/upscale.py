@@ -10,16 +10,13 @@ async def upscale_image(client, message):
     
     progress = await message.reply("Upscaling your image, please wait...")
     
-    # Download the image using the file_id of the photo
     image = await client.download_media(reply.photo.file_id)
     
-    # Encode the image to base64
     with open(image, "rb") as f:
         encoded = base64.b64encode(f.read()).decode("utf-8")
     
     async with aiohttp.ClientSession() as s:
         async with s.post("https://lexica.qewertyy.dev/upscale", data={"image_data": encoded}) as r:
-            # Save the upscaled image to a file
             with open("upscaled_image.png", "wb") as out:
                 out.write(await r.read())
     
