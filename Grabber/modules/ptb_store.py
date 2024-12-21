@@ -85,6 +85,10 @@ async def store_callback_handler(update: Update, context):
     query = update.callback_query
     query_data = query.data
     spl = query_data.split('_')
+
+    if len(spl) < 2:
+        return await query.answer("Invalid callback data.", show_alert=True)
+
     origin = int(spl[1])
     user_id = query.from_user.id
 
@@ -95,7 +99,7 @@ async def store_callback_handler(update: Update, context):
     if query_data.startswith("buy"):
         await handle_buy(query, spl[0], origin, user_id)
     elif query_data.startswith("pg"):
-        await handle_page(query, int(query_data[2]), origin, user_id)
+        await handle_page(query, int(spl[2]) if len(spl) > 2 else 1, origin, user_id)
     elif query_data.startswith("charcnf/"):
         await handle_char_confirm(query, spl[0].split("/")[1], user_id)
     elif query_data.startswith("charback/"):
