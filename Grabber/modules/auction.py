@@ -2,7 +2,7 @@ import asyncio
 import random
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from . import app, collection, user_collection, capsify, druby, sruby
+from . import app, collection, user_collection, capsify, druby, sruby, group_user_totals_collection
 from .watchers import auction_watcher
 
 DEFAULT_MODE_SETTINGS = {
@@ -21,7 +21,7 @@ async def check_auction_trigger(_, message):
     if not chat_modes:
         chat_modes = DEFAULT_MODE_SETTINGS.copy()
         chat_modes["chat_id"] = chat_id
-        await user_collection.insert_one(chat_modes)
+        await group_user_totals_collection.insert_one(chat_modes)
     if not chat_modes.get('auction', True):
         return
     auction_message_counts[chat_id] = auction_message_counts.get(chat_id, 0) + 1
