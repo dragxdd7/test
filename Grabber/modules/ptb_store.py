@@ -65,10 +65,15 @@ async def shop(update: Update, context):
 
     if not x or x[0] != today():
         ids = await get_character_ids()
+        if len(ids) < 3:
+            return await update.message.reply("Not enough characters available.")
         ch_ids = random.sample(ids, 3)
         await set_today_characters(user_id, [today(), ch_ids])
     else:
         ch_ids = x[1]
+
+    if not ch_ids:
+        return await update.message.reply("No characters available today.")
 
     ch_info = [await get_character(cid) for cid in ch_ids]
     photo, caption = await get_image_and_caption(ch_ids[0])
