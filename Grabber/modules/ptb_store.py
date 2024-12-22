@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
 import random
-from . import app, db, add, deduct, show, collection, user_collection
+from . import app, db, add, deduct, show, collection, user_collection, capsify
 
 sdb = db.new_store
 user_db = db.bought
@@ -10,11 +10,6 @@ user_db = db.bought
 
 def today():
     return str(dt.now()).split()[0]
-
-
-def capsify(text: str) -> str:
-    return text.upper()
-
 
 async def get_character(id: int):
     character = await collection.find_one({"id": id})
