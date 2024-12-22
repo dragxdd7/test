@@ -5,7 +5,7 @@ from .cmode import cmode_callback
 from Grabber.utils.button import button_click as bc
 #from .harem import harem_callback as hc
 from .info import check
-from .sgift import confirm_gift, cancel_gift
+#from .sgift import confirm_gift, cancel_gift
 from .trade import confirm_trade, cancel_trade
 from .rps import rps_button 
 #from .start import button
@@ -19,14 +19,10 @@ async def cbq(update: Update, context: CallbackContext):
         await check(update, context)
     elif data.startswith('cmode'):
         await cmode_callback(update, context)
-    elif data.startswith('cancel_gift'):
-        await cancel_gift(update, context)
     elif data.startswith('confirm_trade'):
         await confirm_trade(update, context)
     elif data.startswith('cancel_trade'):
         await cancel_trade(update, context)
-    elif data.startswith('confirm_gift'):
-        await confirm_gift(update, context)
     elif data in ('rock', 'paper', 'scissors', 'play_again'):
         await rps_button(update, context)
         
