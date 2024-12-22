@@ -13,9 +13,9 @@ def today():
 
 
 async def get_character(id: int):
-    character = await db.collection.find_one({"id": id})
+    character = await collection.find_one({"id": id})
     if not character:
-        character = await db.collection.find_one({"id": str(id)})
+        character = await collection.find_one({"id": str(id)})
     if not character:
         raise ValueError(f"Character with ID {id} not found.")
     return character
