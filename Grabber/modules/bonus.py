@@ -69,7 +69,7 @@ async def bonus_handler(_, message):
 @app.on_callback_query(filters.regex(r"^bonus_"))
 async def bonus_claim_handler(_, query):
     _, bonus_type, user_id = query.data.split("_")
-    if user_id != query.from_user.id:
+    if int(user_id) != query.from_user.id:
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
 
     bonus_status = await get_bonus_status(user_id)
