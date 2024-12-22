@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
 import random
-from . import app, db, add, deduct, show
+from . import app, db, add, deduct, show, collection, user_collection
 
 sdb = db.new_store
 user_db = db.bought
@@ -23,7 +23,7 @@ async def get_character(id: int):
 
 async def get_available_characters():
     excluded_rarities = ["💋 Aura", "❄️ Winter"]
-    return await db.collection.find({"rarity": {"$nin": excluded_rarities}}).to_list(None)
+    return await collection.find({"rarity": {"$nin": excluded_rarities}}).to_list(None)
 
 
 async def get_user_session(user_id: int):
@@ -159,11 +159,22 @@ async def confirm_handler(_, query):
 
     bought = await get_user_bought(user_id)
     if bought and bought[0] == today() and char_id in bought[1]:
-        return await query.answer("You already own this character!", show_alert=True)
+        return await query.answer("You already bought this character!", show_alert=True)
 
     await deduct(user_id, char["price"])
     updated_bought = [today(), (bought[1] + [char_id]) if bought else [char_id]]
     await update_user_bought(user_id, updated_bought)
+
+    user_collection_entry = await user_collection.find_one({"user_id": user_id})
+    if user_collection_entry:
+        await user_collection.update_one(
+            {"user_id": user_id},
+            {"$addToSet": {"characters": char}}
+        )
+    else:
+        await user_collection.insert_one(
+            {"user_id": user_id, "characters": [char]}
+        )
 
     await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
     await query.message.delete()
