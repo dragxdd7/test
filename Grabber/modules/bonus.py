@@ -85,7 +85,7 @@ async def bonus_claim_handler(_, query):
     elif bonus_type == "weekly":
         if bonus_status["weekly"] and bonus_status["weekly"] > today:
             return await query.answer(capsify("You have already claimed your weekly bonus!"), show_alert=True)
-        print(f"Adding {amount} coins to user {user_id}")
+        print(f"Adding  coins to user {user_id}")
         await add(user_id, 700000)
         await update_bonus_status(user_id, "weekly")
         await query.answer(capsify("Successfully claimed your weekly bonus of 700,000 coins!"), show_alert=True)
