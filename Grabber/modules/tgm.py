@@ -21,6 +21,6 @@ def ul(_, message):
             img_url = f"https://telegra.ph{response[0]['src']}"
             i.edit(f'Your Telegraph [link]({img_url})', disable_web_page_preview=True)
         else:
-            i.edit("Upload failed. Telegraph did not return a valid response.")
+            i.edit(f"Unexpected response: {response}")
     except Exception as e:
-        i.edit(f"An error occurred: {str(e)}")
+        i.edit(f"An error occurred: {e}")
