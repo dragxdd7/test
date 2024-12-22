@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, user_collection, add
 
-bonus_db = db.bo
+bonus_db = db.b
 
 
 def get_next_day():
@@ -36,7 +36,7 @@ async def update_bonus_status(user_id, bonus_type):
 
 @app.on_message(filters.command("bonus"))
 async def bonus_handler(_, message):
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
     user_name = message.from_user.first_name or "User"
     today = datetime.now()
     current_day = today.strftime("%A").lower()
@@ -69,7 +69,7 @@ async def bonus_handler(_, message):
 @app.on_callback_query(filters.regex(r"^bonus_"))
 async def bonus_claim_handler(_, query):
     _, bonus_type, user_id = query.data.split("_")
-    if user_id != str(query.from_user.id):
+    if user_id != query.from_user.id:
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
 
     bonus_status = await get_bonus_status(user_id)
