@@ -86,7 +86,7 @@ async def store_handler(_, message):
 
     markup = IKM([
         [IKB("⬅️", callback_data=f"page_{user_id}_3"), IKB("Buy 🔖", callback_data=f"buy_{user_id}_0"), IKB("➡️", callback_data=f"page_{user_id}_2")],
-        [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
+        [IKB("Close 🗑️", callback_data=f"clos_{user_id}")]
     ])
 
     await message.reply_photo(img, caption=f"**Page 1/3**\n\n{caption}", reply_markup=markup)
@@ -119,7 +119,7 @@ async def page_handler(_, query):
             IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}"),
             IKB("➡️", callback_data=f"page_{user_id}_{next_page}")
         ],
-        [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
+        [IKB("Close 🗑️", callback_data=f"clos_{user_id}")]
     ])
     await query.edit_message_media(IMP(img, caption=f"**Page {page}/3**\n\n{caption}"), reply_markup=markup)
 
@@ -194,7 +194,7 @@ async def confirm_handler(_, query):
     await page_handler(_, query)  # Navigate back to the store page
 
 
-@app.on_callback_query(filters.regex(r"^close_"))
+@app.on_callback_query(filters.regex(r"^clos_"))
 async def close_handler(_, query):
     _, user_id = query.data.split("_")
     if int(user_id) == query.from_user.id:
