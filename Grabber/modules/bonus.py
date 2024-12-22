@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, users_collection
 
-bonus_db = db.bonus
+bonus_db = db.bonu
 
 
 def get_next_day():
@@ -34,7 +34,7 @@ async def update_bonus_status(user_id: int, bonus_type: str):
 
 
 async def add(user_id: int, amount: int):
-    user = await db.users_collection.find_one({"user_id": user_id})
+    user = await users_collection.find_one({"user_id": user_id})
     if not user:
         await users_collection.insert_one({"user_id": user_id, "balance": str(amount)})
     else:
