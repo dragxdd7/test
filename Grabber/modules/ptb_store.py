@@ -12,12 +12,16 @@ def today():
     return str(dt.now()).split()[0]
 
 
+def capsify(text: str) -> str:
+    return text.upper()
+
+
 async def get_character(id: int):
     character = await collection.find_one({"id": id})
     if not character:
         character = await collection.find_one({"id": str(id)})
     if not character:
-        raise ValueError(f"Character with ID {id} not found.")
+        raise ValueError(capsify(f"character with id {id} not found."))
     return character
 
 
@@ -55,14 +59,16 @@ async def get_user_bought(user_id: int):
 
 async def format_character_info(character):
     if not character:
-        raise ValueError("Invalid character data.")
+        raise ValueError(capsify("invalid character data."))
     return (
         character["img_url"],
-        f"**Name:** {character['name']}\n"
-        f"**Anime:** {character['anime']}\n"
-        f"**ID:** {character['id']}\n"
-        f"**Rarity:** {character['rarity']}\n"
-        f"**Price:** {character['price']} coins",
+        capsify(
+            f"**Name:** {character['name']}\n"
+            f"**Anime:** {character['anime']}\n"
+            f"**ID:** {character['id']}\n"
+            f"**Rarity:** {character['rarity']}\n"
+            f"**Price:** {character['price']} coins"
+        ),
     )
 
 
@@ -81,26 +87,30 @@ async def store_handler(_, message):
         char = await get_character(selected_ids[0])
         img, caption = await format_character_info(char)
     except ValueError as e:
-        return await message.reply_text(f"Error: {e}")
+        return await message.reply_text(capsify(f"error: {e}"))
 
     markup = IKM([
-        [IKB("⬅️", callback_data=f"page_{user_id}_3"), IKB("Buy 🔖", callback_data=f"buy_{user_id}_0"), IKB("➡️", callback_data=f"page_{user_id}_2")],
-        [IKB("Close 🗑️", callback_data=f"clos_{user_id}")]
+        [
+            IKB(capsify("⬅️"), callback_data=f"page_{user_id}_3"),
+            IKB(capsify("Buy 🔖"), callback_data=f"buy_{user_id}_0"),
+            IKB(capsify("➡️"), callback_data=f"page_{user_id}_2")
+        ],
+        [IKB(capsify("Close 🗑️"), callback_data=f"clos_{user_id}")]
     ])
 
-    await message.reply_photo(img, caption=f"**Page 1/3**\n\n{caption}", reply_markup=markup)
+    await message.reply_photo(img, caption=capsify(f"**Page 1/3**\n\n{caption}"), reply_markup=markup)
 
 
 @app.on_callback_query(filters.regex(r"^page_"))
 async def page_handler(_, query):
     _, user_id, page = query.data.split("_")
     if int(user_id) != query.from_user.id:
-        return await query.answer("This is not for you, baka!", show_alert=True)
+        return await query.answer(capsify("this is not for you, baka!"), show_alert=True)
 
     user_id, page = int(user_id), int(page)
     session = await get_user_session(user_id)
     if not session or session[0] != today():
-        return await query.answer("Session expired! Use /store to refresh.", show_alert=True)
+        return await query.answer(capsify("session expired! use /store to refresh."), show_alert=True)
 
     prev_page = 3 if page == 1 else page - 1
     next_page = 1 if page == 3 else page + 1
@@ -110,24 +120,24 @@ async def page_handler(_, query):
         char = await get_character(char_id)
         img, caption = await format_character_info(char)
     except ValueError as e:
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(capsify(f"error: {e}"), show_alert=True)
 
     markup = IKM([
         [
-            IKB("⬅️", callback_data=f"page_{user_id}_{prev_page}"),
-            IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}"),
-            IKB("➡️", callback_data=f"page_{user_id}_{next_page}")
+            IKB(capsify("⬅️"), callback_data=f"page_{user_id}_{prev_page}"),
+            IKB(capsify("Buy 🔖"), callback_data=f"buy_{user_id}_{page - 1}"),
+            IKB(capsify("➡️"), callback_data=f"page_{user_id}_{next_page}")
         ],
-        [IKB("Close 🗑️", callback_data=f"clos_{user_id}")]
+        [IKB(capsify("Close 🗑️"), callback_data=f"clos_{user_id}")]
     ])
-    await query.edit_message_media(IMP(img, caption=f"**Page {page}/3**\n\n{caption}"), reply_markup=markup)
+    await query.edit_message_media(IMP(img, caption=capsify(f"**Page {page}/3**\n\n{caption}")), reply_markup=markup)
 
 
 @app.on_callback_query(filters.regex(r"^buy_"))
 async def buy_handler(_, query):
     _, user_id, char_index = query.data.split("_")
     if int(user_id) != query.from_user.id:
-        return await query.answer("This is not for you, baka!", show_alert=True)
+        return await query.answer(capsify("this is not for you, baka!"), show_alert=True)
 
     user_id, char_index = int(user_id), int(char_index)
     session = await get_user_session(user_id)
@@ -136,19 +146,19 @@ async def buy_handler(_, query):
     try:
         char = await get_character(char_id)
     except ValueError as e:
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(capsify(f"error: {e}"), show_alert=True)
 
     user_balance = await show(user_id)
     if user_balance < char["price"]:
-        return await query.answer("You don't have enough coins!", show_alert=True)
+        return await query.answer(capsify("you don't have enough coins!"), show_alert=True)
 
     markup = IKM([
-        [IKB("Confirm Purchase 💵", callback_data=f"con_{user_id}_{char_id}")],
-        [IKB("Cancel 🔙", callback_data=f"page_{user_id}_{char_index + 1}")]
+        [IKB(capsify("Confirm Purchase 💵"), callback_data=f"con_{user_id}_{char_id}")],
+        [IKB(capsify("Cancel 🔙"), callback_data=f"page_{user_id}_{char_index + 1}")]
     ])
 
     await query.edit_message_caption(
-        f"**Confirm Purchase**\n\n{char['name']} - {char['price']} coins",
+        capsify(f"**Confirm Purchase**\n\n{char['name']} - {char['price']} coins"),
         reply_markup=markup
     )
 
@@ -157,22 +167,22 @@ async def buy_handler(_, query):
 async def confirm_handler(_, query):
     _, user_id, char_id = query.data.split("_")
     if int(user_id) != query.from_user.id:
-        return await query.answer("This is not for you, baka!", show_alert=True)
+        return await query.answer(capsify("this is not for you, baka!"), show_alert=True)
 
     user_id, char_id = int(user_id), int(char_id)
 
     try:
         char = await get_character(char_id)
     except ValueError as e:
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(capsify(f"error: {e}"), show_alert=True)
 
     user_balance = await show(user_id)
     if user_balance < char["price"]:
-        return await query.answer("You don't have enough coins!", show_alert=True)
+        return await query.answer(capsify("you don't have enough coins!"), show_alert=True)
 
     bought = await get_user_bought(user_id)
     if bought and bought[0] == today() and char_id in bought[1]:
-        return await query.answer("You already bought this character!", show_alert=True)
+        return await query.answer(capsify("you already bought this character!"), show_alert=True)
 
     await deduct(user_id, char["price"])
     updated_bought = [today(), (bought[1] + [char_id]) if bought else [char_id]]
@@ -190,10 +200,10 @@ async def confirm_handler(_, query):
         )
 
     await query.edit_message_caption(
-        f"**Purchase Successful!**\n\nCharacter **{char['name']}** has been added to your collection.",
+        capsify(f"**Purchase Successful!**\n\nCharacter **{char['name']}** has been added to your collection."),
         reply_markup=None
     )
-    await query.answer("Purchase successful!", show_alert=True)
+    await query.answer(capsify("purchase successful!"), show_alert=True)
 
 
 @app.on_callback_query(filters.regex(r"^clos_"))
@@ -202,4 +212,4 @@ async def close_handler(_, query):
     if int(user_id) == query.from_user.id:
         await query.message.delete()
     else:
-        await query.answer("This is not for you, baka!", show_alert=True)
+        await query.answer(capsify("this is not for you, baka!"), show_alert=True)
