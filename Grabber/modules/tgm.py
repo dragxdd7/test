@@ -1,26 +1,37 @@
+import requests
 from pyrogram import filters
-from telegraph import Telegraph
 from . import app
 
-telegraph = Telegraph()
-telegraph.create_account(short_name="tgm_bot")
+
+def upload_to_catbox(file_path):
+    """Uploads a file to Catbox and returns the file URL."""
+    url = "https://catbox.moe/user/api.php"
+    with open(file_path, "rb") as file:
+        response = requests.post(
+            url,
+            data={"reqtype": "fileupload"},
+            files={"fileToUpload": file}
+        )
+    if response.status_code == 200:
+        return response.text.strip()
+    else:
+        raise Exception(f"Catbox upload failed: {response.text}")
 
 
-@app.on_message(filters.command('tgm'))
+@app.on_message(filters.command("tgm"))
 def ul(_, message):
     reply = message.reply_to_message
     if not reply or not reply.media:
         return message.reply("Please reply to an image or media to upload.")
 
-    i = message.reply("**Downloading....**")
+    i = message.reply("**Downloading...**")
     path = reply.download()
 
+    if not path:
+        return i.edit("Failed to download the file.")
+
     try:
-        response = telegraph.upload_file(path)
-        if isinstance(response, list) and len(response) > 0 and "src" in response[0]:
-            img_url = f"https://telegra.ph{response[0]['src']}"
-            i.edit(f'Your Telegraph [link]({img_url})', disable_web_page_preview=True)
-        else:
-            i.edit("Telegraph upload failed. Unsupported file or invalid response.")
+        file_url = upload_to_catbox(path)
+        i.edit(f'Your Catbox [link]({file_url})', disable_web_page_preview=True)
     except Exception as e:
-        i.edit(f"An error occurred: {e}")
+        i.edit(f"An error occurred: {str(e)}")
