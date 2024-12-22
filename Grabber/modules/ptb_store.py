@@ -1,42 +1,157 @@
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, WebAppInfo
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InputMediaPhoto as IMP
 from datetime import datetime as dt
 import random
-from Grabber import db, collection, app
+from . import app, db, add, deduct, show
 
 sdb = db.new_store
+user_db = db.bought
 
-async def set_today_characters(user_id: int, data):
-    await sdb.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
-
-async def get_today_characters(user_id: int):
-    x = await sdb.find_one({"user_id": user_id})
-    return x["data"] if x else None
-
-async def get_character_ids() -> list:
-    all_characters = await collection.find({}).to_list(length=None)
-    return [x['id'] for x in all_characters]
 
 def today():
     return str(dt.now()).split()[0]
 
-@app.on_message(filters.command("store"))
-async def shop(client, message):
-    user_id = message.from_user.id
-    x = await get_today_characters(user_id)
-    if not x or x[0] != today():
-        ids = await get_character_ids()
-        ch_ids = random.sample(ids, 3)
-        await set_today_characters(user_id, [today(), ch_ids])
-    else:
-        ch_ids = x[1]
 
-    web_app_url = f"https://pickweb-858c2f90d460.herokuapp.com/{user_id}"  # Your web app URL
+async def get_character(id: int):
+    return await db.collection.find_one({"id": id})
 
-    # Create a WebApp button
-    await message.reply_text(
-        "Welcome to your store! Use the button below to explore today's characters.",
-        reply_markup=IKM([
-            [IKB("Open Store 🛒", web_app=WebAppInfo(url=web_app_url))]
-        ])
+
+async def get_available_characters():
+    excluded_rarities = ["💋 Aura", "❄️ Winter"]
+    return await db.collection.find({"rarity": {"$nin": excluded_rarities}}).to_list(None)
+
+
+async def get_user_session(user_id: int):
+    record = await sdb.find_one({"user_id": user_id})
+    return record["data"] if record else None
+
+
+async def update_user_session(user_id: int, data):
+    await sdb.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
+
+
+async def clear_user_session(user_id: int):
+    await sdb.delete_one({"user_id": user_id})
+
+
+async def update_user_bought(user_id: int, data):
+    await user_db.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
+
+
+async def get_user_bought(user_id: int):
+    record = await user_db.find_one({"user_id": user_id})
+    return record["data"] if record else None
+
+
+async def format_character_info(character):
+    return (
+        character["img_url"],
+        f"**Name:** {character['name']}\n"
+        f"**Anime:** {character['anime']}\n"
+        f"**ID:** {character['id']}\n"
+        f"**Price:** {character['price']} coins",
     )
+
+
+@app.on_message(filters.command("store"))
+async def store_handler(_, message):
+    user_id = message.from_user.id
+    session = await get_user_session(user_id)
+    if not session or session[0] != today():
+        characters = await get_available_characters()
+        selected_ids = random.sample([c["id"] for c in characters], 3)
+        await update_user_session(user_id, [today(), selected_ids])
+    else:
+        selected_ids = session[1]
+
+    char = await get_character(selected_ids[0])
+    img, caption = await format_character_info(char)
+
+    markup = IKM([
+        [IKB("⬅️", callback_data=f"page_{user_id}_2"), IKB("➡️", callback_data=f"page_{user_id}_1")],
+        [IKB("Buy 🔖", callback_data=f"buy_{user_id}_0")],
+        [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
+    ])
+
+    await message.reply_photo(img, caption=f"**Page 1/3**\n\n{caption}", reply_markup=markup)
+
+
+@app.on_callback_query(filters.regex(r"^page_"))
+async def page_handler(_, query):
+    _, user_id, page = query.data.split("_")
+    user_id, page = int(user_id), int(page)
+
+    session = await get_user_session(user_id)
+    if not session or session[0] != today():
+        return await query.answer("Session expired! Use /store to refresh.", show_alert=True)
+
+    char_id = session[1][page - 1]
+    char = await get_character(char_id)
+    img, caption = await format_character_info(char)
+
+    markup = IKM([
+        [
+            IKB("⬅️", callback_data=f"page_{user_id}_{(page - 1) % 3 + 1}"),
+            IKB("➡️", callback_data=f"page_{user_id}_{(page + 1) % 3 + 1}")
+        ],
+        [IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}")],
+        [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
+    ])
+
+    await query.edit_message_media(IMP(img, caption=f"**Page {page}/3**\n\n{caption}"), reply_markup=markup)
+
+
+@app.on_callback_query(filters.regex(r"^buy_"))
+async def buy_handler(_, query):
+    _, user_id, char_index = query.data.split("_")
+    user_id, char_index = int(user_id), int(char_index)
+
+    session = await get_user_session(user_id)
+    char_id = session[1][char_index]
+    char = await get_character(char_id)
+
+    user_balance = await show(user_id)
+    if user_balance < char["price"]:
+        return await query.answer("You don't have enough coins!", show_alert=True)
+
+    markup = IKM([
+        [IKB("Confirm Purchase 💵", callback_data=f"confirm_{user_id}_{char_id}")],
+        [IKB("Cancel 🔙", callback_data=f"page_{user_id}_{char_index + 1}")]
+    ])
+
+    await query.edit_message_caption(
+        f"**Confirm Purchase**\n\n{char['name']} - {char['price']} coins",
+        reply_markup=markup
+    )
+
+
+@app.on_callback_query(filters.regex(r"^confirm_"))
+async def confirm_handler(_, query):
+    _, user_id, char_id = query.data.split("_")
+    user_id, char_id = int(user_id), int(char_id)
+
+    user_balance = await show(user_id)
+    char = await get_character(char_id)
+
+    if user_balance < char["price"]:
+        return await query.answer("You don't have enough coins!", show_alert=True)
+
+    bought = await get_user_bought(user_id)
+    if bought and bought[0] == today() and char_id in bought[1]:
+        return await query.answer("You already own this character!", show_alert=True)
+
+    await deduct(user_id, char["price"])
+    updated_bought = [today(), (bought[1] + [char_id]) if bought else [char_id]]
+    await update_user_bought(user_id, updated_bought)
+
+    await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
+    await query.message.delete()
+
+
+@app.on_callback_query(filters.regex(r"^close_"))
+async def close_handler(_, query):
+    _, user_id = query.data.split("_")
+    if int(user_id) == query.from_user.id:
+        await query.message.delete()
+    else:
+        await query.answer("This action is not for you!", show_alert=True)
