@@ -23,7 +23,13 @@ async def get_character(id: int):
 
 async def get_available_characters():
     excluded_rarities = ["💋 Aura", "❄️ Winter"]
-    return await collection.find({"rarity": {"$nin": excluded_rarities}}).to_list(None)
+    characters = await collection.find().to_list(None)
+    # Filter and normalize rarity values
+    filtered = [
+        char for char in characters
+        if char.get("rarity", "").strip() not in excluded_rarities
+    ]
+    return filtered
 
 
 async def get_user_session(user_id: int):
