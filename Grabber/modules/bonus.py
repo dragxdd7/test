@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import app, db, capsify, user_collection
+from . import app, db, capsify, user_collection, add
 
 bonus_db = db.bo
 
@@ -32,15 +32,6 @@ async def update_bonus_status(user_id, bonus_type):
         bonus_status["weekly"] = get_next_week()
     await bonus_db.update_one({"user_id": user_id}, {"$set": {"bonus": bonus_status}}, upsert=True)
 
-
-async def add(user_id, amount):
-    user = await user_collection.find_one({"user_id": user_id})
-    if not user:
-        await user_collection.insert_one({"user_id": user_id, "balance": str(amount)})
-    else:
-        current_balance = int(user.get("balance", "0"))
-        new_balance = current_balance + amount
-        await user_collection.update_one({"user_id": user_id}, {"$set": {"balance": str(new_balance)}})
 
 
 @app.on_message(filters.command("bonus"))
