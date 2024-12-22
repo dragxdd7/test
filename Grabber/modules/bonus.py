@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from . import app, db, add, capsify 
+from capsify import capsify
+from . import app, db, add
 
-bonus_db = db.bonus
+bonus_db = db.bonu
 
 
 def get_next_day():
@@ -36,45 +37,33 @@ async def update_bonus_status(user_id: int, bonus_type: str):
     )
 
 
-@app.on_callback_query(filters.regex(r"^bonus_"))
-async def bonus_claim_handler(_, query):
-    _, bonus_type, user_id = query.data.split("_")
-    if int(user_id) != query.from_user.id:
-        return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
+async def add(amount: int, user_id: int):
+    user = await db.users.find_one({"user_id": user_id})
+    if not user:
+        print(f"Creating new user record: {user_id}")
+        await db.users.insert_one({"user_id": user_id, "balance": amount})
+    else:
+        current_balance = user.get("balance", 0)
+        print(f"User {user_id} current balance: {current_balance}")
+        new_balance = current_balance + amount
+        await db.users.update_one({"user_id": user_id}, {"$set": {"balance": new_balance}})
+        print(f"User {user_id} new balance: {new_balance}")
 
-    user_id = int(user_id)
+
+@app.on_message(filters.command("bonus"))
+async def bonus_handler(_, message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name or "User"
+    today = datetime.now()
+    current_day = today.strftime("%A").lower()
+    current_week = today.strftime("%U")
+
     bonus_status = await get_bonus_status(user_id)
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    if bonus_type == "daily":
-        if bonus_status["daily"] and bonus_status["daily"] > today:
-            return await query.answer(capsify("You have already claimed your daily bonus!"), show_alert=True)
-        await add(50000, user_id)
-        await update_bonus_status(user_id, "daily")
-        await query.answer(capsify("Successfully claimed your daily bonus of 50,000 coins!"), show_alert=True)
-
-    elif bonus_type == "weekly":
-        if bonus_status["weekly"] and bonus_status["weekly"] > today:
-            return await query.answer(capsify("You have already claimed your weekly bonus!"), show_alert=True)
-        await add(700000, user_id)
-        await update_bonus_status(user_id, "weekly")
-        await query.answer(capsify("Successfully claimed your weekly bonus of 700,000 coins!"), show_alert=True)
-
-    elif bonus_type == "close":
-        await query.message.delete()
-        return await query.answer(capsify("Bonus menu closed!"))
-
-    # Edit the existing message to reflect updated status
-    user_name = query.from_user.first_name or "User"
-    current_day = datetime.now().strftime("%A").lower()
-    current_week = datetime.now().strftime("%U")
-
-    updated_bonus_status = await get_bonus_status(user_id)
     daily_status = (
-        capsify("✅ Claimed") if updated_bonus_status["daily"] and updated_bonus_status["daily"] > today else capsify("Available")
+        capsify("✅ Claimed") if bonus_status["daily"] and bonus_status["daily"] > today.strftime("%Y-%m-%d") else capsify("Available")
     )
     weekly_status = (
-        capsify("✅ Claimed") if updated_bonus_status["weekly"] and updated_bonus_status["weekly"] > today else capsify("Available")
+        capsify("✅ Claimed") if bonus_status["weekly"] and bonus_status["weekly"] > today.strftime("%Y-%m-%d") else capsify("Available")
     )
 
     caption = (
@@ -90,7 +79,7 @@ async def bonus_claim_handler(_, query):
         [IKB("Close 🗑️", callback_data=f"bonus_close_{user_id}")]
     ])
 
-    await query.edit_message_text(caption, reply_markup=markup)
+    await message.reply_text(caption, reply_markup=markup)
 
 
 @app.on_callback_query(filters.regex(r"^bonus_"))
