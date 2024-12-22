@@ -1,11 +1,10 @@
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from pyrogram.types import CallbackQuery, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, WebAppInfo
 from datetime import datetime as dt
 import random
 from Grabber import db, collection, app
 
 sdb = db.new_store
-
 
 async def set_today_characters(user_id: int, data):
     await sdb.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
@@ -31,11 +30,13 @@ async def shop(client, message):
         await set_today_characters(user_id, [today(), ch_ids])
     else:
         ch_ids = x[1]
-    web_app_url = f"http://pickweb-858c2f90d460.herokuapp.com/{user_id}"
+
+    web_app_url = f"http://pickweb-858c2f90d460.herokuapp.com/{user_id}"  # Your web app URL
+
+    # Create a WebApp button
     await message.reply_text(
         "Welcome to your store! Use the button below to explore today's characters.",
         reply_markup=IKM([
-            [IKB("Open Store 🛒", url=web_app_url)]
+            [IKB("Open Store 🛒", web_app=WebAppInfo(url=web_app_url))]
         ])
     )
-
