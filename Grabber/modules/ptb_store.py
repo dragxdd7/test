@@ -89,11 +89,10 @@ async def store_handler(_, message):
 @app.on_callback_query(filters.regex(r"^page_"))
 async def page_handler(_, query):
     _, user_id, page = query.data.split("_")
+    if int(user_id) != query.from_user.id:
+        return await query.answer("This is not for you, baka!", show_alert=True)
+
     user_id, page = int(user_id), int(page)
-
-    if query.from_user.id != user_id:
-        return await query.answer("This action is not for you!", show_alert=True)
-
     session = await get_user_session(user_id)
     if not session or session[0] != today():
         return await query.answer("Session expired! Use /store to refresh.", show_alert=True)
@@ -122,11 +121,10 @@ async def page_handler(_, query):
 @app.on_callback_query(filters.regex(r"^buy_"))
 async def buy_handler(_, query):
     _, user_id, char_index = query.data.split("_")
+    if int(user_id) != query.from_user.id:
+        return await query.answer("This is not for you, baka!", show_alert=True)
+
     user_id, char_index = int(user_id), int(char_index)
-
-    if query.from_user.id != user_id:
-        return await query.answer("This action is not for you!", show_alert=True)
-
     session = await get_user_session(user_id)
     char_id = session[1][char_index]
 
@@ -153,10 +151,10 @@ async def buy_handler(_, query):
 @app.on_callback_query(filters.regex(r"^confirm_"))
 async def confirm_handler(_, query):
     _, user_id, char_id = query.data.split("_")
-    user_id, char_id = int(user_id), int(char_id)
+    if int(user_id) != query.from_user.id:
+        return await query.answer("This is not for you, baka!", show_alert=True)
 
-    if query.from_user.id != user_id:
-        return await query.answer("This action is not for you!", show_alert=True)
+    user_id, char_id = int(user_id), int(char_id)
 
     try:
         char = await get_character(char_id)
@@ -186,30 +184,8 @@ async def confirm_handler(_, query):
             {"id": user_id, "characters": [char]}
         )
 
-    # Update the store instead of deleting
-    session = await get_user_session(user_id)
-    selected_ids = session[1]
-
-    if char_id in selected_ids:
-        current_index = selected_ids.index(char_id)
-        await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
-
-        try:
-            img, caption = await format_character_info(char)
-        except ValueError as e:
-            return await query.answer(f"Error: {e}", show_alert=True)
-
-        markup = IKM([
-            [
-                IKB("⬅️", callback_data=f"page_{user_id}_{(current_index - 1) % 3 + 1}"),
-                IKB("➡️", callback_data=f"page_{user_id}_{(current_index + 1) % 3 + 1}")
-            ],
-            [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
-        ])
-        await query.edit_message_media(
-            IMP(img, caption=f"**Page {current_index + 1}/3**\n\n{caption}\n\n**Purchased!**"),
-            reply_markup=markup
-        )
+    await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
+    await page_handler(_, query)  # Navigate back to the store page
 
 
 @app.on_callback_query(filters.regex(r"^close_"))
@@ -218,4 +194,4 @@ async def close_handler(_, query):
     if int(user_id) == query.from_user.id:
         await query.message.delete()
     else:
-        await query.answer("This action is not for you!", show_alert=True)
+        await query.answer("This is not for you, baka!", show_alert=True)
