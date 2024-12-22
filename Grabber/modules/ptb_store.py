@@ -11,6 +11,7 @@ user_db = db.bought
 def today():
     return str(dt.now()).split()[0]
 
+
 async def get_character(id: int):
     character = await collection.find_one({"id": id})
     if not character:
@@ -31,24 +32,24 @@ async def get_available_characters():
 
 
 async def get_user_session(user_id: int):
-    record = await sdb.find_one({"user_id": user_id})
+    record = await sdb.find_one({"id": user_id})
     return record["data"] if record else None
 
 
 async def update_user_session(user_id: int, data):
-    await sdb.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
+    await sdb.update_one({"id": user_id}, {"$set": {"data": data}}, upsert=True)
 
 
 async def clear_user_session(user_id: int):
-    await sdb.delete_one({"user_id": user_id})
+    await sdb.delete_one({"id": user_id})
 
 
 async def update_user_bought(user_id: int, data):
-    await user_db.update_one({"user_id": user_id}, {"$set": {"data": data}}, upsert=True)
+    await user_db.update_one({"id": user_id}, {"$set": {"data": data}}, upsert=True)
 
 
 async def get_user_bought(user_id: int):
-    record = await user_db.find_one({"user_id": user_id})
+    record = await user_db.find_one({"id": user_id})
     return record["data"] if record else None
 
 
@@ -149,7 +150,7 @@ async def buy_handler(_, query):
 
     markup = IKM([
         [IKB(capsify("Confirm Purchase 💵"), callback_data=f"con_{user_id}_{char_id}")],
-        [IKB(capsify("Cancel 🔙"), callback_data=f"page_{user_id}_{char_index + 1}")]
+        [IKB(capsify("Back 🔙"), callback_data=f"page_{user_id}_{char_index + 1}")]
     ])
 
     await query.edit_message_caption(
@@ -183,20 +184,24 @@ async def confirm_handler(_, query):
     updated_bought = [today(), (bought[1] + [char_id]) if bought else [char_id]]
     await update_user_bought(user_id, updated_bought)
 
-    user_collection_entry = await user_collection.find_one({"user_id": user_id})
+    user_collection_entry = await user_collection.find_one({"id": user_id})
     if user_collection_entry:
         await user_collection.update_one(
-            {"user_id": user_id},
+            {"id": user_id},
             {"$addToSet": {"characters": char}}
         )
     else:
         await user_collection.insert_one(
-            {"user_id": user_id, "characters": [char]}
+            {"id": user_id, "characters": [char]}
         )
+
+    markup = IKM([
+        [IKB(capsify("Back 🔙"), callback_data=f"page_{user_id}_1")]
+    ])
 
     await query.edit_message_caption(
         capsify(f"**Purchase Successful!**\n\nCharacter **{char['name']}** has been added to your collection."),
-        reply_markup=None
+        reply_markup=markup
     )
     await query.answer(capsify("purchase successful!"), show_alert=True)
 
