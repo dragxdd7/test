@@ -144,7 +144,7 @@ async def buy_handler(_, query):
         return await query.answer("You don't have enough coins!", show_alert=True)
 
     markup = IKM([
-        [IKB("Confirm Purchase 💵", callback_data=f"confirm_{user_id}_{char_id}")],
+        [IKB("Confirm Purchase 💵", callback_data=f"con_{user_id}_{char_id}")],
         [IKB("Cancel 🔙", callback_data=f"page_{user_id}_{char_index + 1}")]
     ])
 
@@ -154,7 +154,7 @@ async def buy_handler(_, query):
     )
 
 
-@app.on_callback_query(filters.regex(r"^confirm_"))
+@app.on_callback_query(filters.regex(r"^con_"))
 async def confirm_handler(_, query):
     _, user_id, char_id = query.data.split("_")
     if int(user_id) != query.from_user.id:
