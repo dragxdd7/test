@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from datetime import datetime as dt
 import random
 from . import app, db, add, deduct, show, collection, user_collection, capsify
+from .block import block_dec, temp_block
 
 sdb = db.new_store
 user_db = db.bought
@@ -69,8 +70,11 @@ async def format_character_info(character):
 
 
 @app.on_message(filters.command("store"))
+@block_dec
 async def store_handler(_, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     session = await get_user_session(user_id)
     if not session or session[0] != today():
         characters = await get_available_characters()
