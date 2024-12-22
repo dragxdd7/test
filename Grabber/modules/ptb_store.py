@@ -177,8 +177,31 @@ async def confirm_handler(_, query):
             {"id": user_id, "characters": [char]}
         )
 
+    # Refresh the store message instead of deleting it
+    session = await get_user_session(user_id)
+    selected_ids = session[1]
+    try:
+        img, caption = await format_character_info(char)
+    except ValueError as e:
+        return await query.answer(f"Error: {e}", show_alert=True)
+
+    # Update the current character's status to "Purchased"
+    current_index = selected_ids.index(char_id)
+    updated_caption = f"**Purchased!**\n\n{caption}"
+    markup = IKM([
+        [
+            IKB("⬅️", callback_data=f"page_{user_id}_{(current_index - 1) % 3 + 1}"),
+            IKB("➡️", callback_data=f"page_{user_id}_{(current_index + 1) % 3 + 1}")
+        ],
+        [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
+    ])
+
+    await query.edit_message_media(
+        IMP(img, caption=f"**Page {current_index + 1}/3**\n\n{updated_caption}"),
+        reply_markup=markup
+    )
+
     await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
-    await query.message.delete()
 
 
 @app.on_callback_query(filters.regex(r"^close_"))
