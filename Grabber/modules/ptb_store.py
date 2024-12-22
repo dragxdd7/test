@@ -169,12 +169,12 @@ async def confirm_handler(_, query):
     user_collection_entry = await user_collection.find_one({"user_id": user_id})
     if user_collection_entry:
         await user_collection.update_one(
-            {"user_id": user_id},
+            {"id": user_id},
             {"$addToSet": {"characters": char}}
         )
     else:
         await user_collection.insert_one(
-            {"user_id": user_id, "characters": [char]}
+            {"id": user_id, "characters": [char]}
         )
 
     await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
