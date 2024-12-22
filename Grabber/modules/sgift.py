@@ -5,8 +5,8 @@ from . import capsify, app
 from .block import block_dec, temp_block
 from pyrogram import Client, filters
 
-@block_dec
 @app.on_message(filters.command("gift"))
+@block_dec
 async def gift(client, message):
     sender_id = message.from_user.id
 
