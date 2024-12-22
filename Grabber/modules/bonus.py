@@ -38,7 +38,7 @@ async def add(user_id: int, amount: int):
     if not user:
         await users_collection.insert_one({"user_id": user_id, "balance": str(amount)})
     else:
-        current_balance = int(user["balance"])
+        current_balance = int(user.get("balance", 0))
         new_balance = current_balance + amount
         await users_collection.update_one({"user_id": user_id}, {"$set": {"balance": str(new_balance)}})
 
