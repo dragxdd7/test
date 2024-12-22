@@ -1,30 +1,23 @@
-import uuid
-from datetime import datetime
-from Grabber import user_collection
-from . import capsify, app
-from .block import block_dec, temp_block
-from pyrogram import Client, filters
-
 @block_dec
 @app.on_message(filters.command("gift"))
 async def gift(client, message):
     sender_id = message.from_user.id
 
     if not message.reply_to_message:
-        await message.reply("You need to reply to a user's message to gift a character!")
+        await message.reply(capsify("You need to reply to a user's message to gift a character!"))
         return
 
     receiver_id = message.reply_to_message.from_user.id
     receiver_first_name = message.reply_to_message.from_user.first_name
 
     if sender_id == receiver_id:
-        await message.reply("You can't gift a character to yourself!")
+        await message.reply(capsify("You can't gift a character to yourself!"))
         return
     if temp_block(sender_id):
         return
 
     if len(message.command) != 2:
-        await message.reply("You need to provide a character ID!")
+        await message.reply(capsify("You need to provide a character ID!"))
         return
 
     character_id = message.command[1]
@@ -50,7 +43,7 @@ async def gift(client, message):
         )
 
     if daily_gift_count >= 10:
-        await message.reply("You have reached your daily gift limit. Try again tomorrow!")
+        await message.reply(capsify("You have reached your daily gift limit. Try again tomorrow!"))
         return
 
     daily_gift_count += 1
@@ -62,14 +55,14 @@ async def gift(client, message):
     character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
 
     if not character:
-        await message.reply(f"You do not have a character with ID {character_id}!")
+        await message.reply(capsify(f"You do not have a character with ID {character_id}!"))
         return
 
     sender_characters = sender.get('characters', [])
     sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character['id']), None)
 
     if sender_character_index is None:
-        await message.reply("You do not have this character anymore!")
+        await message.reply(capsify("You do not have this character anymore!"))
         return
 
     sender_characters.pop(sender_character_index)
@@ -89,10 +82,10 @@ async def gift(client, message):
     gifts_left = 10 - daily_gift_count
     success_message = (
         f"{capsify('🎁 Successfully Gifted')}\n\n"
-        f"{capsify('♦️ ɴᴀᴍᴇ :')} {character['name']} {character.get('emoji', '[🥎]')}\n"
-        f"{capsify('🧧ᴀɴɪᴍᴇ :')} {character['anime']}\n"
+        f"{capsify('♦️ NAME:')} {capsify(character['name'])} {character.get('emoji', '[🥎]')}\n"
+        f"{capsify('🧧 ANIME:')} {capsify(character['anime'])}\n"
         f"{capsify('🆔:')} {character['id']:03}\n"
         f"{capsify('🌟:')} {character.get('rarity', '🔮 Limited')}\n\n"
-        f"{capsify('ɢɪғᴛs ʟᴇғᴛ:')} {gifts_left}"
+        f"{capsify('GIFTS LEFT:')} {gifts_left}"
     )
     await message.reply(success_message)
