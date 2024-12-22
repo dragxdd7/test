@@ -13,7 +13,10 @@ def today():
 
 
 async def get_character(id: int):
-    return await db.collection.find_one({"id": id})
+    character = await db.collection.find_one({"id": id})
+    if not character:
+        raise ValueError(f"Character with ID {id} not found.")
+    return character
 
 
 async def get_available_characters():
@@ -44,6 +47,8 @@ async def get_user_bought(user_id: int):
 
 
 async def format_character_info(character):
+    if not character:
+        raise ValueError("Invalid character data.")
     return (
         character["img_url"],
         f"**Name:** {character['name']}\n"
@@ -64,8 +69,11 @@ async def store_handler(_, message):
     else:
         selected_ids = session[1]
 
-    char = await get_character(selected_ids[0])
-    img, caption = await format_character_info(char)
+    try:
+        char = await get_character(selected_ids[0])
+        img, caption = await format_character_info(char)
+    except ValueError as e:
+        return await message.reply_text(f"Error: {e}")
 
     markup = IKM([
         [IKB("⬅️", callback_data=f"page_{user_id}_2"), IKB("➡️", callback_data=f"page_{user_id}_1")],
@@ -86,8 +94,12 @@ async def page_handler(_, query):
         return await query.answer("Session expired! Use /store to refresh.", show_alert=True)
 
     char_id = session[1][page - 1]
-    char = await get_character(char_id)
-    img, caption = await format_character_info(char)
+
+    try:
+        char = await get_character(char_id)
+        img, caption = await format_character_info(char)
+    except ValueError as e:
+        return await query.answer(f"Error: {e}", show_alert=True)
 
     markup = IKM([
         [
@@ -108,7 +120,11 @@ async def buy_handler(_, query):
 
     session = await get_user_session(user_id)
     char_id = session[1][char_index]
-    char = await get_character(char_id)
+
+    try:
+        char = await get_character(char_id)
+    except ValueError as e:
+        return await query.answer(f"Error: {e}", show_alert=True)
 
     user_balance = await show(user_id)
     if user_balance < char["price"]:
@@ -130,9 +146,12 @@ async def confirm_handler(_, query):
     _, user_id, char_id = query.data.split("_")
     user_id, char_id = int(user_id), int(char_id)
 
-    user_balance = await show(user_id)
-    char = await get_character(char_id)
+    try:
+        char = await get_character(char_id)
+    except ValueError as e:
+        return await query.answer(f"Error: {e}", show_alert=True)
 
+    user_balance = await show(user_id)
     if user_balance < char["price"]:
         return await query.answer("You don't have enough coins!", show_alert=True)
 
