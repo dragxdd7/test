@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, users_collection
 
-bonus_db = db.bonu
+bonus_db = db.bon
 
 
 def get_next_day():
