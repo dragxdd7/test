@@ -2,12 +2,10 @@ import uuid
 from datetime import datetime
 from Grabber import user_collection
 from . import capsify, app
-from .block import block_dec, temp_block
-from pyrogram import Client, filters
+from .block import block_dec_pyro, temp_block
 
-
+@block_dec_pyro
 @app.on_message(filters.command("gift"))
-@block_dec
 async def gift(client, message):
     sender_id = message.from_user.id
 
@@ -54,9 +52,10 @@ async def gift(client, message):
         await message.reply("You have reached your daily gift limit. Try again tomorrow!")
         return
 
+    daily_gift_count += 1
     await user_collection.update_one(
         {'id': sender_id}, 
-        {'$inc': {'daily_gift_count': 1}}
+        {'$set': {'daily_gift_count': daily_gift_count}}
     )
 
     character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
@@ -86,13 +85,13 @@ async def gift(client, message):
             'characters': [character],
         })
 
-    gifts_left = 10 - sender.get('daily_gift_count', 1)
+    gifts_left = 10 - daily_gift_count
     success_message = (
         f"{capsify('🎁 Successfully Gifted')}\n\n"
-        f"{capsify('♦️ Name:')} {character['name']}\n"
-        f"{capsify('[Anime]:')} {character['anime']}\n"
+        f"{capsify('♦️ ɴᴀᴍᴇ :')} {character['name']} {character.get('emoji', '[🥎]')}\n"
+        f"{capsify('🧧ᴀɴɪᴍᴇ :')} {character['anime']}\n"
         f"{capsify('🆔:')} {character['id']:03}\n"
-        f"{capsify('🌟:')} {character.get('rarity', 'N/A')}\n\n"
-        f"{capsify('Gifts Left:')} {gifts_left}"
+        f"{capsify('🌟:')} {character.get('rarity', '🔮 Limited')}\n\n"
+        f"{capsify('ɢɪғᴛs ʟᴇғᴛ:')} {gifts_left}"
     )
     await message.reply(success_message)
