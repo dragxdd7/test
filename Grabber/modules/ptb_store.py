@@ -56,6 +56,7 @@ async def format_character_info(character):
         f"**Name:** {character['name']}\n"
         f"**Anime:** {character['anime']}\n"
         f"**ID:** {character['id']}\n"
+        f"**Rarity:** {character['rarity']}\n"
         f"**Price:** {character['price']} coins",
     )
 
@@ -78,8 +79,7 @@ async def store_handler(_, message):
         return await message.reply_text(f"Error: {e}")
 
     markup = IKM([
-        [IKB("⬅️", callback_data=f"page_{user_id}_3"), IKB("➡️", callback_data=f"page_{user_id}_2")],
-        [IKB("Buy 🔖", callback_data=f"buy_{user_id}_0")],
+        [IKB("⬅️", callback_data=f"page_{user_id}_3"), IKB("Buy 🔖", callback_data=f"buy_{user_id}_0"), IKB("➡️", callback_data=f"page_{user_id}_2")],
         [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
     ])
 
@@ -110,9 +110,9 @@ async def page_handler(_, query):
     markup = IKM([
         [
             IKB("⬅️", callback_data=f"page_{user_id}_{prev_page}"),
+            IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}"),
             IKB("➡️", callback_data=f"page_{user_id}_{next_page}")
         ],
-        [IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}")],
         [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
     ])
     await query.edit_message_media(IMP(img, caption=f"**Page {page}/3**\n\n{caption}"), reply_markup=markup)
