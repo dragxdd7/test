@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
-from capsify import capsify
-from . import app, db, add
+from . import app, db, add, capsify 
 
 bonus_db = db.bonu
 
