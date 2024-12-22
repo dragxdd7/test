@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, users_collection
 
-bonus_db = db.bon
+bonus_db = db.bonu
 
 
 def get_next_day():
@@ -17,14 +17,14 @@ def get_next_week():
     return next_monday.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d")
 
 
-async def get_bonus_status(user_id: int):
+async def get_bonus_status(user_id):
     record = await bonus_db.find_one({"user_id": user_id})
     if not record:
         return {"daily": None, "weekly": None}
     return record.get("bonus", {"daily": None, "weekly": None})
 
 
-async def update_bonus_status(user_id: int, bonus_type: str):
+async def update_bonus_status(user_id, bonus_type):
     bonus_status = await get_bonus_status(user_id)
     if bonus_type == "daily":
         bonus_status["daily"] = get_next_day()
@@ -33,19 +33,19 @@ async def update_bonus_status(user_id: int, bonus_type: str):
     await bonus_db.update_one({"user_id": user_id}, {"$set": {"bonus": bonus_status}}, upsert=True)
 
 
-async def add(user_id: int, amount: int):
+async def add(user_id, amount):
     user = await users_collection.find_one({"user_id": user_id})
     if not user:
         await users_collection.insert_one({"user_id": user_id, "balance": str(amount)})
     else:
-        current_balance = int(user.get("balance", 0))
+        current_balance = int(user.get("balance", "0"))
         new_balance = current_balance + amount
         await users_collection.update_one({"user_id": user_id}, {"$set": {"balance": str(new_balance)}})
 
 
 @app.on_message(filters.command("bonus"))
 async def bonus_handler(_, message):
-    user_id = message.from_user.id
+    user_id = str(message.from_user.id)
     user_name = message.from_user.first_name or "User"
     today = datetime.now()
     current_day = today.strftime("%A").lower()
@@ -78,10 +78,9 @@ async def bonus_handler(_, message):
 @app.on_callback_query(filters.regex(r"^bonus_"))
 async def bonus_claim_handler(_, query):
     _, bonus_type, user_id = query.data.split("_")
-    if int(user_id) != query.from_user.id:
+    if user_id != str(query.from_user.id):
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
 
-    user_id = int(user_id)
     bonus_status = await get_bonus_status(user_id)
     today = datetime.now().strftime("%Y-%m-%d")
 
