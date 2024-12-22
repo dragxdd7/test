@@ -24,7 +24,6 @@ async def get_character(id: int):
 async def get_available_characters():
     excluded_rarities = ["💋 Aura", "❄️ Winter"]
     characters = await collection.find().to_list(None)
-    # Filter and normalize rarity values
     filtered = [
         char for char in characters
         if char.get("rarity", "").strip() not in excluded_rarities
@@ -182,16 +181,19 @@ async def confirm_handler(_, query):
     user_collection_entry = await user_collection.find_one({"user_id": user_id})
     if user_collection_entry:
         await user_collection.update_one(
-            {"id": user_id},
+            {"user_id": user_id},
             {"$addToSet": {"characters": char}}
         )
     else:
         await user_collection.insert_one(
-            {"id": user_id, "characters": [char]}
+            {"user_id": user_id, "characters": [char]}
         )
 
-    await query.answer("Purchase successful! Character added to your collection.", show_alert=True)
-    await page_handler(_, query)  # Navigate back to the store page
+    await query.edit_message_caption(
+        f"**Purchase Successful!**\n\nCharacter **{char['name']}** has been added to your collection.",
+        reply_markup=None
+    )
+    await query.answer("Purchase successful!", show_alert=True)
 
 
 @app.on_callback_query(filters.regex(r"^clos_"))
