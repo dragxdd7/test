@@ -96,4 +96,30 @@ async def bonus_claim_handler(_, query):
         await query.message.delete()
         return await query.answer(capsify("Bonus menu closed!"))
 
-    await bonus_handler(_, query.message)
+    # Edit the existing message to reflect updated status
+    user_name = query.from_user.first_name or "User"
+    current_day = datetime.now().strftime("%A").lower()
+    current_week = datetime.now().strftime("%U")
+
+    updated_bonus_status = await get_bonus_status(user_id)
+    daily_status = (
+        capsify("✅ Claimed") if updated_bonus_status["daily"] and updated_bonus_status["daily"] > today else capsify("Available")
+    )
+    weekly_status = (
+        capsify("✅ Claimed") if updated_bonus_status["weekly"] and updated_bonus_status["weekly"] > today else capsify("Available")
+    )
+
+    caption = (
+        f"ᴜsᴇʀ : {capsify(user_name)}\n\n"
+        f"ᴅᴀʏ : {current_day}\n"
+        f"ᴡᴇᴇᴋ : {current_week}\n\n"
+        "ᴄʜᴏᴏsᴇ ғʀᴏᴍ ʙᴇʟᴏᴡ !"
+    )
+
+    markup = IKM([
+        [IKB(f"Daily: {daily_status}", callback_data=f"bonus_daily_{user_id}")],
+        [IKB(f"Weekly: {weekly_status}", callback_data=f"bonus_weekly_{user_id}")],
+        [IKB("Close 🗑️", callback_data=f"bonus_close_{user_id}")]
+    ])
+
+    await query.edit_message_text(caption, reply_markup=markup)
