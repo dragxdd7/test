@@ -78,7 +78,7 @@ async def store_handler(_, message):
         return await message.reply_text(f"Error: {e}")
 
     markup = IKM([
-        [IKB("⬅️", callback_data=f"page_{user_id}_2"), IKB("➡️", callback_data=f"page_{user_id}_1")],
+        [IKB("⬅️", callback_data=f"page_{user_id}_3"), IKB("➡️", callback_data=f"page_{user_id}_2")],
         [IKB("Buy 🔖", callback_data=f"buy_{user_id}_0")],
         [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
     ])
@@ -95,8 +95,10 @@ async def page_handler(_, query):
     if not session or session[0] != today():
         return await query.answer("Session expired! Use /store to refresh.", show_alert=True)
 
-    char_id = session[1][page - 1]
+    prev_page = 3 if page == 1 else page - 1
+    next_page = 1 if page == 3 else page + 1
 
+    char_id = session[1][page - 1]
     try:
         char = await get_character(char_id)
         img, caption = await format_character_info(char)
@@ -105,13 +107,12 @@ async def page_handler(_, query):
 
     markup = IKM([
         [
-            IKB("⬅️", callback_data=f"page_{user_id}_{(page - 1) % 3 + 1}"),
-            IKB("➡️", callback_data=f"page_{user_id}_{(page + 1) % 3 + 1}")
+            IKB("⬅️", callback_data=f"page_{user_id}_{prev_page}"),
+            IKB("➡️", callback_data=f"page_{user_id}_{next_page}")
         ],
         [IKB("Buy 🔖", callback_data=f"buy_{user_id}_{page - 1}")],
         [IKB("Close 🗑️", callback_data=f"close_{user_id}")]
     ])
-
     await query.edit_message_media(IMP(img, caption=f"**Page {page}/3**\n\n{caption}"), reply_markup=markup)
 
 
