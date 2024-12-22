@@ -17,7 +17,10 @@ def ul(_, message):
 
     try:
         response = telegraph.upload_file(path)
-        img_url = f"https://telegra.ph{response[0]['src']}"
-        i.edit(f'Your Telegraph [link]({img_url})', disable_web_page_preview=True)
+        if isinstance(response, list) and "src" in response[0]:
+            img_url = f"https://telegra.ph{response[0]['src']}"
+            i.edit(f'Your Telegraph [link]({img_url})', disable_web_page_preview=True)
+        else:
+            i.edit("Upload failed. Telegraph did not return a valid response.")
     except Exception as e:
         i.edit(f"An error occurred: {str(e)}")
