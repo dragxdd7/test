@@ -31,7 +31,7 @@ async def shop(client, message):
     else:
         ch_ids = x[1]
 
-    web_app_url = f"http://pickweb-858c2f90d460.herokuapp.com/{user_id}"  # Your web app URL
+    web_app_url = f"https://pickweb-858c2f90d460.herokuapp.com/{user_id}"  # Your web app URL
 
     # Create a WebApp button
     await message.reply_text(
