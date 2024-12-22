@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime
 from Grabber import user_collection
 from . import capsify, app
-from .block import block_dec_pyro, temp_block
+from .block import block_dec, temp_block
+from pyrogram import Client, filters
 
-@block_dec_pyro
+@block_dec
 @app.on_message(filters.command("gift"))
 async def gift(client, message):
     sender_id = message.from_user.id
