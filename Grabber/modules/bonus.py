@@ -1,103 +1,100 @@
-import math
 from datetime import datetime, timedelta
 from pyrogram import Client, filters
-from pyrogram.types import Message
-from Grabber import user_collection, Grabberu
-from . import add as add_balance, show as show_balance, capsify
-from .block import block_dec
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
+from capsify import capsify
+from . import app, db, add
 
-last_payment_times = {}
+bonus_db = db.bonus
 
-def custom_format_number(num):
-    if int(num) >= 10**6:
-        exponent = int(math.log10(num)) - 5
-        base = num // (10 ** exponent)
-        return f"{base:,.0f}({exponent:+})"
-    return f"{num:,.0f}"
 
-def parse_amount(amount_str):
-    if "+" in amount_str:
-        base_str, exponent_str = amount_str.split("+")
-        y = [i for i in base_str if i != ","]
-        base_str = "".join(y)
-        base = int(base_str)
-        exponent = int(exponent_str)
-        amount = base * (10 ** exponent)
-    else:
-        y = [i for i in amount_str if i != ","]
-        amount_str = "".join(y)
-        amount = int(amount_str)
-    return amount
+def get_next_day():
+    tomorrow = datetime.now() + timedelta(days=1)
+    return tomorrow.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d")
 
-def format_timedelta(delta):
-    minutes, seconds = divmod(delta.seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    days = delta.days
-    if days > 0:
-        return f"{days}d {hours}h {minutes}m {seconds}s"
-    elif hours > 0:
-        return f"{hours}h {minutes}m {seconds}s"
-    elif minutes > 0:
-        return f"{minutes}m {seconds}s"
-    else:
-        return f"{seconds}s"
 
-async def handle_error(client: Client, message: Message, error: Exception):
-    error_message = capsify(f"An error occurred: {str(error)}")
-    await message.reply_text(error_message)
-    print(f"Error: {error}")
+def get_next_week():
+    today = datetime.now()
+    next_monday = today + timedelta(days=(7 - today.weekday()))
+    return next_monday.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d")
 
-async def daily_reward(client: Client, message: Message):
-    try:
-        user_id = message.from_user.id
-        user_data = await user_collection.find_one({'id': user_id}, projection={'last_daily_reward': 1, 'balance': 1})
-        #if temp_block(user_id):
-            #return
-        if user_data:
-            last_claimed_date = user_data.get('last_daily_reward')
-            if last_claimed_date and last_claimed_date.date() == datetime.utcnow().date():
-                time_since_last_claim = datetime.utcnow() - last_claimed_date
-                time_until_next_claim = timedelta(days=1) - time_since_last_claim
-                formatted_time_until_next_claim = format_timedelta(time_until_next_claim)
-                await message.reply_text(capsify(f"You already claimed your today's reward. Come back Tomorrow!\nTime Until Next Claim: `{formatted_time_until_next_claim}`."))
-                return
 
-        await user_collection.update_one({'id': user_id}, {'$set': {'last_daily_reward': datetime.utcnow()}}, upsert=True)
-        await add_balance(user_id, 50000)
-        updated_balance = await show_balance(user_id)
-        await message.reply_text(capsify(f"Daily reward claimed! You've received Ŧ50,000 tokens.\nYour new balance is Ŧ{custom_format_number(updated_balance)}."))
-    except Exception as e:
-        await handle_error(client, message, e)
+async def get_bonus_status(user_id: int):
+    record = await bonus_db.find_one({"user_id": user_id})
+    if not record:
+        return {"daily": None, "weekly": None}
+    return record.get("bonus", {"daily": None, "weekly": None})
 
-async def weekly(client: Client, message: Message):
-    try:
-        user_id = message.from_user.id
-        user_data = await user_collection.find_one({'id': user_id}, projection={'last_weekly_bonus': 1, 'balance': 1})
-        #if temp_block(user_id):
-            #return
 
-        if user_data:
-            last_claimed_date = user_data.get('last_weekly_bonus')
-            if last_claimed_date and last_claimed_date.date() >= (datetime.utcnow() - timedelta(days=7)).date():
-                time_since_last_claim = datetime.utcnow() - last_claimed_date
-                time_until_next_claim = timedelta(days=7) - time_since_last_claim
-                formatted_time_until_next_claim = format_timedelta(time_until_next_claim)
-                await message.reply_text(capsify(f"You already claimed your weekly bonus for this week. Come back next week!\nTime Until Next Claim: `{formatted_time_until_next_claim}`."))
-                return
+async def update_bonus_status(user_id: int, bonus_type: str):
+    bonus_status = await get_bonus_status(user_id)
+    if bonus_type == "daily":
+        bonus_status["daily"] = get_next_day()
+    elif bonus_type == "weekly":
+        bonus_status["weekly"] = get_next_week()
 
-        await user_collection.update_one({'id': user_id}, {'$set': {'last_weekly_bonus': datetime.utcnow()}}, upsert=True)
-        await add_balance(user_id, 500000)
-        updated_balance = await show_balance(user_id)
-        await message.reply_text(capsify(f"Congratulations! You claimed Ŧ500,000 Tokens as your weekly bonus.\nYour new balance is Ŧ{custom_format_number(updated_balance)}."))
-    except Exception as e:
-        await handle_error(client, message, e)
+    await bonus_db.update_one(
+        {"user_id": user_id}, {"$set": {"bonus": bonus_status}}, upsert=True
+    )
 
-@Grabberu.on_message(filters.command("bonus"))
-@block_dec
-async def daily_reward_handler(client: Client, message: Message):
-    await daily_reward(client, message)
 
-@Grabberu.on_message(filters.command("xbonus"))
-@block_dec
-async def weekly_handler(client: Client, message: Message):
-    await weekly(client, message)
+@app.on_message(filters.command("bonus"))
+async def bonus_handler(_, message):
+    user_id = message.from_user.id
+    user_name = message.from_user.first_name or "User"
+    today = datetime.now()
+    current_day = today.strftime("%A").lower()
+    current_week = today.strftime("%U")
+
+    bonus_status = await get_bonus_status(user_id)
+    daily_status = (
+        capsify("✅ Claimed") if bonus_status["daily"] and bonus_status["daily"] > today.strftime("%Y-%m-%d") else capsify("Available")
+    )
+    weekly_status = (
+        capsify("✅ Claimed") if bonus_status["weekly"] and bonus_status["weekly"] > today.strftime("%Y-%m-%d") else capsify("Available")
+    )
+
+    caption = (
+        f"ᴜsᴇʀ : {capsify(user_name)}\n\n"
+        f"ᴅᴀʏ : {current_day}\n"
+        f"ᴡᴇᴇᴋ : {current_week}\n\n"
+        "ᴄʜᴏᴏsᴇ ғʀᴏᴍ ʙᴇʟᴏᴡ !"
+    )
+
+    markup = IKM([
+        [IKB(f"Daily: {daily_status}", callback_data=f"bonus_daily_{user_id}")],
+        [IKB(f"Weekly: {weekly_status}", callback_data=f"bonus_weekly_{user_id}")],
+        [IKB("Close 🗑️", callback_data=f"bonus_close_{user_id}")]
+    ])
+
+    await message.reply_text(caption, reply_markup=markup)
+
+
+@app.on_callback_query(filters.regex(r"^bonus_"))
+async def bonus_claim_handler(_, query):
+    _, bonus_type, user_id = query.data.split("_")
+    if int(user_id) != query.from_user.id:
+        return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
+
+    user_id = int(user_id)
+    bonus_status = await get_bonus_status(user_id)
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    if bonus_type == "daily":
+        if bonus_status["daily"] and bonus_status["daily"] > today:
+            return await query.answer(capsify("You have already claimed your daily bonus!"), show_alert=True)
+        await add(50000, user_id)
+        await update_bonus_status(user_id, "daily")
+        await query.answer(capsify("Successfully claimed your daily bonus of 50,000 coins!"), show_alert=True)
+
+    elif bonus_type == "weekly":
+        if bonus_status["weekly"] and bonus_status["weekly"] > today:
+            return await query.answer(capsify("You have already claimed your weekly bonus!"), show_alert=True)
+        await add(700000, user_id)
+        await update_bonus_status(user_id, "weekly")
+        await query.answer(capsify("Successfully claimed your weekly bonus of 700,000 coins!"), show_alert=True)
+
+    elif bonus_type == "close":
+        await query.message.delete()
+        return await query.answer(capsify("Bonus menu closed!"))
+
+    await bonus_handler(_, query.message)
