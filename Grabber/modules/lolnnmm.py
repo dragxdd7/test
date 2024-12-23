@@ -146,7 +146,7 @@ async def sales_command(client, message):
         reply_markup=InlineKeyboardMarkup(
             [
                 buttons,
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{target_user_id}")],
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")],
             ]
         )
     )
@@ -180,7 +180,7 @@ async def view_sale_details(client, callback_query):
     if callback_query.from_user.id == buyer_id:
         buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
-    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{target_user_id}")])
+    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user_id}")])
 
     await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
