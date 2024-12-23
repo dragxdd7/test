@@ -12,6 +12,8 @@ MAX_SALE_PRICE = 500000
 @block_dec
 async def sale_command(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     if len(message.command) != 3:
         await message.reply(capsify("USAGE: /SALE (CHARACTER_ID) (AMOUNT)"))
         return
@@ -73,6 +75,8 @@ async def sale_command(client, message):
 @block_dec
 async def my_sales_command(client, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user = await user_collection.find_one({'id': user_id})
     if not user or not user.get('sales_slot'):
         await message.reply(capsify("YOU HAVE NO CHARACTERS IN YOUR SALES SLOT❗"))
