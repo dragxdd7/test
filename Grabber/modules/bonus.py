@@ -34,6 +34,7 @@ async def update_bonus_status(user_id, bonus_type):
 async def bonus_handler(_, message):
     user_id = message.from_user.id
     if temp_block(user_id):
+        return
     user_name = message.from_user.first_name or "User"
     today = datetime.now()
     current_day = capsify(today.strftime("%A"))  # Capsified day
