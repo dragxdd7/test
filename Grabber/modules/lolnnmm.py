@@ -1,4 +1,4 @@
-"""from pyrogram import Client, filters
+from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from Grabber import user_collection
 from . import capsify, app
@@ -184,6 +184,7 @@ async def purchase_character(client, callback_query):
         capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗")
     )
 
+
 @app.on_callback_query(filters.regex(r"VIEW_SALE_(\d+)_(\d+)"))
 async def view_sale_details(client, callback_query):
     query = callback_query.matches[0]
@@ -215,6 +216,7 @@ async def view_sale_details(client, callback_query):
     buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
     await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
+
 @app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
 async def sale_slot_close(client, callback_query):
     command_user = int(callback_query.matches[0].group(1))
@@ -245,4 +247,4 @@ async def remove_sales_command(client, message):
 
     sales_slot.remove(sale)
     await user_collection.update_one({'id': user_id}, {'$set': {'sales_slot': sales_slot}})
-    await message.reply(capsify("CHARACTER REMOVED FROM SALES SLOT❗"))"""
+    await message.reply(capsify("CHARACTER REMOVED FROM SALES SLOT❗"))
