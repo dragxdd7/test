@@ -1,224 +1,194 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from datetime import datetime, timedelta
-from random import choice
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from pytz import timezone
-from . import app, user_collection, collection
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from Grabber import user_collection
+from . import capsify, app
 
-
-scheduler = AsyncIOScheduler(timezone=timezone('UTC'))
-
-# Store active sales and their details
-active_sales = {}
-scheduler = AsyncIOScheduler()
-
-async def get_user_data(user_id):
-    user = await user_collection.find_one({'id': user_id})
-    if not user:
-        user = {
-            'id': user_id,
-            'gold': 0,
-            'characters': [],
-        }
-        await user_collection.insert_one(user)
-    return user
-
-async def get_character_by_id(character_id):
-    try:
-        character = await collection.find_one({'id': character_id})
-        return character
-    except Exception as e:
-        print(f"Error in get_character_by_id: {e}")
-        return None
+MAX_SALES_SLOT = 5
+MIN_SALE_PRICE = 10000
+MAX_SALE_PRICE = 500000
 
 @app.on_message(filters.command("sale"))
-async def sell_waifu(client: Client, message):
+async def sale_command(client, message):
     user_id = message.from_user.id
-    first_name = message.from_user.first_name
-
-    if len(message.command) < 3:
-        await message.reply_text("Usage: /sale <waifu_id> <price>")
+    if len(message.command) != 3:
+        await message.reply(capsify("Usage: /sale (character_id) (amount)"))
         return
 
     character_id = message.command[1]
     try:
-        price = int(message.command[2])
+        sale_price = int(message.command[2])
     except ValueError:
-        await message.reply_text("Price must be a valid number.")
+        await message.reply(capsify("The sale price must be a number❗"))
         return
 
-    # Retrieve the character from the user's collection
-    user = await get_user_data(user_id)
-    character = next((char for char in user.get('characters', []) if char['id'] == character_id), None)
+    if not (MIN_SALE_PRICE <= sale_price <= MAX_SALE_PRICE):
+        await message.reply(
+            capsify(f"The sale price must be between {MIN_SALE_PRICE} and {MAX_SALE_PRICE} gold❗")
+        )
+        return
 
+    user = await user_collection.find_one({'id': user_id})
+    if not user:
+        await message.reply(capsify("You have no characters in your collection❗"))
+        return
+
+    character = next(
+        (char for char in user.get('characters', []) if char['id'] == character_id), None
+    )
     if not character:
-        await message.reply_text("You don't own a waifu with that ID.")
+        await message.reply(capsify(f"Character with ID {character_id} not found in your collection❗"))
         return
 
-    # Check if this waifu is already on sale
-    sale_id = f"{user_id}_{character_id}"
-    if sale_id in active_sales:
-        await message.reply_text("This waifu is already on sale.")
+    sales_slot = user.get('sales_slot', [])
+    if len(sales_slot) >= MAX_SALES_SLOT:
+        await message.reply(capsify("Your sales slot is full❗ Remove a character to add a new one."))
         return
 
-    # Prepare the sale details
-    active_sales[sale_id] = {
-        'seller_id': user_id,
-        'character': character,
-        'price': price,
-        'created_at': datetime.now()
-    }
-
-    # Send a message confirming the waifu is up for sale
-    await message.reply_photo(
-        photo=character['img_url'],
-        caption=f"{first_name} is selling a waifu!\n\n"
-                f"Name: {character['name']}\n"
-                f"Rarity: {character['rarity']}\n"
-                f"Anime: {character['anime']}\n"
-                f"Price: {price} gold\n"
-                f"(Use /sales <waifu_id> to view or purchase this waifu.)"
-    )
-
-@app.on_callback_query(filters.regex(r"^waifu_buy_\d+_\w+$"))
-async def buy_waifu(client: Client, callback_query):
-    sale_id = callback_query.data.split("waifu_buy_")[1]
-    buyer_id = callback_query.from_user.id
-    buyer_name = callback_query.from_user.first_name
-
-    if sale_id not in active_sales:
-        await callback_query.answer("This sale is no longer available.", show_alert=True)
-        return
-
-    sale = active_sales[sale_id]
-    seller_id = sale['seller_id']
-    character = sale['character']
-    price = sale['price']
-
-    if buyer_id == seller_id:
-        await callback_query.answer("You cannot buy your own waifu.", show_alert=True)
-        return
-
-    # Get buyer and seller data
-    buyer_data = await get_user_data(buyer_id)
-    seller_data = await get_user_data(seller_id)
-
-    # Check if the buyer has enough gold
-    if buyer_data['gold'] < price:
-        await callback_query.answer("You don't have enough gold.", show_alert=True)
-        return
-
-    # Transfer the waifu and update gold balances
+    sales_slot.append({"id": character_id, "price": sale_price, **character})
     await user_collection.update_one(
-        {'id': buyer_id},
-        {'$push': {'characters': character}, '$inc': {'gold': -price}}
-    )
-    await user_collection.update_one(
-        {'id': seller_id},
-        {'$pull': {'characters': {'id': character['id']}}, '$inc': {'gold': price}}
+        {'id': user_id}, {'$set': {'sales_slot': sales_slot}}
     )
 
-    # Edit the original sales message to indicate the waifu has been sold
-    await callback_query.message.edit_caption(
-        caption=f"**Sold!**\n\n"
-                f"**Name:** {character.get('name', 'N/A')}\n"
-                f"**Rarity:** {character.get('rarity', 'N/A')}\n"
-                f"**Anime:** {character.get('anime', 'N/A')}\n"
-                f"**Price:** {price} gold\n\n"
-                f"Purchased by: {buyer_name}",
+    await message.reply(
+        capsify(
+            f"ᴬᴰᴰᴱᴰ ᵀᴼ ˢᴬᴸᴱ ☑️\n\n"
+            f"💠 ᴺᴬᴹᴱ : {character['name']}\n"
+            f"🔶 [{character['anime']}]\n"
+            f"🧧 ᴿᴬᴿᴵᵀʸ : {character.get('rarity', 'Unknown')}\n"
+            f"🔷 🆔 : {character_id}\n\n"
+            f"ˢᴬᴸᴱ ᴾᴿᴵᶜᴱ : {sale_price} 🔖"
+        ),
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{user_id}")]]
+        )
     )
-
-    await callback_query.answer("Purchase successful!", show_alert=True)
-    await client.send_message(
-        chat_id=seller_id,
-        text=f"{buyer_name} bought your waifu '{character.get('name', 'N/A')}' for {price} gold!"
-    )
-
-    # Remove the sale
-    del active_sales[sale_id]
 
 @app.on_message(filters.command("mysales"))
-async def my_sales(client: Client, message):
+async def my_sales_command(client, message):
     user_id = message.from_user.id
-    user_sales = [sale for sale in active_sales.values() if sale['seller_id'] == user_id]
-
-    if not user_sales:
-        await message.reply_text("You have no active sales.")
+    user = await user_collection.find_one({'id': user_id})
+    if not user or not user.get('sales_slot'):
+        await message.reply(capsify("You have no characters in your sales slot❗"))
         return
 
-    response = "Your Active Sales:\n\n"
-    for sale in user_sales:
-        character = sale['character']
-        response += (f"**ID:** {character.get('id', 'N/A')}\n"
-                     f"**Name:** {character.get('name', 'N/A')}\n"
-                     f"**Rarity:** {character.get('rarity', 'N/A')}\n"
-                     f"**Price:** {sale['price']} gold\n\n")
+    sales = user['sales_slot']
+    sales_list = f"{capsify(message.from_user.first_name + ' sᴀʟᴇs')}\n\n"
+    for idx, sale in enumerate(sales, 1):
+        sales_list += (
+            f"🔴 {sale['name']}\n"
+            f"  [{sale['anime']}]\n"
+            f"  {capsify('ᴿᴬᴿᴵᵀʸ')} : {sale.get('rarity', 'Unknown')}\n"
+            f"  {capsify('ᴀᴄᴛᴜᴀʟ ᴘʀɪᴄᴇ')} : {sale.get('actual_price', 'Unknown')} 🔖\n"
+            f"  {capsify('sᴀʟᴇs ᴘʀɪᴄᴇ')} : {sale['price']} 🔖\n"
+            f"  🆔 : {sale['id']}\n\n"
+        )
 
-    await message.reply_text(response)
+    await message.reply(
+        sales_list,
+        reply_markup=InlineKeyboardMarkup(
+            [
+                [InlineKeyboardButton(str(i), callback_data=f"view_sale_{i}_{user_id}") for i in range(1, len(sales) + 1)],
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{user_id}")],
+            ]
+        )
+    )
 
-@app.on_message(filters.command("sales"))
-async def sales(client: Client, message):
-    if len(message.command) == 2:
-        character_id = message.command[1]
-    else:
-        await message.reply_text("Usage: /sales <waifu_id>")
+@app.on_callback_query(filters.regex(r"sale_slot_close_(\d+)"))
+async def sale_slot_close(client, callback_query):
+    command_user = int(callback_query.matches[0].group(1))
+    if callback_query.from_user.id != command_user:
+        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
+        return
+    await callback_query.message.delete()
+
+@app.on_callback_query(filters.regex(r"view_sale_(\d+)_(\d+)"))
+async def view_sale_details(client, callback_query):
+    query = callback_query.matches[0]
+    slot_index = int(query.group(1)) - 1
+    command_user = int(query.group(2))
+
+    if callback_query.from_user.id != command_user:
+        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
         return
 
-    sale_id = next(
-        (sale_id for sale_id, sale in active_sales.items() if sale['character']['id'] == character_id),
-        None
-    )
-    if not sale_id:
-        await message.reply_text("This waifu is not currently for sale.")
+    user = await user_collection.find_one({'id': command_user})
+    if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
+        await callback_query.answer(capsify("This sales slot does not exist❗"), show_alert=True)
         return
 
-    sale = active_sales[sale_id]
-    character = sale['character']
-    seller_id = sale['seller_id']
-    price = sale['price']
-
-    # Create an inline keyboard for buying
-    keyboard = InlineKeyboardMarkup(
-        [[InlineKeyboardButton(f"Buy for {price} gold", callback_data=f"waifu_buy_{sale_id}")]]
+    sale = user['sales_slot'][slot_index]
+    sale_details = (
+        f"🍃 𝙉𝘼𝙈𝙀 : {sale['name']}\n"
+        f"🍃 𝘼𝙉𝙄𝙈𝙀 : {sale['anime']}\n"
+        f"🍃 𝙍𝘼ᴿᴵᵀʸ : {sale.get('rarity', 'Unknown')}\n"
+        f"🍃 𝙋𝙍𝙄ᶜᴱ : {sale['price']} 🔖\n"
+        f"🆔 : {sale['id']}\n"
     )
 
-    # Send the sale message with the inline keyboard
-    await message.reply_photo(
-        photo=character.get('img_url', ''),
-        caption=f"**Waifu for sale!**\n\n"
-                f"**Seller ID:** {seller_id}\n"
-                f"**Name:** {character.get('name', 'N/A')}\n"
-                f"**Rarity:** {character.get('rarity', 'N/A')}\n"
-                f"**Anime:** {character.get('anime', 'N/A')}\n"
-                f"**Price:** {price} gold",
-        reply_markup=keyboard
-    )
+    buttons = [
+        [InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"sale_purchase_{sale['id']}_{command_user}")],
+        [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{command_user}")],
+    ]
+    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
-@app.on_message(filters.command("randomsale"))
-async def random_sale(client: Client, message):
-    if not active_sales:
-        await message.reply_text("No sales available.")
+@app.on_callback_query(filters.regex(r"sale_purchase_(\d+)_(\d+)"))
+async def purchase_character(client, callback_query):
+    buyer_id = callback_query.from_user.id
+    sale_id = int(callback_query.matches[0].group(1))
+    seller_id = int(callback_query.matches[0].group(2))
+
+    if callback_query.from_user.id != buyer_id:
+        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
         return
 
-    sale = choice(list(active_sales.values()))
-    character = sale['character']
-    seller_id = sale['seller_id']
-    price = sale['price']
+    buyer = await user_collection.find_one({'id': buyer_id})
+    seller = await user_collection.find_one({'id': seller_id})
 
-    # Send the sale message with details
-    await message.reply_text(
-        f"**Random Waifu for sale!**\n\n"
-        f"**Seller ID:** {seller_id}\n"
-        f"**Waifu ID:** {character.get('id', 'N/A')}\n"
-        f"**Name:** {character.get('name', 'N/A')}\n"
-        f"**Rarity:** {character.get('rarity', 'N/A')}\n"
-        f"**Price:** {price} gold\n\n"
-        f"Use `/sales {character.get('id', '')}` to buy this waifu.",
+    if not buyer or not seller or not seller.get('sales_slot'):
+        await callback_query.answer(capsify("Sale not found❗"), show_alert=True)
+        return
+
+    sale = next((s for s in seller['sales_slot'] if s['id'] == str(sale_id)), None)
+    if not sale:
+        await callback_query.answer(capsify("Character no longer available for sale❗"), show_alert=True)
+        return
+
+    buyer_gold = buyer.get('gold', 0)
+    if buyer_gold < sale['price']:
+        await callback_query.answer(capsify("You do not have enough gold to purchase this character❗"), show_alert=True)
+        return
+
+    buyer_gold -= sale['price']
+    seller['sales_slot'].remove(sale)
+    await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot']}})
+    await user_collection.update_one({'id': buyer_id}, {'$set': {'gold': buyer_gold}})
+    await user_collection.update_one(
+        {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['price']}}}
     )
 
-# Automatically rotate the waifu in the random sale every 10 minutes
-def rotate_random_sale():
-    app.loop.create_task(random_sale(app, None))
+    await callback_query.message.edit_text(
+        capsify(f"Purchase successful❗ {sale['name']} has been added to your collection❗")
+    )
 
-scheduler.add_job(rotate_random_sale, 'interval', minutes=10, timezone=timezone('UTC'))
+@app.on_message(filters.command("rmsales"))
+async def remove_sales_command(client, message):
+    user_id = message.from_user.id
+    if len(message.command) != 2:
+        await message.reply(capsify("Usage: /rmsales (character_id)"))
+        return
+
+    character_id = message.command[1]
+    user = await user_collection.find_one({'id': user_id})
+    if not user or not user.get('sales_slot'):
+        await message.reply(capsify("You have no characters in your sales slot❗"))
+        return
+
+    sales_slot = user['sales_slot']
+    sale = next((s for s in sales_slot if s['id'] == character_id), None)
+    if not sale:
+        await message.reply(capsify("Character not found in your sales slot❗"))
+        return
+
+    sales_slot.remove(sale)
+    await user_collection.update_one({'id': user_id}, {'$set': {'sales_slot': sales_slot}})
+    await message.reply(capsify("Character removed from sales slot❗"))
