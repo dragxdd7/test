@@ -213,8 +213,12 @@ async def purchase_character(client, callback_query):
         return
 
     buyer_gold -= sale['sprice']
+    seller_gold = seller.get('gold', 0)
+    seller_gold += sale['sprice']
+
     seller['sales_slot'].remove(sale)
-    await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot']}})
+
+    await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot'], 'gold': seller_gold}})
     await user_collection.update_one({'id': buyer_id}, {'$set': {'gold': buyer_gold}})
     await user_collection.update_one(
         {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
