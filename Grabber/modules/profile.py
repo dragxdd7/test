@@ -1,98 +1,58 @@
-import math
 import os
-import aiohttp
-import aiofiles
+import requests
 from pyrogram import Client, filters
-from datetime import datetime
-import pytz
-from . import user_collection, collection, app, capsify
-from .block import block_dec, temp_block
+from pyrogram.types import Message
+from . import user_collection, app
+from .block import block_dec
 
-def custom_format_number(num):
-    if int(num) >= 10**6:
-        exponent = int(math.log10(num)) - 5
-        base = num // (10 ** exponent)
-        return f"{base:,.0f}({exponent:+})"
-    return f"{num:,.0f}"
+CATBOX_API_URL = "https://catbox.moe/user/api.php"
 
-def parse_amount(amount_str):
-    if "+" in amount_str:
-        base_str, exponent_str = amount_str.split("+")
-        base = int(base_str.replace(",", ""))
-        exponent = int(exponent_str)
-        return base * (10 ** exponent)
-    return int(amount_str.replace(",", ""))
+def upload_to_catbox(file_path):
+    with open(file_path, 'rb') as file:
+        files = {'fileToUpload': file}
+        data = {'req': 'fileToUpload'}
+        response = requests.post(CATBOX_API_URL, files=files, data=data)
+    
+    data = response.text.strip()
 
-async def download_image(url, file_path):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            if response.status == 200:
-                async with aiofiles.open(file_path, 'wb') as f:
-                    await f.write(await response.read())
+    if response.status_code == 200 and data.startswith('https://'):
+        return data
+    else:
+        raise Exception(f"Catbox upload failed: {data}")
 
-def calculate_days_old(created_at):
-    now = datetime.now(pytz.timezone('Asia/Kolkata'))
-    days_old = (now - created_at).days
-    return days_old
-
-@app.on_message(filters.command('xprofile'))
+@app.on_message(filters.command("setpfp"))
 @block_dec
-async def xprofile(client, message):
+async def set_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
-    if temp_block(user_id):
+    reply_message = message.reply_to_message
+
+    if not reply_message or not reply_message.photo:
+        await message.reply_text("**Please reply to a photo to set it as your profile media.**")
         return
 
+    photo = reply_message.photo
+    photo_path = await client.download_media(photo.file_id)
+
     try:
-        user_data = await user_collection.find_one(
-            {'id': user_id},
-            projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'gender': 1, 'profile_media': 1, 'created_at': 1}
-        )
+        img_url = upload_to_catbox(photo_path)
 
-        if user_data:
-            balance_amount = int(user_data.get('balance', 0))
-            bank_balance = int(user_data.get('saved_amount', 0))
-            characters = user_data.get('characters', [])
-            gender = user_data.get('gender')
-            profile_media = user_data.get('profile_media')
-            created_at = user_data.get('created_at')
-
-            if created_at:
-                created_at = created_at.replace(tzinfo=pytz.timezone('Asia/Kolkata'))
-                days_old = calculate_days_old(created_at)
-            else:
-                days_old = "N/A"
-
-            total_characters = len(characters)
-            all_characters = await collection.find({}).to_list(length=None)
-            total_database_characters = len(all_characters)
-
-            gender_icon = '👦🏻' if gender == 'male' else '👧🏻' if gender == 'female' else '👶🏻'
-
-            balance_message = capsify(
-                f"PROFILE\n\n"
-                f"Name: {message.from_user.first_name or ''} {message.from_user.last_name or ''} [{gender_icon}]\n"
-                f"ID: `{user_id}`\n\n"
-                f"Coins: Ŧ`{custom_format_number(balance_amount)}`\n"
-                f"Bank: Ŧ`{custom_format_number(bank_balance)}`\n"
-                f"Characters: `{total_characters}/{total_database_characters}`\n"
-                f"Days Old: `{days_old}`\n"
-            )
-
-            if profile_media:
-                temp_file_path = "temp_profile_image.jpg"
-                await download_image(profile_media, temp_file_path)
-
-                await message.reply_photo(
-                    photo=temp_file_path,
-                    caption=balance_message
-                )
-
-                os.remove(temp_file_path)
-            else:
-                await message.reply_text(balance_message)
-
-        else:
-            await message.reply_text(capsify("Claim bonus first using /xbonus"))
-
+        await user_collection.update_one({'id': user_id}, {'$set': {'profile_media': img_url}})
+        await message.reply_text("**Profile media has been set!**")
     except Exception as e:
-        await message.reply_text(capsify(f"An error occurred: {e}"))
+        await message.reply_text(f"Failed to upload image to Catbox: {e}")
+    finally:
+        if os.path.exists(photo_path):
+            os.remove(photo_path)
+
+@app.on_message(filters.command("delpfp"))
+@block_dec
+async def delete_profile_media(client: Client, message: Message):
+    user_id = message.from_user.id
+    user_data = await user_collection.find_one({'id': user_id})
+
+    if not user_data or 'profile_media' not in user_data:
+        await message.reply_text("No profile media found to delete.")
+        return
+
+    await user_collection.update_one({'id': user_id}, {'$unset': {'profile_media': ""}})
+    await message.reply_text("**Profile media has been deleted.**")
