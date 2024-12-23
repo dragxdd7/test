@@ -24,6 +24,8 @@ def upload_to_catbox(file_path):
 @block_dec
 async def set_profile_media(client: Client, message: Message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     reply_message = message.reply_to_message
 
     if not reply_message or not reply_message.photo:
