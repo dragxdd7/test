@@ -11,6 +11,7 @@ async def gift(client, message):
     sender_id = message.from_user.id
     user_id = message.from_user.id
     if temp_block(user_id):
+        return
 
     if not message.reply_to_message:
         await message.reply(capsify("You need to reply to a user's message to gift a character!"))
