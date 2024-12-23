@@ -86,12 +86,87 @@ async def my_sales_command(client, message):
     await message.reply(
         sales_list,
         reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{user_id}")]]
+        )
+    )
+
+
+@app.on_message(filters.command("sales"))
+async def sales_command(client, message):
+    if message.reply_to_message:
+        target_user_id = message.reply_to_message.from_user.id
+    elif len(message.command) == 2:
+        try:
+            target_user_id = int(message.command[1])
+        except ValueError:
+            await message.reply(capsify("Invalid user ID provided❗"))
+            return
+    else:
+        await message.reply(capsify("Usage: /sales (user_id) or as a reply to a user❗"))
+        return
+
+    if target_user_id == message.from_user.id:
+        await message.reply(capsify("Use /mysales to view your own sales❗"))
+        return
+
+    user = await user_collection.find_one({'id': target_user_id})
+    if not user or not user.get('sales_slot'):
+        await message.reply(capsify("The user has no characters in their sales slot❗"))
+        return
+
+    sales = user['sales_slot']
+    sales_list = f"{capsify('Sales for')} {capsify(user.get('username', 'Unknown'))}\n\n"
+    buttons = []
+
+    for idx, sale in enumerate(sales, 1):
+        sales_list += (
+            f"🔴 {sale['name']}\n"
+            f"  [{sale['anime']}]\n"
+            f"  {capsify('ᴿᴬᴿᴵᵀʸ')} : {sale.get('rarity', 'Unknown')}\n"
+            f"  {capsify('sᴀʟᴇs ᴘʀɪᴄᴇ')} : {sale['price']} 🔖\n"
+            f"  🆔 : {sale['id']}\n\n"
+        )
+        buttons.append(
+            InlineKeyboardButton(str(idx), callback_data=f"view_sale_{idx}_{target_user_id}")
+        )
+
+    await message.reply(
+        sales_list,
+        reply_markup=InlineKeyboardMarkup(
             [
-                [InlineKeyboardButton(str(i), callback_data=f"view_sale_{i}_{user_id}") for i in range(1, len(sales) + 1)],
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{user_id}")],
+                buttons,
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{target_user_id}")],
             ]
         )
     )
+
+
+@app.on_callback_query(filters.regex(r"view_sale_(\d+)_(\d+)"))
+async def view_sale_details(client, callback_query):
+    query = callback_query.matches[0]
+    slot_index = int(query.group(1)) - 1
+    command_user = int(query.group(2))
+
+    user = await user_collection.find_one({'id': command_user})
+    if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
+        await callback_query.answer(capsify("This sales slot does not exist❗"), show_alert=True)
+        return
+
+    sale = user['sales_slot'][slot_index]
+    sale_details = (
+        f"🍃 𝙉𝘼𝙈𝙀 : {sale['name']}\n"
+        f"🍃 𝘼𝙉𝙄𝙈𝙀 : {sale['anime']}\n"
+        f"🍃 𝙍𝘼ᴿᴵᵀʸ : {sale.get('rarity', 'Unknown')}\n"
+        f"🍃 𝙋ʀɪᴄᴇ : {sale['price']} 🔖\n"
+        f"🆔 : {sale['id']}\n"
+    )
+
+    buttons = []
+    if callback_query.from_user.id != command_user:
+        buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"sale_purchase_{sale['id']}_{command_user}")])
+
+    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{command_user}")])
+    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
 @app.on_callback_query(filters.regex(r"sale_slot_close_(\d+)"))
 async def sale_slot_close(client, callback_query):
