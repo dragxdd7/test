@@ -78,14 +78,14 @@ async def my_sales_command(client, message):
     sales = user['sales_slot']
     sales_list = f"{capsify(message.from_user.first_name)}'S SALES\n\n"
     for idx, sale in enumerate(sales, 1):
-        sales_list += (
+        sales_list += (capsify(
             f"{idx}. {capsify(sale['name'])}\n"
             f"ANIME: {capsify(sale['anime'])}\n"
             f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
             f"ORIGINAL PRICE: {sale.get('price', 'UNKNOWN')} GOLD\n"
             f"SALE PRICE: {sale['sprice']} GOLD\n"
             f"ID: {sale['id']}\n\n"
-        )
+        ))
 
     await message.reply(
         sales_list,
@@ -123,13 +123,13 @@ async def sales_command(client, message):
     buttons = []
 
     for idx, sale in enumerate(sales, 1):
-        sales_list += (
+        sales_list += (capsify(
             f"{idx}. {capsify(sale['name'])}\n"
             f"ANIME: {capsify(sale['anime'])}\n"
             f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
             f"SALE PRICE: {sale['sprice']} GOLD\n"
             f"ID: {sale['id']}\n\n"
-        )
+        ))
         buttons.append(
             InlineKeyboardButton(str(idx), callback_data=f"VIEW_SALE_{idx}_{target_user_id}")
         )
@@ -157,13 +157,13 @@ async def view_sale_details(client, callback_query):
         return
 
     sale = user['sales_slot'][slot_index]
-    sale_details = (
+    sale_details = (capsify(
         f"NAME: {capsify(sale['name'])}\n"
         f"ANIME: {capsify(sale['anime'])}\n"
         f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
         f"PRICE: {sale['sprice']} GOLD\n"
         f"ID: {sale['id']}\n"
-    )
+    ))
 
     buttons = []
     if callback_query.from_user.id != command_user:
