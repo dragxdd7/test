@@ -151,6 +151,10 @@ async def view_sale_details(client, callback_query):
     slot_index = int(query.group(1)) - 1
     command_user = int(query.group(2))
 
+    if callback_query.from_user.id != command_user:
+        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+        return
+
     user = await user_collection.find_one({'id': command_user})
     if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
         await callback_query.answer(capsify("THIS SALES SLOT DOES NOT EXIST❗"), show_alert=True)
@@ -172,6 +176,9 @@ async def view_sale_details(client, callback_query):
     buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
     await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
+    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
+    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
+
 
 @app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
 async def sale_slot_close(client, callback_query):
@@ -187,6 +194,10 @@ async def purchase_character(client, callback_query):
     buyer_id = callback_query.from_user.id
     sale_id = int(callback_query.matches[0].group(1))
     seller_id = int(callback_query.matches[0].group(2))
+
+    if buyer_id != seller_id:
+        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+        return
 
     buyer = await user_collection.find_one({'id': buyer_id})
     seller = await user_collection.find_one({'id': seller_id})
