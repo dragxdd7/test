@@ -146,7 +146,7 @@ async def sales_command(client, message):
         reply_markup=InlineKeyboardMarkup(
             [
                 buttons,
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")],
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")],
             ]
         )
     )
@@ -180,7 +180,7 @@ async def view_sale_details(client, callback_query):
     if callback_query.from_user.id == buyer_id:
         buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
-    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user_id}")])
+    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")])
 
     await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
@@ -228,9 +228,12 @@ async def purchase_character(client, callback_query):
 @app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
 async def sale_slot_close(client, callback_query):
     target_user_id = int(callback_query.matches[0].group(1))
+    
+    # Only allow the user who triggered the command to close the message
     if callback_query.from_user.id != target_user_id:
         await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
         return
+    
     await callback_query.message.delete()
 
 
