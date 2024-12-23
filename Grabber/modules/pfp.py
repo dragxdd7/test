@@ -10,7 +10,8 @@ CATBOX_API_URL = "https://catbox.moe/user/api.php"
 def upload_to_catbox(file_path):
     with open(file_path, 'rb') as file:
         files = {'fileToUpload': file}
-        response = requests.post(CATBOX_API_URL, files=files)
+        data = {'req': 'fileToUpload'}
+        response = requests.post(CATBOX_API_URL, files=files, data=data)
     
     data = response.text.strip()
 
