@@ -131,7 +131,7 @@ async def sales_command(client, message):
             f"ID: {sale['id']}\n\n"
         ))
         buttons.append(
-            InlineKeyboardButton(str(idx), callback_data=f"VIEW_SALE_{idx}_{target_user_id}")
+            InlineKeyboardButton(str(idx), callback_data=f"VIEW_SALE_{idx}_{user_id}")
         )
 
     await message.reply(
@@ -139,7 +139,7 @@ async def sales_command(client, message):
         reply_markup=InlineKeyboardMarkup(
             [
                 buttons,
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{target_user_id}")],
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")],
             ]
         )
     )
