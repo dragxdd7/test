@@ -145,58 +145,14 @@ async def sales_command(client, message):
     )
 
 
-@app.on_callback_query(filters.regex(r"VIEW_SALE_(\d+)_(\d+)"))
-async def view_sale_details(client, callback_query):
-    query = callback_query.matches[0]
-    slot_index = int(query.group(1)) - 1
-    command_user = int(query.group(2))
-
-    if callback_query.from_user.id != command_user:
-        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
-        return
-
-    user = await user_collection.find_one({'id': command_user})
-    if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
-        await callback_query.answer(capsify("THIS SALES SLOT DOES NOT EXIST❗"), show_alert=True)
-        return
-
-    sale = user['sales_slot'][slot_index]
-    sale_details = (capsify(
-        f"NAME: {capsify(sale['name'])}\n"
-        f"ANIME: {capsify(sale['anime'])}\n"
-        f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
-        f"PRICE: {sale['sprice']} GOLD\n"
-        f"ID: {sale['id']}\n"
-    ))
-
-    buttons = []
-    if callback_query.from_user.id != command_user:
-        buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{command_user}")])
-
-    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
-    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
-
-    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
-    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
-
-
-@app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
-async def sale_slot_close(client, callback_query):
-    command_user = int(callback_query.matches[0].group(1))
-    if callback_query.from_user.id != command_user:
-        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
-        return
-    await callback_query.message.delete()
-
-
 @app.on_callback_query(filters.regex(r"SALE_PURCHASE_(\d+)_(\d+)"))
 async def purchase_character(client, callback_query):
     buyer_id = callback_query.from_user.id
     sale_id = int(callback_query.matches[0].group(1))
     seller_id = int(callback_query.matches[0].group(2))
 
-    if buyer_id != seller_id:
-        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+    if buyer_id == seller_id:
+        await callback_query.answer(capsify("YOU CANNOT PURCHASE YOUR OWN CHARACTER❗"), show_alert=True)
         return
 
     buyer = await user_collection.find_one({'id': buyer_id})
@@ -227,6 +183,45 @@ async def purchase_character(client, callback_query):
     await callback_query.message.edit_text(
         capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗")
     )
+
+@app.on_callback_query(filters.regex(r"VIEW_SALE_(\d+)_(\d+)"))
+async def view_sale_details(client, callback_query):
+    query = callback_query.matches[0]
+    slot_index = int(query.group(1)) - 1
+    command_user = int(query.group(2))
+
+    if callback_query.from_user.id != command_user:
+        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+        return
+
+    user = await user_collection.find_one({'id': command_user})
+    if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
+        await callback_query.answer(capsify("THIS SALES SLOT DOES NOT EXIST❗"), show_alert=True)
+        return
+
+    sale = user['sales_slot'][slot_index]
+    sale_details = (capsify(
+        f"NAME: {capsify(sale['name'])}\n"
+        f"ANIME: {capsify(sale['anime'])}\n"
+        f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
+        f"PRICE: {sale['sprice']} GOLD\n"
+        f"ID: {sale['id']}\n"
+    ))
+
+    buttons = []
+    if callback_query.from_user.id == command_user:
+        buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{command_user}")])
+
+    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{command_user}")])
+    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
+
+@app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
+async def sale_slot_close(client, callback_query):
+    command_user = int(callback_query.matches[0].group(1))
+    if callback_query.from_user.id != command_user:
+        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+        return
+    await callback_query.message.delete()
 
 
 @app.on_message(filters.command("rmsales"))
