@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, user_collection, add
+from .block import block_dec, temp_block
 
 bonus_db = db.bonus
 
@@ -29,8 +30,10 @@ async def update_bonus_status(user_id, bonus_type):
     await bonus_db.update_one({"user_id": user_id}, {"$set": {"bonus": bonus_status}}, upsert=True)
 
 @app.on_message(filters.command("bonus"))
+@block_dec
 async def bonus_handler(_, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
     user_name = message.from_user.first_name or "User"
     today = datetime.now()
     current_day = capsify(today.strftime("%A"))  # Capsified day
