@@ -126,7 +126,7 @@ async def sales_command(client, message):
         return
 
     sales = user['sales_slot']
-    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('username', 'UNKNOWN'))}\n\n"
+    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('first_name', 'UNKNOWN'))}\n\n"
     buttons = []
 
     for idx, sale in enumerate(sales, 1):
