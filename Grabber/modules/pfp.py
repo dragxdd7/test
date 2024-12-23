@@ -3,7 +3,7 @@ import requests
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from . import user_collection, app
-from .block import block_dec
+from .block import block_dec, temp_block
 
 CATBOX_API_URL = "https://catbox.moe/user/api.php"
 
