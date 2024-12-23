@@ -1,4 +1,4 @@
-from pyrogram import Client, filters
+"""from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from Grabber import user_collection
 from . import capsify, app
@@ -245,4 +245,4 @@ async def remove_sales_command(client, message):
 
     sales_slot.remove(sale)
     await user_collection.update_one({'id': user_id}, {'$set': {'sales_slot': sales_slot}})
-    await message.reply(capsify("CHARACTER REMOVED FROM SALES SLOT❗"))
+    await message.reply(capsify("CHARACTER REMOVED FROM SALES SLOT❗"))"""
