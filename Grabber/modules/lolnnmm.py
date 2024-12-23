@@ -146,7 +146,7 @@ async def sales_command(client, message):
         reply_markup=InlineKeyboardMarkup(
             [
                 buttons,
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")],
+                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")],
             ]
         )
     )
