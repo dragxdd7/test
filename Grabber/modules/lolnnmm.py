@@ -44,24 +44,28 @@ async def sale_command(client, message):
         await message.reply(capsify("Your sales slot is full❗ Remove a character to add a new one."))
         return
 
-    sales_slot.append({"id": character_id, "price": sale_price, **character})
+    # Add sale details
+    character['sprice'] = sale_price
+    sales_slot.append(character)
+
     await user_collection.update_one(
         {'id': user_id}, {'$set': {'sales_slot': sales_slot}}
     )
 
     await message.reply(
         capsify(
-            f"ᴬᴰᴰᴱᴰ ᵀᴼ ˢᴬᴸᴱ ☑️\n\n"
-            f"💠 ᴺᴬᴹᴱ : {character['name']}\n"
-            f"🔶 [{character['anime']}]\n"
-            f"🧧 ᴿᴬᴿᴵᵀʸ : {character.get('rarity', 'Unknown')}\n"
-            f"🔷 🆔 : {character_id}\n\n"
-            f"ˢᴬᴸᴱ ᴾᴿᴵᶜᴱ : {sale_price} 🔖"
+            f"ADDED TO SALE ✅\n\n"
+            f"NAME: {capsify(character['name'])}\n"
+            f"ANIME: {capsify(character['anime'])}\n"
+            f"RARITY: {character.get('rarity', 'Unknown')}\n"
+            f"ID: {character_id}\n"
+            f"SALE PRICE: {sale_price} gold"
         ),
         reply_markup=InlineKeyboardMarkup(
             [[InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{user_id}")]]
         )
     )
+
 
 @app.on_message(filters.command("mysales"))
 async def my_sales_command(client, message):
@@ -72,15 +76,15 @@ async def my_sales_command(client, message):
         return
 
     sales = user['sales_slot']
-    sales_list = f"{capsify(message.from_user.first_name + ' sᴀʟᴇs')}\n\n"
+    sales_list = f"{capsify(message.from_user.first_name)}'S SALES\n\n"
     for idx, sale in enumerate(sales, 1):
         sales_list += (
-            f"🔴 {sale['name']}\n"
-            f"  [{sale['anime']}]\n"
-            f"  {capsify('ᴿᴬᴿᴵᵀʸ')} : {sale.get('rarity', 'Unknown')}\n"
-            f"  {capsify('ᴀᴄᴛᴜᴀʟ ᴘʀɪᴄᴇ')} : {sale.get('actual_price', 'Unknown')} 🔖\n"
-            f"  {capsify('sᴀʟᴇs ᴘʀɪᴄᴇ')} : {sale['price']} 🔖\n"
-            f"  🆔 : {sale['id']}\n\n"
+            f"{idx}. {capsify(sale['name'])}\n"
+            f"ANIME: {capsify(sale['anime'])}\n"
+            f"RARITY: {sale.get('rarity', 'Unknown')}\n"
+            f"ORIGINAL PRICE: {sale.get('price', 'Unknown')} gold\n"
+            f"SALE PRICE: {sale['sprice']} gold\n"
+            f"ID: {sale['id']}\n\n"
         )
 
     await message.reply(
@@ -115,16 +119,16 @@ async def sales_command(client, message):
         return
 
     sales = user['sales_slot']
-    sales_list = f"{capsify('Sales for')} {capsify(user.get('username', 'Unknown'))}\n\n"
+    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('username', 'Unknown'))}\n\n"
     buttons = []
 
     for idx, sale in enumerate(sales, 1):
         sales_list += (
-            f"🔴 {sale['name']}\n"
-            f"  [{sale['anime']}]\n"
-            f"  {capsify('ᴿᴬᴿᴵᵀʸ')} : {sale.get('rarity', 'Unknown')}\n"
-            f"  {capsify('sᴀʟᴇs ᴘʀɪᴄᴇ')} : {sale['price']} 🔖\n"
-            f"  🆔 : {sale['id']}\n\n"
+            f"{idx}. {capsify(sale['name'])}\n"
+            f"ANIME: {capsify(sale['anime'])}\n"
+            f"RARITY: {sale.get('rarity', 'Unknown')}\n"
+            f"SALE PRICE: {sale['sprice']} gold\n"
+            f"ID: {sale['id']}\n\n"
         )
         buttons.append(
             InlineKeyboardButton(str(idx), callback_data=f"view_sale_{idx}_{target_user_id}")
@@ -154,11 +158,11 @@ async def view_sale_details(client, callback_query):
 
     sale = user['sales_slot'][slot_index]
     sale_details = (
-        f"🍃 𝙉𝘼𝙈𝙀 : {sale['name']}\n"
-        f"🍃 𝘼𝙉𝙄𝙈𝙀 : {sale['anime']}\n"
-        f"🍃 𝙍𝘼ᴿᴵᵀʸ : {sale.get('rarity', 'Unknown')}\n"
-        f"🍃 𝙋ʀɪᴄᴇ : {sale['price']} 🔖\n"
-        f"🆔 : {sale['id']}\n"
+        f"NAME: {capsify(sale['name'])}\n"
+        f"ANIME: {capsify(sale['anime'])}\n"
+        f"RARITY: {sale.get('rarity', 'Unknown')}\n"
+        f"PRICE: {sale['sprice']} gold\n"
+        f"ID: {sale['id']}\n"
     )
 
     buttons = []
@@ -168,53 +172,21 @@ async def view_sale_details(client, callback_query):
     buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{command_user}")])
     await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
+
 @app.on_callback_query(filters.regex(r"sale_slot_close_(\d+)"))
 async def sale_slot_close(client, callback_query):
     command_user = int(callback_query.matches[0].group(1))
     if callback_query.from_user.id != command_user:
-        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
+        await callback_query.answer(capsify("This is not for you, baka❗"), show_alert=True)
         return
     await callback_query.message.delete()
 
-@app.on_callback_query(filters.regex(r"view_sale_(\d+)_(\d+)"))
-async def view_sale_details(client, callback_query):
-    query = callback_query.matches[0]
-    slot_index = int(query.group(1)) - 1
-    command_user = int(query.group(2))
-
-    if callback_query.from_user.id != command_user:
-        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
-        return
-
-    user = await user_collection.find_one({'id': command_user})
-    if not user or not user.get('sales_slot') or slot_index >= len(user['sales_slot']):
-        await callback_query.answer(capsify("This sales slot does not exist❗"), show_alert=True)
-        return
-
-    sale = user['sales_slot'][slot_index]
-    sale_details = (
-        f"🍃 𝙉𝘼𝙈𝙀 : {sale['name']}\n"
-        f"🍃 𝘼𝙉𝙄𝙈𝙀 : {sale['anime']}\n"
-        f"🍃 𝙍𝘼ᴿᴵᵀʸ : {sale.get('rarity', 'Unknown')}\n"
-        f"🍃 𝙋𝙍𝙄ᶜᴱ : {sale['price']} 🔖\n"
-        f"🆔 : {sale['id']}\n"
-    )
-
-    buttons = [
-        [InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"sale_purchase_{sale['id']}_{command_user}")],
-        [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"sale_slot_close_{command_user}")],
-    ]
-    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
 
 @app.on_callback_query(filters.regex(r"sale_purchase_(\d+)_(\d+)"))
 async def purchase_character(client, callback_query):
     buyer_id = callback_query.from_user.id
     sale_id = int(callback_query.matches[0].group(1))
     seller_id = int(callback_query.matches[0].group(2))
-
-    if callback_query.from_user.id != buyer_id:
-        await callback_query.answer(capsify("This is not for you baka ❗"), show_alert=True)
-        return
 
     buyer = await user_collection.find_one({'id': buyer_id})
     seller = await user_collection.find_one({'id': seller_id})
@@ -229,21 +201,22 @@ async def purchase_character(client, callback_query):
         return
 
     buyer_gold = buyer.get('gold', 0)
-    if buyer_gold < sale['price']:
+    if buyer_gold < sale['sprice']:
         await callback_query.answer(capsify("You do not have enough gold to purchase this character❗"), show_alert=True)
         return
 
-    buyer_gold -= sale['price']
+    buyer_gold -= sale['sprice']
     seller['sales_slot'].remove(sale)
     await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot']}})
     await user_collection.update_one({'id': buyer_id}, {'$set': {'gold': buyer_gold}})
     await user_collection.update_one(
-        {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['price']}}}
+        {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
     )
 
     await callback_query.message.edit_text(
         capsify(f"Purchase successful❗ {sale['name']} has been added to your collection❗")
     )
+
 
 @app.on_message(filters.command("rmsales"))
 async def remove_sales_command(client, message):
