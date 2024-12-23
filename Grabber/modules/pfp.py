@@ -10,15 +10,15 @@ CATBOX_API_URL = "https://catbox.moe/user/api.php"
 def upload_to_catbox(file_path):
     with open(file_path, 'rb') as file:
         files = {'fileToUpload': file}
-        data = {'req': 'fileToUpload'}
+        data = {'reqtype': 'fileupload'}
         response = requests.post(CATBOX_API_URL, files=files, data=data)
-    
-    data = response.text.strip()
 
-    if response.status_code == 200 and data.startswith('https://'):
-        return data
+    response_text = response.text.strip()
+
+    if response.status_code == 200 and response_text.startswith('https://'):
+        return response_text
     else:
-        raise Exception(f"Catbox upload failed: {data}")
+        raise Exception(f"Catbox upload failed: {response_text}")
 
 @app.on_message(filters.command("setpfp"))
 @block_dec
@@ -37,7 +37,6 @@ async def set_profile_media(client: Client, message: Message):
 
     try:
         img_url = upload_to_catbox(photo_path)
-
         await user_collection.update_one({'id': user_id}, {'$set': {'profile_media': img_url}})
         await message.reply_text("**Profile media has been set!**")
     except Exception as e:
