@@ -18,6 +18,9 @@ def temp_block(user_id):
 
 @app.on_message(filters.group, group=block_watcher)
 async def block_cwf(_, m: Message):
+    if m.from_user is None:
+        return
+
     user_id = m.from_user.id
 
     if user_id in t_block:
@@ -41,7 +44,6 @@ async def block_cwf(_, m: Message):
         dic2[user_id] = 0
 
     dic1[user_id] = current_time
-bdb = db.block
 
 async def block(user_id):
     await bdb.insert_one({'user_id': user_id})
