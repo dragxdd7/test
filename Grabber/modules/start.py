@@ -9,10 +9,11 @@ devb = db.dev
 uploaderdb = db.uploader
 
 @app.on_message(filters.command("start") & filters.private)
-async def start_command_private(_, message):
+async def start_command_private(client, message):
     user_id = message.from_user.id
-    username = message.from_user.username
-    first_name = message.from_user.first_name
+    user = await client.get_users(user_id)
+    username = user.username
+    first_name = user.first_name
 
     user_collection.update_one(
         {"id": user_id},
@@ -20,8 +21,8 @@ async def start_command_private(_, message):
         upsert=True
     )
 
-    random_video = random.choice(PHOTO_URL)  # VIDEO_URL should be a list of video URLs or file IDs
-    await app.send_video(
+    random_video = random.choice(PHOTO_URL)
+    await client.send_video(
         chat_id=user_id,
         video=random_video,
         caption=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
@@ -35,7 +36,7 @@ async def start_command_private(_, message):
     )
 
 @app.on_message(filters.command("start") & filters.group)
-async def start_command_group(_, message):
+async def start_command_group(client, message):
     await message.reply_text(
         capsify("🚀 To start using me, please click the button below to initiate in DM."),
         reply_markup=IKM([
@@ -44,44 +45,11 @@ async def start_command_group(_, message):
     )
 
 @app.on_message(filters.command("credits") & filters.private)
-async def credits_command(_, message):
-    await show_credits(_, message)
-
-@app.on_callback_query(filters.regex("show_credits"))
-async def show_credits(_, message_or_callback):
-    if isinstance(message_or_callback, Client):  # When called by /credits
-        message = message_or_callback
-        await message.reply_text(
-            text=capsify(
-                "Bot Developers\n\n"
-                "Users below are the developers, helpers, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You!"
-            ),
-            reply_markup=IKM([
-                [IKB(capsify("Developers"), callback_data="show_dev_names"),
-                 IKB(capsify("Sudos"), callback_data="show_sudo_names")],
-                [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
-                 IKB(capsify("Back"), callback_data="start_main_menu")]
-            ])
-        )
-    else:  # When called by the callback button
-        callback_query = message_or_callback
-        await callback_query.edit_message_text(
-            text=capsify(
-                "Bot Developers\n\n"
-                "Users below are the developers, helpers, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You!"
-            ),
-            reply_markup=IKM([
-                [IKB(capsify("Developers"), callback_data="show_dev_names"),
-                 IKB(capsify("Sudos"), callback_data="show_sudo_names")],
-                [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
-                 IKB(capsify("Back"), callback_data="start_main_menu")]
-            ])
-        )
+async def credits_command(client, message):
+    await show_credits(client, message)
 
 @app.on_callback_query(filters.regex("show_dev_names"))
-async def show_dev_names(_, callback_query):
+async def show_dev_names(client, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading developer names..."),
         reply_markup=IKM([
@@ -89,9 +57,17 @@ async def show_dev_names(_, callback_query):
         ])
     )
 
-    dev_names = [user.get("first_name", "Pick-Unknown") async for user in devb.find()]
-    text = "**Developers:**\n" + "\n".join(capsify(name) for name in dev_names)
+    dev_ids = [user["id"] async for user in devb.find()]
+    dev_names = []
 
+    for dev_id in dev_ids:
+        try:
+            user = await client.get_users(dev_id)
+            dev_names.append(user.first_name or "Pick-Unknown")
+        except Exception:
+            dev_names.append("Pick-Unknown")
+
+    text = "**Developers:**\n" + "\n".join(capsify(name) for name in dev_names)
     await callback_query.edit_message_text(
         text=text,
         reply_markup=IKM([
@@ -100,7 +76,7 @@ async def show_dev_names(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("show_sudo_names"))
-async def show_sudo_names(_, callback_query):
+async def show_sudo_names(client, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading sudo names..."),
         reply_markup=IKM([
@@ -108,9 +84,17 @@ async def show_sudo_names(_, callback_query):
         ])
     )
 
-    sudo_names = [user.get("first_name", "Pick-Unknown") async for user in sudb.find()]
-    text = "**Sudos:**\n" + "\n".join(capsify(name) for name in sudo_names)
+    sudo_ids = [user["id"] async for user in sudb.find()]
+    sudo_names = []
 
+    for sudo_id in sudo_ids:
+        try:
+            user = await client.get_users(sudo_id)
+            sudo_names.append(user.first_name or "Pick-Unknown")
+        except Exception:
+            sudo_names.append("Pick-Unknown")
+
+    text = "**Sudos:**\n" + "\n".join(capsify(name) for name in sudo_names)
     await callback_query.edit_message_text(
         text=text,
         reply_markup=IKM([
@@ -119,7 +103,7 @@ async def show_sudo_names(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("show_uploader_names"))
-async def show_uploader_names(_, callback_query):
+async def show_uploader_names(client, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading uploader names..."),
         reply_markup=IKM([
@@ -127,9 +111,17 @@ async def show_uploader_names(_, callback_query):
         ])
     )
 
-    uploader_names = [user.get("first_name", "Pick-Unknown") async for user in uploaderdb.find()]
-    text = "**Uploaders:**\n" + "\n".join(capsify(name) for name in uploader_names)
+    uploader_ids = [user["id"] async for user in uploaderdb.find()]
+    uploader_names = []
 
+    for uploader_id in uploader_ids:
+        try:
+            user = await client.get_users(uploader_id)
+            uploader_names.append(user.first_name or "Pick-Unknown")
+        except Exception:
+            uploader_names.append("Pick-Unknown")
+
+    text = "**Uploaders:**\n" + "\n".join(capsify(name) for name in uploader_names)
     await callback_query.edit_message_text(
         text=text,
         reply_markup=IKM([
@@ -138,5 +130,5 @@ async def show_uploader_names(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("start_main_menu"))
-async def start_main_menu(_, callback_query):
-    await start_command_private(_, callback_query.message)
+async def start_main_menu(client, callback_query):
+    await start_command_private(client, callback_query.message)
