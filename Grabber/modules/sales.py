@@ -169,7 +169,6 @@ async def view_sale_details(client, callback_query):
         return
 
     sale = user['sales_slot'][slot_index]
-    image_url = sale.get('img_url', None)
 
     sale_details = (capsify(
         f"NAME: {capsify(sale['name'])}\n"
@@ -182,10 +181,6 @@ async def view_sale_details(client, callback_query):
     buttons = []
     if callback_query.from_user.id == buyer_id:
         buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
-
-    if image_url:
-        web_app_url = f"https://your-webapp-url.com?image_url={image_url}"
-        buttons.append([IKB(capsify("VIEW IMAGE"), web_app=web_app_url)])
 
     buttons.append([IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")])
 
