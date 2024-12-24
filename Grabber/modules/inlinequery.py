@@ -5,7 +5,7 @@ from pymongo import MongoClient, DESCENDING
 import asyncio
 
 from telegram import Update
-from telegram.ext import InlineQueryHandler, CallbackContext
+from telegram.ext import InlineQueryHandler, CallbackContext, CommandHandler
 from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
 
 from . import user_collection, collection, application, db, capsify
@@ -15,6 +15,7 @@ lock = asyncio.Lock()
 db.characters.create_index([('id', DESCENDING)])
 db.characters.create_index([('anime', DESCENDING)])
 db.characters.create_index([('img_url', DESCENDING)])
+
 db.user_collection.create_index([('characters.id', DESCENDING)])
 db.user_collection.create_index([('characters.name', DESCENDING)])
 db.user_collection.create_index([('characters.img_url', DESCENDING)])
@@ -27,21 +28,6 @@ def clear_all_caches():
     user_collection_cache.clear()
 
 clear_all_caches()
-
-rarity_map = {
-    "common": "🟢 Common",
-    "medium": "🔵 Medium",
-    "rare": "🟠 Rare",
-    "legendary": "🟡 Legendary",
-    "celestial": "🪽 Celestial",
-    "divine": "🥵 Divine",
-    "special": "🥴 Special",
-    "premium": "💎 Premium",
-    "limited": "🔮 Limited",
-    "cosplay": "🍭 Cosplay",
-    "aura": "💋 Aura",
-    "winter": "❄️ Winter"
-}
 
 @block_inl_ptb
 async def inlinequery(update: Update, context: CallbackContext) -> None:
@@ -65,22 +51,12 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
                 if user:
                     all_characters = {v['id']: v for v in user.get('characters', [])}.values()
-                    rarity_filter = search_terms[-1].lower() if search_terms else None
-                    if rarity_filter and rarity_filter in rarity_map:
-                        all_characters = [
-                            character for character in all_characters
-                            if character.get('rarity', '').lower() == rarity_filter
-                        ]
-                        search_terms = search_terms[:-1]
                     if search_terms:
                         if search_terms[0].isdigit():
                             all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
                         else:
                             regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                            all_characters = [
-                                character for character in all_characters
-                                if regex.search(character['name']) or regex.search(character['anime'])
-                            ]
+                            all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
                 else:
                     all_characters = []
             else:
@@ -123,7 +99,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
 
-            price = character.get('price', 'Unknown')
+            price = character.get('price', 'Unknown')  # Get the price, default to 'Unknown'
 
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
@@ -177,4 +153,3 @@ async def check(update: Update, context: CallbackContext) -> None:
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
     await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
-
