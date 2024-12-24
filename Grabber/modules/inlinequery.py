@@ -47,7 +47,7 @@ rarity_map = {
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.inline_query.query.strip()
+        query = update.inline_query.query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
@@ -87,14 +87,15 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 all_characters = []
         else:
             if query:
-                if query.isdigit():
-                    all_characters = await collection.find({"id": int(query)}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-                else:
-                    regex = re.compile(query, re.IGNORECASE)
-                    all_characters = await collection.find(
-                        {"$or": [{"name": regex}, {"anime": regex}]},
-                        {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
-                    ).to_list(length=None)
+                regex = re.compile(query, re.IGNORECASE)
+                # Modify this query to search by 'id' as well as 'name' and 'anime'
+                all_characters = await collection.find({
+                    "$or": [
+                        {"name": regex},
+                        {"anime": regex},
+                        {"id": int(query)}  # Added the condition to search by 'id'
+                    ]
+                }, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
@@ -170,6 +171,8 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )
 
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
+
+application.add_handler(InlineQueryHandler(inlinequery, block=False))
 
 async def check(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
