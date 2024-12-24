@@ -17,13 +17,7 @@ TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"
 #TOKEN = "7872640132:AAFrIY4CCYQBMr-yQncD59_r2xBysmsk0xE"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
-    "https://graph.org/file/f10bec6ec695bba69037d.jpg",
-    "https://graph.org/file/bdac0dcb5d841263a8866.jpg",
-    "https://telegra.ph/file/75e758e6e47453d301fcd.jpg",
-    "https://telegra.ph/file/75e758e6e47453d301fcd.jpg",
-    "https://telegra.ph/file/dba87ad2a7d957588b8de.jpg",
-    "https://telegra.ph/file/765c9474d372cf40621da.jpg",
-    "https://telegra.ph/file/1e55c00d0be79b7ca614d.jpg"
+    "https://files.catbox.moe/glb1m8.mp4"
 ]
 SUPPORT_CHAT = "dragona_support"
 UPDATE_CHAT = "PickBotUpdatesHQ"
