@@ -40,41 +40,41 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         start_index = offset
         end_index = offset + results_per_page
 
-        # Check if query is a numeric ID
-        if query.isdigit():
-            character_id = int(query)
+        if query.strip().isdigit():
+            character_id = int(query.strip())
             all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-        elif query.startswith('collection.'):
-            user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
-            if user_id.isdigit():
-                if user_id in user_collection_cache:
-                    user = user_collection_cache[user_id]
-                else:
-                    user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
-                    user_collection_cache[user_id] = user
+        else:
+            if query.startswith('collection.'):
+                user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
+                if user_id.isdigit():
+                    if user_id in user_collection_cache:
+                        user = user_collection_cache[user_id]
+                    else:
+                        user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
+                        user_collection_cache[user_id] = user
 
-                if user:
-                    all_characters = {v['id']: v for v in user.get('characters', [])}.values()
-                    if search_terms:
-                        if search_terms[0].isdigit():
-                            all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
-                        else:
-                            regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                            all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
+                    if user:
+                        all_characters = {v['id']: v for v in user.get('characters', [])}.values()
+                        if search_terms:
+                            if search_terms[0].isdigit():
+                                all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
+                            else:
+                                regex = re.compile(' '.join(search_terms), re.IGNORECASE)
+                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
+                    else:
+                        all_characters = []
                 else:
                     all_characters = []
             else:
-                all_characters = []
-        else:
-            if query:
-                regex = re.compile(query, re.IGNORECASE)
-                all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-            else:
-                if 'all_characters' in all_characters_cache:
-                    all_characters = all_characters_cache['all_characters']
+                if query:
+                    regex = re.compile(query, re.IGNORECASE)
+                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
                 else:
-                    all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-                    all_characters_cache['all_characters'] = all_characters
+                    if 'all_characters' in all_characters_cache:
+                        all_characters = all_characters_cache['all_characters']
+                    else:
+                        all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                        all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
 
@@ -103,7 +103,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             global_count = global_count_dict.get(character['id'], 0)
             anime_characters = anime_count_dict.get(character['anime'], 0)
 
-            price = character.get('price', 'Unknown')  # Get the price, default to 'Unknown'
+            price = character.get('price', 'Unknown')
 
             if query.startswith('collection.'):
                 user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
