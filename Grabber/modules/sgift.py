@@ -4,6 +4,7 @@ from Grabber import user_collection
 from . import capsify, app
 from .block import block_dec, temp_block
 from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 
 @app.on_message(filters.command("gift"))
 @block_dec
@@ -68,11 +69,46 @@ async def gift(client, message):
         await message.reply(capsify(f"You do not have a character with ID {character_id}!"))
         return
 
+    confirm_button = IKB(capsify("✅ Confirm"), callback_data=f"gift_confirm_{sender_id}_{receiver_id}_{character_id}")
+    cancel_button = IKB(capsify("❌ Cancel"), callback_data=f"gift_cancel_{sender_id}")
+    reply_markup = IKM([[confirm_button, cancel_button]])
+
+    confirmation_message = (
+        f"{capsify('🎁 Confirm Gift')}\n\n"
+        f"{capsify('♦️ NAME:')} {capsify(character['name'])} {character.get('emoji', '[🥎]')}\n"
+        f"{capsify('🧧 ANIME:')} {capsify(character['anime'])}\n"
+        f"{capsify('🆔:')} {character['id']:03}\n"
+        f"{capsify('🌟:')} {character.get('rarity', '🔮 Limited')}\n\n"
+        f"{capsify('Are you sure you want to send this character?')}"
+    )
+
+    await message.reply(confirmation_message, reply_markup=reply_markup)
+
+@app.on_callback_query(filters.regex(r"^gift_confirm_(\d+)_(\d+)_(\d+)$"))
+async def gift_confirm(client, callback_query, match):
+    sender_id = int(match.group(1))
+    receiver_id = int(match.group(2))
+    character_id = int(match.group(3))
+
+    if callback_query.from_user.id != sender_id:
+        await callback_query.answer(capsify("This is not for you, baka ❗"), show_alert=True)
+        return
+
+    sender = await user_collection.find_one({'id': sender_id})
+    if not sender:
+        await callback_query.answer(capsify("Sender not found!"))
+        return
+
+    character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
+    if not character:
+        await callback_query.answer(capsify("Character not found!"))
+        return
+
     sender_characters = sender.get('characters', [])
-    sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character['id']), None)
+    sender_character_index = next((index for index, char in enumerate(sender_characters) if char['id'] == character_id), None)
 
     if sender_character_index is None:
-        await message.reply(capsify("You do not have this character anymore!"))
+        await callback_query.answer(capsify("You do not have this character anymore!"))
         return
 
     sender_characters.pop(sender_character_index)
@@ -85,9 +121,15 @@ async def gift(client, message):
     else:
         await user_collection.insert_one({
             'id': receiver_id,
-            'first_name': receiver_first_name,
+            'first_name': callback_query.message.reply_to_message.from_user.first_name,
             'characters': [character],
         })
+
+    last_reset = sender.get('last_reset')
+    daily_gift_count = sender.get('daily_gift_count', 0)
+
+    if not last_reset or datetime.fromisoformat(last_reset).date() < datetime.utcnow().date():
+        daily_gift_count = 0
 
     gifts_left = 10 - daily_gift_count
     success_message = (
@@ -98,4 +140,15 @@ async def gift(client, message):
         f"{capsify('🌟:')} {character.get('rarity', '🔮 Limited')}\n\n"
         f"{capsify('GIFTS LEFT:')} {gifts_left}"
     )
-    await message.reply(success_message)
+    await callback_query.message.edit_text(success_message)
+
+@app.on_callback_query(filters.regex(r"^gift_cancel_(\d+)$"))
+async def gift_cancel(client, callback_query, match):
+    sender_id = int(match.group(1))
+
+    if callback_query.from_user.id != sender_id:
+        await callback_query.answer(capsify("This is not for you, baka ❗"), show_alert=True)
+        return
+
+    await callback_query.answer(capsify("Gift cancelled!"), show_alert=True)
+    await callback_query.message.delete()
