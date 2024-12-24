@@ -177,7 +177,7 @@ async def view_sale_details(client, callback_query):
         f"ID: {sale['id']}\n"
     ))
 
-    buttons = [[IKB(capsify("BACK TO SALES"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")]]
+    buttons = [[IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")]]
     if callback_query.from_user.id == buyer_id:
         buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
@@ -213,7 +213,6 @@ async def purchase_character(client, callback_query):
         await callback_query.answer(capsify("YOU DO NOT HAVE ENOUGH GOLD TO PURCHASE THIS CHARACTER❗"), show_alert=True)
         return
 
-    # Update buyer and seller gold and inventory
     buyer_gold -= sale['sprice']
     seller_gold = seller.get('gold', 0)
     seller_gold += sale['sprice']
@@ -227,7 +226,6 @@ async def purchase_character(client, callback_query):
         {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
     )
 
-    # Notify group about the purchase
     chat_id = callback_query.message.chat.id
     buyer_mention = f"[{buyer['first_name']}](tg://user?id={buyer['id']})"
     seller_mention = f"[{seller['first_name']}](tg://user?id={seller['id']})"
@@ -239,7 +237,6 @@ async def purchase_character(client, callback_query):
         ) + f"{buyer_mention} " + capsify("FROM") + f" {seller_mention}" + capsify("'S SALE SLOT❗")
     )
 
-    # Always show Back and Close buttons
     await callback_query.message.edit_text(
         capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
         reply_markup=IKM(
@@ -300,7 +297,6 @@ async def back_to_sales(client, callback_query):
 async def sale_slot_close(client, callback_query):
     target_user_id = int(callback_query.matches[0].group(1))
 
-    # Only allow the user who triggered the command to close the message
     if callback_query.from_user.id != target_user_id:
         await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
         return
@@ -333,3 +329,26 @@ async def remove_sales_command(client, message):
     )
 
     await message.reply(capsify(f"CHARACTER {sale['name']} REMOVED FROM SALES SLOT✅"))
+
+@app.on_message(filters.command("randomsales"))
+@block_dec
+async def random_sales_command(client, message):
+    users_with_sales = await user_collection.find({'sales_slot': {'$exists': True, '$ne': []}}).to_list(length=None)
+
+    if not users_with_sales:
+        await message.reply(capsify("NO USERS CURRENTLY HAVE CHARACTERS IN SALES❗"))
+        return
+
+    import random
+    random_users = random.sample(users_with_sales, min(5, len(users_with_sales)))
+
+    sales_list = capsify("HERE ARE RANDOM USERS WITH CHARACTERS IN SALES:\n\n")
+    for user in random_users:
+        sales_list += f"`{user['id']}`\n"
+
+    sales_list += capsify("\nUSE: /SALES USER_ID TO VIEW THEIR SALES SLOT❗")
+
+    await message.reply(
+        sales_list,
+        reply_markup=IKM([[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")]])
+    )
