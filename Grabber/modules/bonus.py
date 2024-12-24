@@ -90,10 +90,10 @@ async def bonus_claim_handler(_, query):
 
     updated_bonus_status = await get_bonus_status(user_id)
     daily_status = (
-        capsify("✅ Claimed") if updated_bonus_status["daily"] and updated_bonus_status["daily"] > today else capsify("Available")
+        capsify("✅ ") if updated_bonus_status["daily"] and updated_bonus_status["daily"] > today else capsify("Available")
     )
     weekly_status = (
-        capsify("✅ Claimed") if updated_bonus_status["weekly"] and updated_bonus_status["weekly"] > today else capsify("Available")
+        capsify("✅ ") if updated_bonus_status["weekly"] and updated_bonus_status["weekly"] > today else capsify("Available")
     )
 
     caption = (
