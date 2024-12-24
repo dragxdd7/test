@@ -184,7 +184,8 @@ async def view_sale_details(client, callback_query):
         buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
     if image_url:
-        buttons.append([IKB(capsify("VIEW IMAGE"), url=image_url)])
+        web_app_url = f"https://your-webapp-url.com?image_url={image_url}"
+        buttons.append([IKB(capsify("VIEW IMAGE"), web_app=web_app_url)])
 
     buttons.append([IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")])
 
