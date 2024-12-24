@@ -169,6 +169,8 @@ async def view_sale_details(client, callback_query):
         return
 
     sale = user['sales_slot'][slot_index]
+    image_url = sale.get('image_url', None)
+
     sale_details = (capsify(
         f"NAME: {capsify(sale['name'])}\n"
         f"ANIME: {capsify(sale['anime'])}\n"
@@ -177,11 +179,14 @@ async def view_sale_details(client, callback_query):
         f"ID: {sale['id']}\n"
     ))
 
-    buttons = [[IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")]]
+    buttons = []
     if callback_query.from_user.id == buyer_id:
         buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
-    buttons.append([IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")])
+    if image_url:
+        buttons.append([IKB(capsify("VIEW IMAGE"), url=image_url)])
+
+    buttons.append([IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")])
 
     await callback_query.message.edit_text(sale_details, reply_markup=IKM(buttons))
 
