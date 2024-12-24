@@ -35,20 +35,23 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
     async with lock:
         query = update.inline_query.query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
-
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
+        
+        print(f"Received query: {query}")
 
         if query.startswith('view|'):
             ids = query[5:].split('|')
             try:
                 character_ids = list(map(int, ids))
+                print(f"Parsed character IDs: {character_ids}")
             except ValueError:
                 await update.inline_query.answer([], cache_time=5)
                 return
 
             all_characters = await collection.find({'id': {'$in': character_ids}}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+            print(f"Fetched characters: {all_characters}")
 
         else:
             if query.strip().isdigit():
@@ -66,7 +69,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                         all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
-
         results = []
         for character in characters:
             caption = (
@@ -94,7 +96,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             )
 
         next_offset = str(end_index) if len(characters) == results_per_page else ""
-
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
 
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
