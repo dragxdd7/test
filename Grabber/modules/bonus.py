@@ -37,15 +37,15 @@ async def bonus_handler(_, message):
         return
     user_name = message.from_user.first_name or "User"
     today = datetime.now()
-    current_day = capsify(today.strftime("%A"))  # Capsified day
+    current_day = capsify(today.strftime("%A"))
     current_week = today.strftime("%U")
 
     bonus_status = await get_bonus_status(user_id)
     daily_status = (
-        capsify("✅ Claimed") if bonus_status["daily"] and bonus_status["daily"] > today.strftime("%Y-%m-%d") else capsify("Available")
+        capsify("✅ ") if bonus_status["daily"] and bonus_status["daily"] > today.strftime("%Y-%m-%d") else capsify("Available")
     )
     weekly_status = (
-        capsify("✅ Claimed") if bonus_status["weekly"] and bonus_status["weekly"] > today.strftime("%Y-%m-%d") else capsify("Available")
+        capsify("✅ ") if bonus_status["weekly"] and bonus_status["weekly"] > today.strftime("%Y-%m-%d") else capsify("Available")
     )
 
     caption = (
@@ -56,9 +56,9 @@ async def bonus_handler(_, message):
     )
 
     markup = IKM([
-        [IKB(f"Daily: {daily_status}", callback_data=f"bonus_daily_{user_id}")],
-        [IKB(f"Weekly: {weekly_status}", callback_data=f"bonus_weekly_{user_id}")],
-        [IKB("Close 🗑️", callback_data=f"bo_close_{user_id}")]  # Renamed handler
+        [IKB(f"Daily: {capsify(daily_status)}", callback_data=f"bonus_daily_{user_id}")],
+        [IKB(f"Weekly: {capsify(weekly_status)}", callback_data=f"bonus_weekly_{user_id}")],
+        [IKB(capsify("Close 🗑️"), callback_data=f"bo_close_{user_id}")]
     ])
 
     await message.reply_text(caption, reply_markup=markup)
@@ -66,7 +66,7 @@ async def bonus_handler(_, message):
 @app.on_callback_query(filters.regex(r"^bonus_"))
 async def bonus_claim_handler(_, query):
     _, bonus_type, user_id = query.data.split("_")
-    user_id = int(user_id)  # Ensure the user ID is an integer
+    user_id = int(user_id)
 
     if user_id != query.from_user.id:
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
@@ -104,9 +104,9 @@ async def bonus_claim_handler(_, query):
     )
 
     markup = IKM([
-        [IKB(f"Daily: {daily_status}", callback_data=f"bonus_daily_{user_id}")],
-        [IKB(f"Weekly: {weekly_status}", callback_data=f"bonus_weekly_{user_id}")],
-        [IKB("Close 🗑️", callback_data=f"bo_close_{user_id}")]
+        [IKB(f"Daily: {capsify(daily_status)}", callback_data=f"bonus_daily_{user_id}")],
+        [IKB(f"Weekly: {capsify(weekly_status)}", callback_data=f"bonus_weekly_{user_id}")],
+        [IKB(capsify("Close 🗑️"), callback_data=f"bo_close_{user_id}")]
     ])
 
     await query.edit_message_text(caption, reply_markup=markup)
