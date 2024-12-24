@@ -80,3 +80,7 @@ async def show_credits(_, message_or_callback):
                  IKB(capsify("Back"), callback_data="start_main_menu")]
             ])
         )
+
+app.on_callback_query(filters.regex("start_main_menu"))
+async def start_main_menu(_, callback_query):
+    await start_command_private(_, callback_query.message)
