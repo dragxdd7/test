@@ -213,6 +213,7 @@ async def purchase_character(client, callback_query):
         await callback_query.answer(capsify("YOU DO NOT HAVE ENOUGH GOLD TO PURCHASE THIS CHARACTER❗"), show_alert=True)
         return
 
+    # Update buyer and seller gold and inventory
     buyer_gold -= sale['sprice']
     seller_gold = seller.get('gold', 0)
     seller_gold += sale['sprice']
@@ -226,8 +227,8 @@ async def purchase_character(client, callback_query):
         {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
     )
 
+    # Notify group about the purchase
     chat_id = callback_query.message.chat.id
-
     buyer_mention = f"[{buyer['first_name']}](tg://user?id={buyer['id']})"
     seller_mention = f"[{seller['first_name']}](tg://user?id={seller['id']})"
 
@@ -235,10 +236,10 @@ async def purchase_character(client, callback_query):
         chat_id,
         capsify(
             f"CHARACTER {sale['name']} WITH ID ({sale['id']}) HAS BEEN BOUGHT BY "
-            f"{buyer_mention} FROM {seller_mention}'S SALE SLOT❗"
-        )
+        ) + f"{buyer_mention} " + capsify("FROM") + f" {seller_mention}'S SALE SLOT❗"
     )
 
+    # Send success message to the buyer
     if seller['sales_slot']:
         await callback_query.message.edit_text(
             capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
@@ -258,7 +259,6 @@ async def purchase_character(client, callback_query):
                 [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")]]
             )
         )
-
 
 @app.on_callback_query(filters.regex(r"BACK_TO_SALES_(\d+)_(\d+)"))
 async def back_to_sales(client, callback_query):
