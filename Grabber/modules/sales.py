@@ -48,6 +48,7 @@ async def sale_command(client, message):
         await message.reply(capsify("YOUR SALES SLOT IS FULL❗ REMOVE A CHARACTER TO ADD A NEW ONE."))
         return
 
+    # Add sale details
     character['sprice'] = sale_price
     sales_slot.append(character)
 
@@ -66,67 +67,6 @@ async def sale_command(client, message):
         ),
         reply_markup=IKM(
             [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]]
-        )
-    )
-
-@app.on_callback_query(filters.regex(r"SALE_PURCHASE_(\d+)_(\d+)_(\d+)"))
-async def purchase_character(client, callback_query):
-    buyer_id = callback_query.from_user.id
-    sale_id = int(callback_query.matches[0].group(1))
-    seller_id = int(callback_query.matches[0].group(2))
-
-    if buyer_id == seller_id:
-        await callback_query.answer(capsify("YOU CANNOT PURCHASE YOUR OWN CHARACTER❗"), show_alert=True)
-        return
-
-    buyer = await user_collection.find_one({'id': buyer_id})
-    seller = await user_collection.find_one({'id': seller_id})
-
-    if not buyer or not seller or not seller.get('sales_slot'):
-        await callback_query.answer(capsify("SALE NOT FOUND❗"), show_alert=True)
-        return
-
-    sale = next((s for s in seller['sales_slot'] if s['id'] == str(sale_id)), None)
-    if not sale:
-        await callback_query.answer(capsify("CHARACTER NO LONGER AVAILABLE FOR SALE❗"), show_alert=True)
-        return
-
-    buyer_gold = buyer.get('gold', 0)
-    if buyer_gold < sale['sprice']:
-        await callback_query.answer(capsify("YOU DO NOT HAVE ENOUGH GOLD TO PURCHASE THIS CHARACTER❗"), show_alert=True)
-        return
-
-    buyer_gold -= sale['sprice']
-    seller_gold = seller.get('gold', 0)
-    seller_gold += sale['sprice']
-
-    seller['sales_slot'] = [s for s in seller['sales_slot'] if s['id'] != str(sale_id)]
-    seller['characters'] = [char for char in seller['characters'] if char['id'] != str(sale_id)]
-
-    await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot'], 'characters': seller['characters'], 'gold': seller_gold}})
-    await user_collection.update_one({'id': buyer_id}, {'$set': {'gold': buyer_gold}})
-    await user_collection.update_one(
-        {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
-    )
-
-    chat_id = callback_query.message.chat.id
-    buyer_mention = f"[{buyer['first_name']}](tg://user?id={buyer['id']})"
-    seller_mention = f"[{seller['first_name']}](tg://user?id={seller['id']})"
-
-    await client.send_message(
-        chat_id,
-        capsify(
-            f"CHARACTER {sale['name']} 🎒 ᴡɪᴛʜ ɪᴅ ({sale['id']}) ʜᴀs ʙᴇᴇɴ ʙᴏᴜɢʜᴛ ʙʏ "
-        ) + f"{buyer_mention} " + capsify("ғʀᴏᴍ") + f" {seller_mention}" +f"capsify ('s SALE SLOT❗)"
-    )
-
-    await callback_query.message.edit_text(
-        capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
-        reply_markup=IKM(
-            [
-                [IKB(capsify("BACK TO SALES"), callback_data=f"BACK_TO_SALES_{seller_id}_{buyer_id}")],
-                [IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")]
-            ]
         )
     )
 
@@ -237,7 +177,7 @@ async def view_sale_details(client, callback_query):
         f"ID: {sale['id']}\n"
     ))
 
-    buttons = []
+    buttons = [[IKB(capsify("BACK TO SALES"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")]]
     if callback_query.from_user.id == buyer_id:
         buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
@@ -246,6 +186,69 @@ async def view_sale_details(client, callback_query):
     await callback_query.message.edit_text(sale_details, reply_markup=IKM(buttons))
 
 
+@app.on_callback_query(filters.regex(r"SALE_PURCHASE_(\d+)_(\d+)_(\d+)"))
+async def purchase_character(client, callback_query):
+    buyer_id = callback_query.from_user.id
+    sale_id = int(callback_query.matches[0].group(1))
+    seller_id = int(callback_query.matches[0].group(2))
+
+    if buyer_id == seller_id:
+        await callback_query.answer(capsify("YOU CANNOT PURCHASE YOUR OWN CHARACTER❗"), show_alert=True)
+        return
+
+    buyer = await user_collection.find_one({'id': buyer_id})
+    seller = await user_collection.find_one({'id': seller_id})
+
+    if not buyer or not seller or not seller.get('sales_slot'):
+        await callback_query.answer(capsify("SALE NOT FOUND❗"), show_alert=True)
+        return
+
+    sale = next((s for s in seller['sales_slot'] if s['id'] == str(sale_id)), None)
+    if not sale:
+        await callback_query.answer(capsify("CHARACTER NO LONGER AVAILABLE FOR SALE❗"), show_alert=True)
+        return
+
+    buyer_gold = buyer.get('gold', 0)
+    if buyer_gold < sale['sprice']:
+        await callback_query.answer(capsify("YOU DO NOT HAVE ENOUGH GOLD TO PURCHASE THIS CHARACTER❗"), show_alert=True)
+        return
+
+    # Update buyer and seller gold and inventory
+    buyer_gold -= sale['sprice']
+    seller_gold = seller.get('gold', 0)
+    seller_gold += sale['sprice']
+
+    seller['sales_slot'] = [s for s in seller['sales_slot'] if s['id'] != str(sale_id)]
+    seller['characters'] = [char for char in seller['characters'] if char['id'] != str(sale_id)]
+
+    await user_collection.update_one({'id': seller_id}, {'$set': {'sales_slot': seller['sales_slot'], 'characters': seller['characters'], 'gold': seller_gold}})
+    await user_collection.update_one({'id': buyer_id}, {'$set': {'gold': buyer_gold}})
+    await user_collection.update_one(
+        {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
+    )
+
+    # Notify group about the purchase
+    chat_id = callback_query.message.chat.id
+    buyer_mention = f"[{buyer['first_name']}](tg://user?id={buyer['id']})"
+    seller_mention = f"[{seller['first_name']}](tg://user?id={seller['id']})"
+
+    await client.send_message(
+        chat_id,
+        capsify(
+            f"CHARACTER WITH ID ({sale['id']}) HAS BEEN BOUGHT BY "
+        ) + f"{buyer_mention} " + capsify("FROM") + f" {seller_mention}" + capsify("'S SALE SLOT❗")
+    )
+
+    # Always show Back and Close buttons
+    await callback_query.message.edit_text(
+        capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
+        reply_markup=IKM(
+            [
+                [IKB(capsify("BACK TO SALES"), callback_data=f"BACK_TO_SALES_{seller_id}_{buyer_id}")],
+                [IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")],
+            ]
+        )
+    )
 
 @app.on_callback_query(filters.regex(r"BACK_TO_SALES_(\d+)_(\d+)"))
 async def back_to_sales(client, callback_query):
@@ -296,12 +299,12 @@ async def back_to_sales(client, callback_query):
 @app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
 async def sale_slot_close(client, callback_query):
     target_user_id = int(callback_query.matches[0].group(1))
-    
+
     # Only allow the user who triggered the command to close the message
     if callback_query.from_user.id != target_user_id:
         await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
         return
-    
+
     await callback_query.message.delete()
 
 
