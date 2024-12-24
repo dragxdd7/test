@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
 from Grabber import user_collection
 from . import capsify, app
 from .block import block_dec, temp_block
@@ -65,8 +65,8 @@ async def sale_command(client, message):
             f"ID: {character_id}\n"
             f"SALE PRICE: {sale_price} GOLD"
         ),
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]]
+        reply_markup=IKM(
+            [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]]
         )
     )
 
@@ -96,8 +96,8 @@ async def my_sales_command(client, message):
 
     await message.reply(
         sales_list,
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]]
+        reply_markup=IKM(
+            [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]]
         )
     )
 
@@ -138,15 +138,15 @@ async def sales_command(client, message):
             f"ID: {sale['id']}\n\n"
         ))
         buttons.append(
-            InlineKeyboardButton(str(idx), callback_data=f"VIEW_SALE_{idx}_{target_user_id}_{message.from_user.id}")
+            IKB(str(idx), callback_data=f"VIEW_SALE_{idx}_{target_user_id}_{message.from_user.id}")
         )
 
     await message.reply(
         sales_list,
-        reply_markup=InlineKeyboardMarkup(
+        reply_markup=IKM(
             [
                 buttons,
-                [InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")],
+                [IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")],
             ]
         )
     )
@@ -178,11 +178,11 @@ async def view_sale_details(client, callback_query):
 
     buttons = []
     if callback_query.from_user.id == buyer_id:
-        buttons.append([InlineKeyboardButton(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
+        buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
 
-    buttons.append([InlineKeyboardButton(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")])
+    buttons.append([IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")])
 
-    await callback_query.message.edit_text(sale_details, reply_markup=InlineKeyboardMarkup(buttons))
+    await callback_query.message.edit_text(sale_details, reply_markup=IKM(buttons))
 
 
 @app.on_callback_query(filters.regex(r"SALE_PURCHASE_(\d+)_(\d+)_(\d+)"))
@@ -225,8 +225,72 @@ async def purchase_character(client, callback_query):
         {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
     )
 
+    if seller['sales_slot']:
+        # If seller still has items for sale, include a back button
+        await callback_query.message.edit_text(
+            capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
+            reply_markup=IKM(
+                [[
+                    IKB(capsify("BACK TO SALES"), callback_data=f"BACK_TO_SALES_{seller_id}_{buyer_id}")
+                ],
+                [
+                    IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")
+                ]]
+            )
+        )
+    else:
+        # If no items remain, show only the close button
+        await callback_query.message.edit_text(
+            capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
+            reply_markup=IKM(
+                [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")]]
+            )
+        )
+
+
+@app.on_callback_query(filters.regex(r"BACK_TO_SALES_(\d+)_(\d+)"))
+async def back_to_sales(client, callback_query):
+    seller_id = int(callback_query.matches[0].group(1))
+    buyer_id = int(callback_query.matches[0].group(2))
+
+    if callback_query.from_user.id != buyer_id:
+        await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
+        return
+
+    seller = await user_collection.find_one({'id': seller_id})
+    if not seller or not seller.get('sales_slot'):
+        await callback_query.message.edit_text(
+            capsify("THE SELLER HAS NO CHARACTERS LEFT FOR SALE❗"),
+            reply_markup=IKM(
+                [[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")]]
+            )
+        )
+        return
+
+    sales = seller['sales_slot']
+    sales_list = f"{capsify('SALES FOR')} {capsify(seller.get('first_name', 'UNKNOWN'))}\n\n"
+    buttons = []
+
+    for idx, sale in enumerate(sales, 1):
+        sales_list += (capsify(
+            f"{idx}. {capsify(sale['name'])}\n"
+            f"ANIME: {capsify(sale['anime'])}\n"
+            f"RARITY: {capsify(sale.get('rarity', 'UNKNOWN'))}\n"
+            f"SALE PRICE: {sale['sprice']} GOLD\n"
+            f"ID: {sale['id']}\n\n"
+        ))
+        buttons.append(
+            IKB(str(idx), callback_data=f"VIEW_SALE_{idx}_{seller_id}_{buyer_id}")
+        )
+
     await callback_query.message.edit_text(
-        capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗")
+        sales_list,
+        reply_markup=IKM(
+            [
+                buttons,
+                [IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{buyer_id}")],
+            ]
+        )
     )
 
 
@@ -258,9 +322,4 @@ async def remove_sales_command(client, message):
     sales_slot = user['sales_slot']
     sale = next((s for s in sales_slot if s['id'] == character_id), None)
     if not sale:
-        await message.reply(capsify("CHARACTER NOT FOUND IN YOUR SALES SLOT❗"))
-        return
-
-    sales_slot.remove(sale)
-    await user_collection.update_one({'id': user_id}, {'$set': {'sales_slot': sales_slot}})
-    await message.reply(capsify("CHARACTER REMOVED FROM SALES SLOT❗"))
+        await message.reply(capsify("CHARACTER NOT FOUND IN YOUR SALES SLOT
