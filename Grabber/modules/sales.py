@@ -83,7 +83,7 @@ async def my_sales_command(client, message):
         return
 
     sales = user['sales_slot']
-    sales_list = f"{capsify(message.from_user.first_name)}'S SALES\n\n"
+    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('first_name', 'Pick-unknown'))}\n\n"
     for idx, sale in enumerate(sales, 1):
         sales_list += (capsify(
             f"{idx}. {capsify(sale['name'])}\n"
@@ -227,8 +227,8 @@ async def purchase_character(client, callback_query):
     )
 
     chat_id = callback_query.message.chat.id
-    buyer_mention = f"[{buyer['first_name']}](tg://user?id={buyer['id']})"
-    seller_mention = f"[{seller['first_name']}](tg://user?id={seller['id']})"
+    buyer_mention = f"[{buyer.get('first_name', 'Pick-unknown')}](tg://user?id={buyer['id']})"
+    seller_mention = f"[{seller.get('first_name', 'Pick-unknown')}](tg://user?id={seller['id']})"
 
     await client.send_message(
         chat_id,
