@@ -33,44 +33,40 @@ clear_all_caches()
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.inline_query.query
+        query = update.inline_query.query.strip()  # Strip any extra whitespace from the query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
 
-        # Debug: Log the received query
         print(f"Received query: {query}")
         
-        # Handle query with multiple IDs (e.g., "view|30|40|59")
         if query.startswith("view|"):
-            character_ids = list(map(int, query.split("|")[1:]))  # Convert all IDs from the query to integers
-            
-            # Debug: Log the parsed character IDs
+            character_ids = list(map(int, query.split("|")[1:]))  # Convert all IDs to integers
             print(f"Parsed character IDs: {character_ids}")
             
-            # Fetch characters for the parsed IDs
             all_characters = []
             for character_id in character_ids:
-                character = await collection.find_one({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1})
+                print(f"Running query for character ID: {character_id} (int: {int(character_id)})")
+                
+                # Ensure that character_id is an integer
+                character = await collection.find_one({'id': int(character_id)}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1})
                 if character:
                     all_characters.append(character)
                 else:
-                    print(f"Character with ID {character_id} not found.")  # Debug: Log if a character is not found
+                    print(f"Character with ID {character_id} not found.")
         else:
-            all_characters = []  # Default to empty list if query is not of the expected format
+            all_characters = []
 
-        # Debug: Log the fetched characters
         print(f"Fetched characters: {all_characters}")
 
-        # If no characters were found, send an empty result
         if not all_characters:
             await update.inline_query.answer([], cache_time=5)
             return
 
         characters = all_characters[start_index:end_index]
-        
+
         character_ids = [character['id'] for character in characters]
         anime_names = list(set(character['anime'] for character in characters))
 
