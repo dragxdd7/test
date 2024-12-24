@@ -103,6 +103,7 @@ async def my_sales_command(client, message):
 
 
 @app.on_message(filters.command("sales"))
+@block_dec
 async def sales_command(client, message):
     if message.reply_to_message:
         target_user_id = message.reply_to_message.from_user.id
@@ -225,8 +226,20 @@ async def purchase_character(client, callback_query):
         {'id': buyer_id}, {'$push': {'characters': {key: sale[key] for key in sale if key not in ['sprice']}}}
     )
 
+    chat_id = callback_query.message.chat.id
+
+    buyer_mention = f"[{buyer.first_name}](tg://user?id={buyer.id})"
+    seller_mention = f"[{seller.first_name}](tg://user?id={seller.id})"
+
+    await client.send_message(
+        chat_id,
+        capsify(
+            f"CHARACTER {sale['name']} WITH ID ({sale['id']}) HAS BEEN BOUGHT BY "
+            f"{buyer_mention} FROM {seller_mention}'S SALE SLOT❗"
+        )
+    )
+
     if seller['sales_slot']:
-        # If seller still has items for sale, include a back button
         await callback_query.message.edit_text(
             capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
             reply_markup=IKM(
@@ -239,7 +252,6 @@ async def purchase_character(client, callback_query):
             )
         )
     else:
-        # If no items remain, show only the close button
         await callback_query.message.edit_text(
             capsify(f"PURCHASE SUCCESSFUL❗ {sale['name']} HAS BEEN ADDED TO YOUR COLLECTION❗"),
             reply_markup=IKM(
