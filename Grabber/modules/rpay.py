@@ -48,5 +48,5 @@ async def rpay(client, message: Message):
     app.payment_cooldowns[payer_id] = time.time()
 
     await message.reply_text(
-        capsify(f"Successfully paid {amount} rubies to {payee.mention}.")
+        capsify(f"Successfully paid {amount} rubies to) {payee.mention}."
     )
