@@ -44,7 +44,7 @@ async def start_command_group(_, message):
         ])
     )
 
-@app.on_message(filters.command("credits") & filters.private)
+@app.on_message(filters.command("credits"))
 async def credits_command(_, message):
     await show_credits(_, message)
 
