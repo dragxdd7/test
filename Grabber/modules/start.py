@@ -20,7 +20,7 @@ async def start_command_private(_, message):
         upsert=True
     )
 
-    random_video = random.choice(VIDEO_URL)  # VIDEO_URL should be a list of video URLs or file IDs
+    random_video = random.choice(PHOTO_URL)  # VIDEO_URL should be a list of video URLs or file IDs
     await app.send_video(
         chat_id=user_id,
         video=random_video,
