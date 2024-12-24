@@ -40,7 +40,11 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         start_index = offset
         end_index = offset + results_per_page
 
-        if query.startswith('collection.'):
+        # Check if query is a numeric ID
+        if query.isdigit():
+            character_id = int(query)
+            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+        elif query.startswith('collection.'):
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
             if user_id.isdigit():
                 if user_id in user_collection_cache:
