@@ -169,7 +169,7 @@ async def view_sale_details(client, callback_query):
         return
 
     sale = user['sales_slot'][slot_index]
-    image_url = sale.get('image_url', None)
+    image_url = sale.get('img_url', None)
 
     sale_details = (capsify(
         f"NAME: {capsify(sale['name'])}\n"
