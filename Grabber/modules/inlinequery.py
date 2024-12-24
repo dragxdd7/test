@@ -35,49 +35,76 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
     async with lock:
         query = update.inline_query.query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
+
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
-        
+
+        # Debug: Log the received query
         print(f"Received query: {query}")
-
-        if query.startswith('view|'):
-            ids = query[5:].split('|')
-            try:
-                character_ids = list(map(int, ids))
-                print(f"Parsed character IDs: {character_ids}")
-            except ValueError:
-                await update.inline_query.answer([], cache_time=5)
-                return
-
-            all_characters = await collection.find({'id': {'$in': character_ids}}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-            print(f"Fetched characters: {all_characters}")
-
-        else:
-            if query.strip().isdigit():
-                character_id = int(query.strip())
-                all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-            else:
-                if query:
-                    regex = re.compile(query, re.IGNORECASE)
-                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+        
+        # Handle query with multiple IDs (e.g., "view|30|40|59")
+        if query.startswith("view|"):
+            character_ids = list(map(int, query.split("|")[1:]))  # Convert all IDs from the query to integers
+            
+            # Debug: Log the parsed character IDs
+            print(f"Parsed character IDs: {character_ids}")
+            
+            # Fetch characters for the parsed IDs
+            all_characters = []
+            for character_id in character_ids:
+                character = await collection.find_one({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1})
+                if character:
+                    all_characters.append(character)
                 else:
-                    if 'all_characters' in all_characters_cache:
-                        all_characters = all_characters_cache['all_characters']
-                    else:
-                        all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
-                        all_characters_cache['all_characters'] = all_characters
+                    print(f"Character with ID {character_id} not found.")  # Debug: Log if a character is not found
+        else:
+            all_characters = []  # Default to empty list if query is not of the expected format
 
-        characters = list(all_characters)[start_index:end_index]
+        # Debug: Log the fetched characters
+        print(f"Fetched characters: {all_characters}")
+
+        # If no characters were found, send an empty result
+        if not all_characters:
+            await update.inline_query.answer([], cache_time=5)
+            return
+
+        characters = all_characters[start_index:end_index]
+        
+        character_ids = [character['id'] for character in characters]
+        anime_names = list(set(character['anime'] for character in characters))
+
+        global_counts = await user_collection.aggregate([
+            {"$match": {"characters.id": {"$in": character_ids}}},
+            {"$unwind": "$characters"},
+            {"$match": {"characters.id": {"$in": character_ids}}},
+            {"$group": {"_id": "$characters.id", "count": {"$sum": 1}}}
+        ]).to_list(length=None)
+
+        anime_counts = await collection.aggregate([
+            {"$match": {"anime": {"$in": anime_names}}},
+            {"$group": {"_id": "$anime", "count": {"$sum": 1}}}
+        ]).to_list(length=None)
+
+        global_count_dict = {item['_id']: item['count'] for item in global_counts}
+        anime_count_dict = {item['_id']: item['count'] for item in anime_counts}
+
+        next_offset = str(end_index) if len(characters) == results_per_page else ""
+
         results = []
         for character in characters:
+            global_count = global_count_dict.get(character['id'], 0)
+            anime_characters = anime_count_dict.get(character['anime'], 0)
+
+            price = character.get('price', 'Unknown')
+
             caption = (
                 f"{capsify('Character details')}:\n\n"
                 f"{capsify('Name')}: {character['name']}\n"
                 f"{capsify('Anime')}: {character['anime']}\n"
                 f"{capsify('ID')}: {character['id']}\n"
                 f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
-                f"{capsify('Price')}: {character.get('price', 'Unknown')}"
+                f"{capsify('Price')}: {price}"
             )
 
             keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
@@ -95,7 +122,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 )
             )
 
-        next_offset = str(end_index) if len(characters) == results_per_page else ""
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
 
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
