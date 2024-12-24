@@ -88,14 +88,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         else:
             if query:
                 regex = re.compile(query, re.IGNORECASE)
-                # Modify this query to search by 'id' as well as 'name' and 'anime'
-                all_characters = await collection.find({
-                    "$or": [
-                        {"name": regex},
-                        {"anime": regex},
-                        {"id": int(query)}  # Added the condition to search by 'id'
-                    ]
-                }, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
             else:
                 if 'all_characters' in all_characters_cache:
                     all_characters = all_characters_cache['all_characters']
@@ -184,3 +177,4 @@ async def check(update: Update, context: CallbackContext) -> None:
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
     await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
+
