@@ -8,6 +8,7 @@ from .watchers import block_watcher
 dic1 = {}
 dic2 = {}
 t_block = {}
+bdb = db.block
 
 def temp_block(user_id):
     if user_id in t_block:
