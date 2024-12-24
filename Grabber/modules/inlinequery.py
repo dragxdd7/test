@@ -33,39 +33,50 @@ clear_all_caches()
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.inline_query.query.strip()  # Strip any extra whitespace from the query
+        query = update.inline_query.query
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
 
-        print(f"Received query: {query}")
-        
-        if query.startswith("view|"):
-            character_ids = list(map(int, query.split("|")[1:]))  # Convert all IDs to integers
-            print(f"Parsed character IDs: {character_ids}")
-            
-            all_characters = []
-            for character_id in character_ids:
-                print(f"Running query for character ID: {character_id} (int: {int(character_id)})")
-                
-                # Ensure that character_id is an integer
-                character = await collection.find_one({'id': int(character_id)}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1})
-                if character:
-                    all_characters.append(character)
-                else:
-                    print(f"Character with ID {character_id} not found.")
+        if query.strip().isdigit():
+            character_id = int(query.strip())
+            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
         else:
-            all_characters = []
+            if query.startswith('collection.'):
+                user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
+                if user_id.isdigit():
+                    if user_id in user_collection_cache:
+                        user = user_collection_cache[user_id]
+                    else:
+                        user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
+                        user_collection_cache[user_id] = user
 
-        print(f"Fetched characters: {all_characters}")
+                    if user:
+                        all_characters = {v['id']: v for v in user.get('characters', [])}.values()
+                        if search_terms:
+                            if search_terms[0].isdigit():
+                                all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
+                            else:
+                                regex = re.compile(' '.join(search_terms), re.IGNORECASE)
+                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
+                    else:
+                        all_characters = []
+                else:
+                    all_characters = []
+            else:
+                if query:
+                    regex = re.compile(query, re.IGNORECASE)
+                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                else:
+                    if 'all_characters' in all_characters_cache:
+                        all_characters = all_characters_cache['all_characters']
+                    else:
+                        all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                        all_characters_cache['all_characters'] = all_characters
 
-        if not all_characters:
-            await update.inline_query.answer([], cache_time=5)
-            return
-
-        characters = all_characters[start_index:end_index]
+        characters = list(all_characters)[start_index:end_index]
 
         character_ids = [character['id'] for character in characters]
         anime_names = list(set(character['anime'] for character in characters))
@@ -94,14 +105,28 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
             price = character.get('price', 'Unknown')
 
-            caption = (
-                f"{capsify('Character details')}:\n\n"
-                f"{capsify('Name')}: {character['name']}\n"
-                f"{capsify('Anime')}: {character['anime']}\n"
-                f"{capsify('ID')}: {character['id']}\n"
-                f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
-                f"{capsify('Price')}: {price}"
-            )
+            if query.startswith('collection.'):
+                user_character_count = sum(1 for c in user.get('characters', []) if c['id'] == character['id'])
+                user_anime_characters = sum(1 for c in user.get('characters', []) if c['anime'] == character['anime'])
+                user_id_str = str(user.get('id', 'unknown'))
+                user_first_name = user.get('first_name', user_id_str)
+                caption = (
+                    f"{capsify('Character from')} {capsify(user_first_name)}'s {capsify('collection')}:\n\n"
+                    f"{capsify('Name')}: {character['name']} (x{user_character_count})\n"
+                    f"{capsify('Anime')}: {character['anime']} ({user_anime_characters}/{anime_characters})\n"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}\n"
+                    f"{capsify('ID')}: {character['id']}"
+                )
+            else:
+                caption = (
+                    f"{capsify('Character details')}:\n\n"
+                    f"{capsify('Name')}: {character['name']}\n"
+                    f"{capsify('Anime')}: {character['anime']}\n"
+                    f"{capsify('ID')}: {character['id']}\n"
+                    f"{capsify('Rarity')}: {character.get('rarity', '')}\n"
+                    f"{capsify('Price')}: {price}"
+                )
 
             keyboard = [[IKB(capsify("How many I have ❓"), callback_data=f"check_{character['id']}")]]
             reply_markup = IKM(keyboard)
@@ -132,3 +157,5 @@ async def check(update: Update, context: CallbackContext) -> None:
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
     await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
+
+
