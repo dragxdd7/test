@@ -90,71 +90,18 @@ async def show_dev_names(_, callback_query):
         ])
     )
 
-    dev_ids = [user["id"] async for user in devb.find()]
+    dev_ids = [user.get("user_id") for user in await devb.find()]
     dev_names = []
 
     for dev_id in dev_ids:
-        try:
-            user = await _.get_users(dev_id)
-            dev_names.append(user.first_name or "Pick-Unknown")
-        except Exception:
-            dev_names.append("Pick-Unknown")
+        if dev_id:
+            try:
+                user = await _.get_users(dev_id)
+                dev_names.append(user.first_name or "Pick-Unknown")
+            except Exception:
+                dev_names.append("Pick-Unknown")
 
     text = "**Developers:**\n" + "\n".join(capsify(name) for name in dev_names)
-    await callback_query.edit_message_text(
-        text=text,
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
-    )
-
-@app.on_callback_query(filters.regex("show_sudo_names"))
-async def show_sudo_names(_, callback_query):
-    await callback_query.edit_message_text(
-        text=capsify("Loading sudo names..."),
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
-    )
-
-    sudo_ids = [user["id"] async for user in sudb.find()]
-    sudo_names = []
-
-    for sudo_id in sudo_ids:
-        try:
-            user = await _.get_users(sudo_id)
-            sudo_names.append(user.first_name or "Pick-Unknown")
-        except Exception:
-            sudo_names.append("Pick-Unknown")
-
-    text = "**Sudos:**\n" + "\n".join(capsify(name) for name in sudo_names)
-    await callback_query.edit_message_text(
-        text=text,
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
-    )
-
-@app.on_callback_query(filters.regex("show_uploader_names"))
-async def show_uploader_names(_, callback_query):
-    await callback_query.edit_message_text(
-        text=capsify("Loading uploader names..."),
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
-    )
-
-    uploader_ids = [user["id"] async for user in uploaderdb.find()]
-    uploader_names = []
-
-    for uploader_id in uploader_ids:
-        try:
-            user = await _.get_users(uploader_id)
-            uploader_names.append(user.first_name or "Pick-Unknown")
-        except Exception:
-            uploader_names.append("Pick-Unknown")
-
-    text = "**Uploaders:**\n" + "\n".join(capsify(name) for name in uploader_names)
     await callback_query.edit_message_text(
         text=text,
         reply_markup=IKM([
