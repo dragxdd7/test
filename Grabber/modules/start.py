@@ -165,3 +165,19 @@ async def show_uploader_names(_, callback_query):
 @app.on_callback_query(filters.regex("start_main_menu"))
 async def start_main_menu(_, callback_query):
     await start_command_private(_, callback_query.message)
+
+@app.on_message(filters.command("credits"))
+async def credits_command(_, message):
+    await message.reply_text(
+        text=capsify(
+            "Bot Developers\n\n"
+            "Users below are the developers, helpers, etc... of this bot, you can personally contact them for issues, do not DM unnecessarily.\n\n"
+            "Thank You!"
+        ),
+        reply_markup=IKM([
+            [IKB(capsify("Developers"), callback_data="show_dev_names"),
+             IKB(capsify("Sudos"), callback_data="show_sudo_names")],
+            [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
+             IKB(capsify("Back"), callback_data="start_main_menu")]
+        ])
+    )
