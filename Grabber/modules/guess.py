@@ -62,6 +62,9 @@ async def check_guess(client, message: Message):
     if game_data['guessed']:
         return
 
+    if not message.text:
+        return
+
     answer = message.text.strip().lower()
 
     if user_id in cooldown_users:
@@ -76,7 +79,6 @@ async def check_guess(client, message: Message):
         game_data['guessed'] = True
         reward = random.randint(20, 30)
 
-        # Use aruby function to add rubies
         await aruby(user_id, reward)
 
         await message.reply_text(
