@@ -20,17 +20,17 @@ async def start_command_private(_, message):
         upsert=True
     )
 
-    random_image = random.choice(PHOTO_URL)
-    await app.send_photo(
+    random_video = random.choice(VIDEO_URL)  # VIDEO_URL should be a list of video URLs or file IDs
+    await app.send_video(
         chat_id=user_id,
-        photo=random_image,
+        video=random_video,
         caption=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
         reply_markup=IKM([
             [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
              IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
             [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
-            [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}")],
-            [IKB(capsify("Credits"), callback_data="show_credits")]
+            [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
+             IKB(capsify("Credits"), callback_data="show_credits")]
         ])
     )
 
@@ -89,7 +89,7 @@ async def show_dev_names(_, callback_query):
         ])
     )
 
-    dev_names = [user.get("first_name", "Pick-Unknown") for user in devb.find()]
+    dev_names = [user.get("first_name", "Pick-Unknown") async for user in devb.find()]
     text = "**Developers:**\n" + "\n".join(capsify(name) for name in dev_names)
 
     await callback_query.edit_message_text(
@@ -108,7 +108,7 @@ async def show_sudo_names(_, callback_query):
         ])
     )
 
-    sudo_names = [user.get("first_name", "Pick-Unknown") for user in sudb.find()]
+    sudo_names = [user.get("first_name", "Pick-Unknown") async for user in sudb.find()]
     text = "**Sudos:**\n" + "\n".join(capsify(name) for name in sudo_names)
 
     await callback_query.edit_message_text(
@@ -127,7 +127,7 @@ async def show_uploader_names(_, callback_query):
         ])
     )
 
-    uploader_names = [user.get("first_name", "Pick-Unknown") for user in uploaderdb.find()]
+    uploader_names = [user.get("first_name", "Pick-Unknown") async for user in uploaderdb.find()]
     text = "**Uploaders:**\n" + "\n".join(capsify(name) for name in uploader_names)
 
     await callback_query.edit_message_text(
