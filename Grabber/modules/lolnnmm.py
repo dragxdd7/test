@@ -322,4 +322,12 @@ async def remove_sales_command(client, message):
     sales_slot = user['sales_slot']
     sale = next((s for s in sales_slot if s['id'] == character_id), None)
     if not sale:
-        await message.reply(capsify("CHARACTER NOT FOUND IN YOUR SALES SLOT
+        await message.reply(capsify("CHARACTER NOT FOUND IN YOUR SALES SLOT❗"))
+        return
+
+    sales_slot.remove(sale)
+    await user_collection.update_one(
+        {'id': user_id}, {'$set': {'sales_slot': sales_slot}}
+    )
+
+    await message.reply(capsify(f"CHARACTER {sale['name']} REMOVED FROM SALES SLOT✅"))
