@@ -28,6 +28,8 @@ support_buttons = [
 @block_dec
 async def startp(_, message):
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     user = await _.get_users(user_id)
     username = user.username
     first_name = user.first_name
@@ -49,6 +51,9 @@ async def startp(_, message):
 @app.on_message(filters.command("start") & filters.group)
 @block_dec
 async def startg(_, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     await message.reply_text(
         capsify("🚀 To start using me, please click the button below to initiate in DM."),
         reply_markup=IKM([
@@ -59,6 +64,9 @@ async def startg(_, message):
 @app.on_message(filters.command("credits"))
 @block_dec
 async def cred(_, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     await message.reply_text(
         text=capsify(credits_text),
         reply_markup=IKM([
