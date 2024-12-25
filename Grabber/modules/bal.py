@@ -9,13 +9,16 @@ from .block import block_dec, temp_block
 @block_dec
 async def balance(client: Client, message: Message):
     if not message.from_user:
-        await message.reply_text("Couldn't retrieve user information.")
+        await message.reply_text(capsify("COULDN'T RETRIEVE USER INFORMATION."))
         return
 
     user_id = message.from_user.id
     if temp_block(user_id):
         return
-    user_data = await user_collection.find_one({'id': user_id}, projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1, 'potion_amount': 1, 'potion_expiry': 1})
+    user_data = await user_collection.find_one(
+        {'id': user_id}, 
+        projection={'balance': 1, 'saved_amount': 1, 'loan_amount': 1}
+    )
 
     if user_data:
         ub = await show(user_id)
@@ -23,23 +26,16 @@ async def balance(client: Client, message: Message):
         bb = await sbank(user_id)
         saved_amount = int(bb)
         loan_amount = user_data.get('loan_amount', 0)
-        potion_amount = user_data.get('potion_amount', 0)
-        potion_expiry = user_data.get('potion_expiry')
 
-        formatted_balance = f"🔹 Your Current Balance: `{balance_amount:,.0f}`\n"
-        formatted_saved = f"🔸 Amount Saved: `{saved_amount:,.0f}`\n"
-        formatted_loan = f"🔻 Loan Amount: `{loan_amount:,.0f}`\n"
-        formatted_potion = f"🔹 Potion Amount: `{potion_amount}`\n"
+        formatted_balance = f"🔹 COINS: `{balance_amount:,.0f}`\n"
+        formatted_saved = f"🔸 AMOUNT SAVED: `{saved_amount:,.0f}`\n"
+        formatted_loan = f"🔻 LOAN AMOUNT: `{loan_amount:,.0f}`\n"
 
-        if potion_expiry:
-            time_remaining = potion_expiry - datetime.now()
-            formatted_potion += f"⏳ Potion Time Remaining: `{time_remaining}`\n"
-
-        balance_message = formatted_balance + formatted_saved + formatted_loan + formatted_potion
+        balance_message = formatted_balance + formatted_saved + formatted_loan
         balance_message = capsify(balance_message)
 
         await message.reply_text(balance_message)
     else:
-        balance_message = "You haven't added any character yet. Please add a character to unlock all features."
+        balance_message = "YOU HAVEN'T ADDED ANY CHARACTER YET. PLEASE ADD A CHARACTER TO UNLOCK ALL FEATURES."
         balance_message = capsify(balance_message)
         await message.reply_text(balance_message)
