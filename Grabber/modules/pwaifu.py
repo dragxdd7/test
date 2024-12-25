@@ -3,20 +3,38 @@ from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
 from . import ac, rc, app, user_collection, collection
 from .block import block_dec, temp_block
-last_claim_time = {}
 
-async def get_unique_characters(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
+async def get_claim_time(user_id):
+    try:
+        user_data = await user_collection.find_one({"user_id": user_id})
+        if user_data and "last_claim_time" in user_data:
+            return user_data["last_claim_time"]
+        return None
+    except Exception as e:
+        print(f"Error in get_claim_time: {e}")
+        return None
+
+async def set_claim_time(user_id, claim_time):
+    try:
+        await user_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"last_claim_time": claim_time}},
+            upsert=True
+        )
+    except Exception as e:
+        print(f"Error in set_claim_time: {e}")
+
+async def get_chars(target_rarities=['🟢 Common', '🟣 Rare', '🟡 Legendary']):
     try:
         pipeline = [
             {'$match': {'rarity': {'$in': target_rarities}}},
             {'$sample': {'size': 1}}
         ]
         cursor = collection.aggregate(pipeline)
-        characters = await cursor.to_list(length=None)
-
-        return characters
+        chars = await cursor.to_list(length=None)
+        return chars
     except Exception as e:
-        print(f"Error in get_unique_characters: {e}")
+        print(f"Error in get_chars: {e}")
         return []
 
 @app.on_message(filters.command("pwaifu"))
@@ -25,6 +43,7 @@ async def pwaifu(client: Client, message):
     chat_id = message.chat.id
     first_name = message.from_user.first_name
     user_id = message.from_user.id
+
     if temp_block(user_id):
         return
 
@@ -33,8 +52,9 @@ async def pwaifu(client: Client, message):
         return
 
     now = datetime.now()
-    if user_id in last_claim_time:
-        last_claim_date = last_claim_time[user_id]
+    last_claim_date = await get_claim_time(user_id)
+
+    if last_claim_date:
         if last_claim_date.date() == now.date():
             next_claim_time = last_claim_date + timedelta(days=1)
             remaining_time = next_claim_time - now
@@ -44,24 +64,24 @@ async def pwaifu(client: Client, message):
             await message.reply_text(f"Please wait for `after {formatted_time}` to claim your next waifu.", quote=True)
             return
 
-    last_claim_time[user_id] = now
+    await set_claim_time(user_id, now)
 
-    unique_characters = await get_unique_characters()
-    if not unique_characters:
+    chars = await get_chars()
+    if not chars:
         await message.reply_text("No new waifus available to claim.", quote=True)
         return
 
     try:
-        for character in unique_characters:
-            await ac(user_id, character['id'])
+        for char in chars:
+            await ac(user_id, char['id'])
 
-        img_urls = [character['img_url'] for character in unique_characters]
+        img_urls = [char['img_url'] for char in chars]
         captions = [
             f"Congratulations {first_name}! You have received a new waifu for your harem 💕!\n"
-            f"Name: {character['name']}\n"
-            f"Rarity: {character['rarity']}\n"
-            f"Anime: {character['anime']}\n"
-            for character in unique_characters
+            f"Name: {char['name']}\n"
+            f"Rarity: {char['rarity']}\n"
+            f"Anime: {char['anime']}\n"
+            for char in chars
         ]
         media_group = [InputMediaPhoto(media=img_url, caption=caption) for img_url, caption in zip(img_urls, captions)]
         await message.reply_media_group(media_group)
