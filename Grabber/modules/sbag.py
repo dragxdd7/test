@@ -3,7 +3,6 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
 from . import user_collection, Grabberu, sruby
 from .block import block_dec, temp_block
-from . import check
 
 @Grabberu.on_message(filters.command("sbag"))
 @block_dec
