@@ -21,7 +21,7 @@ PHOTO_URL = [
 ]
 SUPPORT_CHAT = "dragona_support"
 UPDATE_CHAT = "PickBotUpdatesHQ"
-BOT_USERNAME = "Guess_Yourr_Waifu_bot"
+BOT_USERNAME = "Okarun_Game_bot"
 CHARA_CHANNEL_ID = -1002235251549
 api_id = 20457610
 api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
