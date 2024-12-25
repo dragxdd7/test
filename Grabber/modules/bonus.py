@@ -113,8 +113,11 @@ async def bonus_claim_handler(_, query):
 
 @app.on_callback_query(filters.regex(r"^bo_close_"))
 async def close_bonus_handler(_, query):
-    _, user_id = query.data.split("_")
-    user_id = int(user_id)
+    try:
+        _, user_id = query.data.split("_", 1)
+        user_id = int(user_id)
+    except ValueError:
+        return 
 
     if user_id != query.from_user.id:
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
