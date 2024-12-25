@@ -88,7 +88,7 @@ async def agold(user_id, balance):
     x.pop('_id')
     await user_collection.update_one({'id': user_id}, {'$set': x}, upsert=True)
 
-async def druby(user_id, balance):
+async def dgold(user_id, balance):
     x = await user_collection.find_one({'id': user_id})
     if not x:
         return
@@ -96,7 +96,7 @@ async def druby(user_id, balance):
     x.pop('_id')
     await user_collection.update_one({'id': user_id}, {'$set': x}, upsert=True)
 
-async def sruby(user_id):
+async def sgold(user_id):
     x = await user_collection.find_one({"id": user_id})
     if x:
         return int(x.get("gold", 0))
