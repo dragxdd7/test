@@ -59,18 +59,15 @@ def limit(func):
 
 
 def check(func):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(client: Client, message: types.Message):
-            user_id = message.from_user.id
-            user_data = user_collection.find_one({"user_id": user_id})
-            
-            if not user_data or "first_name" not in user_data:
-                await message.reply_text(capsify("Please start the bot in DM to register."))
-                return
-            
-            return await func(client, message)
-        
-        return wrapper
-    return decorator
+    @wraps(func)
+    async def wrapper(client, message):
+        user_id = message.from_user.id
+        user_data = user_collection.find_one({"user_id": user_id})
 
+        if not user_data or "first_name" not in user_data:
+            await message.reply_text(capsify("Please start the bot in DM to register."))
+            return
+
+        return await func(client, message)
+
+    return wrapper
