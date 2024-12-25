@@ -1,9 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from functools import wraps
-from . import db
 from .capsify import capsify 
-from Grabber import user_collection
+from Grabber import user_collection, db
 
 sudb = db.sudo
 devb = db.dev
