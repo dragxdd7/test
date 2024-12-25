@@ -74,7 +74,3 @@ def check():
         return wrapper
     return decorator
 
-@Client.on_message(filters.command("start"))
-@check()
-async def start_command(client: Client, message: types.Message):
-    await message.reply_text(capsify("Welcome! You are registered."))
