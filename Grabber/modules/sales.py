@@ -83,7 +83,7 @@ async def my_sales_command(client, message):
         return
 
     sales = user['sales_slot']
-    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('first_name', 'Pick-unknown'))}\n\n"
+    sales_list = f"{capsify('SALES FOR')} {capsify(user.get('first_name', 'unknown'))}\n\n"
     for idx, sale in enumerate(sales, 1):
         sales_list += (capsify(
             f"{idx}. {capsify(sale['name'])}\n"
