@@ -1,7 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from functools import wraps
-from . import db
+from . import db, capsify 
+from Grabber import user_collection
 
 sudb = db.sudo
 devb = db.dev
@@ -57,3 +58,25 @@ def limit(func):
         return await func(client, message)
 
     return wrapper
+
+
+def check():
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(client: Client, message: types.Message):
+            user_id = message.from_user.id
+            user_data = user_collection.find_one({"user_id": user_id})
+            
+            if not user_data or "first_name" not in user_data:
+                await message.reply_text(capsify("Please start the bot in DM to register."))
+                return
+            
+            return await func(client, message)
+        
+        return wrapper
+    return decorator
+
+@Client.on_message(filters.command("start"))
+@check()
+async def start_command(client: Client, message: types.Message):
+    await message.reply_text(capsify("Welcome! You are registered."))
