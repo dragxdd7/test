@@ -17,7 +17,7 @@ GROUP_ID = "-1002225496870"
 TOKEN = "7567371385:AAFDbypym37NXvpdaGPTOZZtFwphrOCnr78"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
-    "https://files.catbox.moe/glb1m8.mp4"
+    "https://files.catbox.moe/oai7m9.mp4"
 ]
 SUPPORT_CHAT = "dragona_support"
 UPDATE_CHAT = "PickBotUpdatesHQ"
