@@ -105,6 +105,9 @@ async def my_sales_command(client, message):
 @app.on_message(filters.command("sales"))
 @block_dec
 async def sales_command(client, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     if message.reply_to_message:
         target_user_id = message.reply_to_message.from_user.id
     elif len(message.command) == 2:
@@ -334,6 +337,9 @@ async def remove_sales_command(client, message):
 @app.on_message(filters.command("randomsales"))
 @block_dec
 async def random_sales_command(client, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     users_with_sales = await user_collection.find({'sales_slot': {'$exists': True, '$ne': []}}).to_list(length=None)
 
     if not users_with_sales:
