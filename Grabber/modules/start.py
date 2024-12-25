@@ -104,8 +104,8 @@ async def start_main_menu(_, callback_query):
 async def credits_command(_, message):
     await message.reply_text(
         text=capsify(
-            "Bot Developers\n\n"
-            "Users below are the developers, helpers, etc... of this bot, you can personally contact them for issues, do not DM unnecessarily.\n\n"
+            "Bot Credits\n\n"
+            "Users below are the developers, uploaders, etc... of this bot, you can personally contact them for issues, do not DM unnecessarily.\n\n"
             "Thank You!"
         ),
         reply_markup=IKM([
