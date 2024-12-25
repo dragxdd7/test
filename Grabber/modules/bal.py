@@ -36,6 +36,6 @@ async def balance(client: Client, message: Message):
 
         await message.reply_text(balance_message)
     else:
-        balance_message = "YOU HAVEN'T ADDED ANY CHARACTER YET. PLEASE ADD A CHARACTER TO UNLOCK ALL FEATURES."
+        balance_message = "please start the bot in dm to register"
         balance_message = capsify(balance_message)
         await message.reply_text(balance_message)
