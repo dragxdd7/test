@@ -3,6 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 import random
 from . import user_collection, app, capsify
 from Grabber import *
+from .block import block_dec, temp_block
 
 sudb = db.sudo
 devb = db.dev
@@ -24,6 +25,7 @@ support_buttons = [
 ]
 
 @app.on_message(filters.command("start") & filters.private)
+@block_dec
 async def startp(_, message):
     user_id = message.from_user.id
     user = await _.get_users(user_id)
@@ -45,6 +47,7 @@ async def startp(_, message):
     )
 
 @app.on_message(filters.command("start") & filters.group)
+@block_dec
 async def startg(_, message):
     await message.reply_text(
         capsify("🚀 To start using me, please click the button below to initiate in DM."),
@@ -54,6 +57,7 @@ async def startg(_, message):
     )
 
 @app.on_message(filters.command("credits"))
+@block_dec
 async def cred(_, message):
     await message.reply_text(
         text=capsify(credits_text),
