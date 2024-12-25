@@ -7,7 +7,7 @@ from . import check
 
 @Grabberu.on_message(filters.command("sbag"))
 @block_dec
-@sruby
+@check
 async def sbag(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
