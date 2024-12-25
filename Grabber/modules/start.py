@@ -115,3 +115,82 @@ async def credits_command(_, message):
              IKB(capsify("Back"), callback_data="start_main_menu")]
         ])
     )
+
+@app.on_callback_query(filters.regex("show_dev_names"))
+async def show_dev_names(_, callback_query):
+    await callback_query.edit_message_text(
+        text=capsify("Loading developer names..."),
+        reply_markup=IKM([
+            [IKB(capsify("Back"), callback_data="show_credits")]
+        ])
+    )
+
+    dev_buttons = []
+    async for user in devb.find():
+        dev_id = user.get("user_id")
+        if dev_id:
+            try:
+                user = await _.get_users(dev_id)
+                name = user.first_name or "Unknown"
+                dev_buttons.append(IKB(capsify(name), user_id=dev_id))
+            except Exception:
+                dev_buttons.append(IKB(capsify("Unknown"), user_id=dev_id))
+
+    # Limit to 4 rows, or as needed
+    rows = [dev_buttons[i:i+3] for i in range(0, min(len(dev_buttons), 12), 3)]
+    await callback_query.edit_message_text(
+        text=capsify("**Developers:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+    )
+
+@app.on_callback_query(filters.regex("show_sudo_names"))
+async def show_sudo_names(_, callback_query):
+    await callback_query.edit_message_text(
+        text=capsify("Loading sudo names..."),
+        reply_markup=IKM([
+            [IKB(capsify("Back"), callback_data="show_credits")]
+        ])
+    )
+
+    sudo_buttons = []
+    async for user in sudb.find():
+        sudo_id = user.get("user_id")
+        if sudo_id:
+            try:
+                user = await _.get_users(sudo_id)
+                name = user.first_name or "Unknown"
+                sudo_buttons.append(IKB(capsify(name), user_id=sudo_id))
+            except Exception:
+                sudo_buttons.append(IKB(capsify("Unknown"), user_id=sudo_id))
+
+    rows = [sudo_buttons[i:i+3] for i in range(0, min(len(sudo_buttons), 12), 3)]
+    await callback_query.edit_message_text(
+        text=capsify("**Sudos:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+    )
+
+@app.on_callback_query(filters.regex("show_uploader_names"))
+async def show_uploader_names(_, callback_query):
+    await callback_query.edit_message_text(
+        text=capsify("Loading uploader names..."),
+        reply_markup=IKM([
+            [IKB(capsify("Back"), callback_data="show_credits")]
+        ])
+    )
+
+    uploader_buttons = []
+    async for user in uploaderdb.find():
+        uploader_id = user.get("user_id")
+        if uploader_id:
+            try:
+                user = await _.get_users(uploader_id)
+                name = user.first_name or "Unknown"
+                uploader_buttons.append(IKB(capsify(name), user_id=uploader_id))
+            except Exception:
+                uploader_buttons.append(IKB(capsify("Unknown"), user_id=uploader_id))
+
+    rows = [uploader_buttons[i:i+3] for i in range(0, min(len(uploader_buttons), 12), 3)]
+    await callback_query.edit_message_text(
+        text=capsify("**Uploaders:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+    )
