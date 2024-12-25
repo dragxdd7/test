@@ -54,7 +54,7 @@ async def buybeast_cmd(client: Client, message: Message):
 
     beast_price = beast_list[beast_id]['price']
     if user_data.get('gold', 0) < beast_price:
-        return await message.reply_text(f"You don't have enough tokens to buy this beast. You need {beast_price} tokens.")
+        return await message.reply_text(f"You don't have enough gold to buy this beast. You need {beast_price} tokens.")
 
     await user_collection.update_one({'id': user_id}, {'$inc': {'gold': -beast_price}})
 
