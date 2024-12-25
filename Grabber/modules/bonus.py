@@ -117,7 +117,7 @@ async def close_bonus_handler(_, query):
         _, user_id = query.data.split("_", 1)
         user_id = int(user_id)
     except ValueError:
-        return 
+        return
 
     if user_id != query.from_user.id:
         return await query.answer(capsify("This is not for you, baka!"), show_alert=True)
