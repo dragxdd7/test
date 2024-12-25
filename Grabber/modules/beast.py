@@ -1,6 +1,6 @@
 import random
 from pyrogram import filters, Client, types as t
-from . import user_collection, app
+from . import user_collection, app, dgold , agold, sgold
 from pyrogram.types import Message  
 from datetime import datetime, timedelta
 from html import escape
@@ -56,7 +56,7 @@ async def buybeast_cmd(client: Client, message: Message):
     if user_data.get('gold', 0) < beast_price:
         return await message.reply_text(f"You don't have enough gold to buy this beast. You need {beast_price} tokens.")
 
-    await user_collection.update_one({'id': user_id}, {'$inc': {'gold': -beast_price}})
+    await dgold(user_id, beast_price)
 
     new_beast = {'id': beast_id, 'name': beast_list[beast_id]['name'], 'rarity': beast_list[beast_id]['rarity'], 'img_url': beast_list[beast_id]['img_url'], 'power': beast_list[beast_id]['power']}
     await user_collection.update_one({'id': user_id}, {'$push': {'beasts': new_beast}})
