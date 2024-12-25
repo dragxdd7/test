@@ -231,8 +231,8 @@ async def purchase_character(client, callback_query):
     )
 
     chat_id = callback_query.message.chat.id
-    buyer_mention = f"[{buyer.get('first_name', 'Pick-unknown')}](tg://user?id={buyer['id']})"
-    seller_mention = f"[{seller.get('first_name', 'Pick-unknown')}](tg://user?id={seller['id']})"
+    buyer_mention = f"[{buyer.get('first_name', 'unknown')}](tg://user?id={buyer['id']})"
+    seller_mention = f"[{seller.get('first_name', 'unknown')}](tg://user?id={seller['id']})"
 
     await client.send_message(
         chat_id,
