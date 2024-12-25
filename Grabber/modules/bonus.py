@@ -114,7 +114,7 @@ async def bonus_claim_handler(_, query):
 @app.on_callback_query(filters.regex(r"^bo_close_"))
 async def close_bonus_handler(_, query):
     try:
-        _, user_id = query.data.split("_", 1)
+        _, bonus_type, user_id = query.data.split("_")
         user_id = int(user_id)
     except ValueError:
         return
@@ -124,3 +124,4 @@ async def close_bonus_handler(_, query):
 
     await query.message.delete()
     await query.answer(capsify("Bonus menu closed!"))
+
