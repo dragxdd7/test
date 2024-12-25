@@ -62,10 +62,9 @@ def check(func):
     @wraps(func)
     async def wrapper(client, message):
         user_id = message.from_user.id
-        user_data = user_collection.find_one({"user_id": user_id})
-
+        user_data = await user_collection.find_one({"user_id": user_id})  
         if not user_data or "first_name" not in user_data:
-            await message.reply_text(capsify("Please start the bot in DM to register."))
+            await message.reply_text("Please start the bot in DM to register.")
             return
 
         return await func(client, message)
