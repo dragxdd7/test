@@ -51,9 +51,9 @@ async def show_credits(_, message_or_callback):
         message = message_or_callback
         await message.reply_text(
             text=capsify(
-                "Bot Developers\n\n"
-                "Users below are the developers, helpers, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You!"
+                "Bot Credits\n\n"
+                "Users below are the developers, uploaders, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
+                "Thank You ❗"
             ),
             reply_markup=IKM([
                 [IKB(capsify("Developers"), callback_data="show_dev_names"),
@@ -66,9 +66,9 @@ async def show_credits(_, message_or_callback):
         callback_query = message_or_callback
         await callback_query.edit_message_text(
             text=capsify(
-                "Bot Developers\n\n"
-                "Users below are the developers, helpers, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You!"
+                "Bot Credits\n\n"
+                "Users below are the developers, uploaders, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
+                "Thank You ❗"
             ),
             reply_markup=IKM([
                 [IKB(capsify("Developers"), callback_data="show_dev_names"),
@@ -87,23 +87,20 @@ async def show_dev_names(_, callback_query):
         ])
     )
 
-    dev_names = []
-
+    dev_buttons = []
     async for user in devb.find():
         dev_id = user.get("user_id")
         if dev_id:
             try:
                 user = await _.get_users(dev_id)
-                dev_names.append(user.first_name or "Pick-Unknown")
+                dev_buttons.append(IKB(user.first_name or "Unknown", callback_data=str(dev_id)))
             except Exception:
-                dev_names.append("Pick-Unknown")
+                dev_buttons.append(IKB("Unknown", callback_data=str(dev_id)))
 
-    text = "**Developers:**\n" + "\n".join(capsify(name) for name in dev_names)
+    rows = [dev_buttons[i:i+3] for i in range(0, len(dev_buttons), 3)]
     await callback_query.edit_message_text(
-        text=text,
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
+        text=capsify("**Developers:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
     )
 
 @app.on_callback_query(filters.regex("show_sudo_names"))
@@ -115,23 +112,20 @@ async def show_sudo_names(_, callback_query):
         ])
     )
 
-    sudo_names = []
-
+    sudo_buttons = []
     async for user in sudb.find():
         sudo_id = user.get("user_id")
         if sudo_id:
             try:
                 user = await _.get_users(sudo_id)
-                sudo_names.append(user.first_name or "Pick-Unknown")
+                sudo_buttons.append(IKB(user.first_name or "Unknown", callback_data=str(sudo_id)))
             except Exception:
-                sudo_names.append("Pick-Unknown")
+                sudo_buttons.append(IKB("Unknown", callback_data=str(sudo_id)))
 
-    text = "**Sudos:**\n" + "\n".join(capsify(name) for name in sudo_names)
+    rows = [sudo_buttons[i:i+3] for i in range(0, len(sudo_buttons), 3)]
     await callback_query.edit_message_text(
-        text=text,
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
+        text=capsify("**Sudos:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
     )
 
 @app.on_callback_query(filters.regex("show_uploader_names"))
@@ -143,24 +137,22 @@ async def show_uploader_names(_, callback_query):
         ])
     )
 
-    uploader_names = []
-
+    uploader_buttons = []
     async for user in uploaderdb.find():
         uploader_id = user.get("user_id")
         if uploader_id:
             try:
                 user = await _.get_users(uploader_id)
-                uploader_names.append(user.first_name or "Pick-Unknown")
+                uploader_buttons.append(IKB(user.first_name or "Unknown", callback_data=str(uploader_id)))
             except Exception:
-                uploader_names.append("Pick-Unknown")
+                uploader_buttons.append(IKB("Unknown", callback_data=str(uploader_id)))
 
-    text = "**Uploaders:**\n" + "\n".join(capsify(name) for name in uploader_names)
+    rows = [uploader_buttons[i:i+3] for i in range(0, len(uploader_buttons), 3)]
     await callback_query.edit_message_text(
-        text=text,
-        reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
-        ])
+        text=capsify("**Uploaders:**"),
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
     )
+
 
 @app.on_callback_query(filters.regex("start_main_menu"))
 async def start_main_menu(_, callback_query):
