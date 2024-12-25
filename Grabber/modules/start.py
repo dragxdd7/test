@@ -156,7 +156,23 @@ async def show_uploader_names(_, callback_query):
 
 @app.on_callback_query(filters.regex("start_main_menu"))
 async def start_main_menu(_, callback_query):
-    await start_command_private(_, callback_query.message)
+    user_id = callback_query.from_user.id
+    user = await _.get_users(user_id)
+    username = user.username
+    first_name = user.first_name
+
+    random_video = random.choice(PHOTO_URL)
+    await callback_query.edit_message_text(
+        text=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
+        caption=random_video,
+        reply_markup=IKM([
+            [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
+             IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
+            [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
+            [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
+             IKB(capsify("Credits"), callback_data="show_credits")]
+        ])
+    )
 
 @app.on_message(filters.command("credits"))
 async def credits_command(_, message):
