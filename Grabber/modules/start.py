@@ -8,8 +8,23 @@ sudb = db.sudo
 devb = db.dev
 uploaderdb = db.uploader
 
+start_text = f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."
+credits_text = (
+    "Bot Credits\n\n"
+    "Users below are the developers, uploaders, etc... of this bot, you can personally contact them for issues, do not DM unnecessarily.\n\n"
+    "Thank You!"
+)
+
+support_buttons = [
+    [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
+     IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
+    [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
+    [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
+     IKB(capsify("Credits"), callback_data="credits")]
+]
+
 @app.on_message(filters.command("start") & filters.private)
-async def start_command_private(_, message):
+async def startp(_, message):
     user_id = message.from_user.id
     user = await _.get_users(user_id)
     username = user.username
@@ -25,18 +40,12 @@ async def start_command_private(_, message):
     await _.send_video(
         chat_id=user_id,
         video=random_video,
-        caption=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
-        reply_markup=IKM([
-            [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
-             IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
-            [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
-            [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
-             IKB(capsify("Credits"), callback_data="show_credits")]
-        ])
+        caption=capsify(start_text),
+        reply_markup=IKM(support_buttons)
     )
 
 @app.on_message(filters.command("start") & filters.group)
-async def start_command_group(_, message):
+async def startg(_, message):
     await message.reply_text(
         capsify("🚀 To start using me, please click the button below to initiate in DM."),
         reply_markup=IKM([
@@ -44,84 +53,49 @@ async def start_command_group(_, message):
         ])
     )
 
+@app.on_message(filters.command("credits"))
+async def cred(_, message):
+    await message.reply_text(
+        text=capsify(credits_text),
+        reply_markup=IKM([
+            [IKB(capsify("Developers"), callback_data="sdev"),
+             IKB(capsify("Sudos"), callback_data="ssudo")],
+            [IKB(capsify("Uploads"), callback_data="suploader"),
+             IKB(capsify("Back"), callback_data="main")]
+        ])
+    )
 
-@app.on_callback_query(filters.regex("show_credits"))
-async def show_credits(_, message_or_callback):
+@app.on_callback_query(filters.regex("credits"))
+async def credcb(_, message_or_callback):
     if isinstance(message_or_callback, Client):
         message = message_or_callback
         await message.reply_text(
-            text=capsify(
-                "Bot Credits\n\n"
-                "Users below are the developers, uploaders, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You ❗"
-            ),
+            text=capsify(credits_text),
             reply_markup=IKM([
-                [IKB(capsify("Developers"), callback_data="show_dev_names"),
-                 IKB(capsify("Sudos"), callback_data="show_sudo_names")],
-                [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
-                 IKB(capsify("Back"), callback_data="start_main_menu")]
+                [IKB(capsify("Developers"), callback_data="sdev"),
+                 IKB(capsify("Sudos"), callback_data="ssudo")],
+                [IKB(capsify("Uploads"), callback_data="suploader"),
+                 IKB(capsify("Back"), callback_data="main")]
             ])
         )
     else:
         callback_query = message_or_callback
         await callback_query.edit_message_text(
-            text=capsify(
-                "Bot Credits\n\n"
-                "Users below are the developers, uploaders, etc... of this bot, you can personally contact em for issues, do not dm unnecessarily.\n\n"
-                "Thank You ❗"
-            ),
+            text=capsify(credits_text),
             reply_markup=IKM([
-                [IKB(capsify("Developers"), callback_data="show_dev_names"),
-                 IKB(capsify("Sudos"), callback_data="show_sudo_names")],
-                [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
-                 IKB(capsify("Back"), callback_data="start_main_menu")]
+                [IKB(capsify("Developers"), callback_data="sdev"),
+                 IKB(capsify("Sudos"), callback_data="ssudo")],
+                [IKB(capsify("Uploads"), callback_data="suploader"),
+                 IKB(capsify("Back"), callback_data="main")]
             ])
         )
 
-
-
-@app.on_callback_query(filters.regex("start_main_menu"))
-async def start_main_menu(_, callback_query):
-    user_id = callback_query.from_user.id
-    user = await _.get_users(user_id)
-    username = user.username
-    first_name = user.first_name
-
-    random_video = random.choice(PHOTO_URL)
-    await callback_query.edit_message_text(
-        text=capsify(f"👋 Hi, this is {BOT_USERNAME}, an anime-based games bot! Add me to your group to start your journey."),
-        caption=random_video,
-        reply_markup=IKM([
-            [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
-             IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
-            [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
-            [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
-             IKB(capsify("Credits"), callback_data="show_credits")]
-        ])
-    )
-
-@app.on_message(filters.command("credits"))
-async def credits_command(_, message):
-    await message.reply_text(
-        text=capsify(
-            "Bot Credits\n\n"
-            "Users below are the developers, uploaders, etc... of this bot, you can personally contact them for issues, do not DM unnecessarily.\n\n"
-            "Thank You!"
-        ),
-        reply_markup=IKM([
-            [IKB(capsify("Developers"), callback_data="show_dev_names"),
-             IKB(capsify("Sudos"), callback_data="show_sudo_names")],
-            [IKB(capsify("Uploads"), callback_data="show_uploader_names"),
-             IKB(capsify("Back"), callback_data="start_main_menu")]
-        ])
-    )
-
-@app.on_callback_query(filters.regex("show_dev_names"))
-async def show_dev_names(_, callback_query):
+@app.on_callback_query(filters.regex("sdev"))
+async def sdev(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading developer names..."),
         reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
+            [IKB(capsify("Back"), callback_data="credits")]
         ])
     )
 
@@ -136,19 +110,18 @@ async def show_dev_names(_, callback_query):
             except Exception:
                 dev_buttons.append(IKB(capsify("Unknown"), user_id=dev_id))
 
-    # Limit to 4 rows, or as needed
     rows = [dev_buttons[i:i+3] for i in range(0, min(len(dev_buttons), 12), 3)]
     await callback_query.edit_message_text(
         text=capsify("**Developers:**"),
-        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
 
-@app.on_callback_query(filters.regex("show_sudo_names"))
-async def show_sudo_names(_, callback_query):
+@app.on_callback_query(filters.regex("ssudo"))
+async def ssudo(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading sudo names..."),
         reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
+            [IKB(capsify("Back"), callback_data="credits")]
         ])
     )
 
@@ -166,15 +139,15 @@ async def show_sudo_names(_, callback_query):
     rows = [sudo_buttons[i:i+3] for i in range(0, min(len(sudo_buttons), 12), 3)]
     await callback_query.edit_message_text(
         text=capsify("**Sudos:**"),
-        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
 
-@app.on_callback_query(filters.regex("show_uploader_names"))
-async def show_uploader_names(_, callback_query):
+@app.on_callback_query(filters.regex("suploader"))
+async def suploader(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading uploader names..."),
         reply_markup=IKM([
-            [IKB(capsify("Back"), callback_data="show_credits")]
+            [IKB(capsify("Back"), callback_data="credits")]
         ])
     )
 
@@ -192,5 +165,14 @@ async def show_uploader_names(_, callback_query):
     rows = [uploader_buttons[i:i+3] for i in range(0, min(len(uploader_buttons), 12), 3)]
     await callback_query.edit_message_text(
         text=capsify("**Uploaders:**"),
-        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="show_credits")]])
+        reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
+    )
+
+@app.on_callback_query(filters.regex("main"))
+async def main(_, callback_query):
+    random_video = random.choice(PHOTO_URL)
+    await callback_query.edit_message_text(
+        text=capsify(start_text),
+        caption=random_video,
+        reply_markup=IKM(support_buttons)
     )
