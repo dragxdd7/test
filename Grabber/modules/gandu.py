@@ -55,8 +55,9 @@ def generate_random_image(word: str) -> io.BytesIO:
     return img_byte_arr
 
 async def handle_guess(client: Client, message):
-    if not message.text:
+    if not message.text or not message.from_user:
         return
+
     message_text = message.text.strip().lower()
     chat_id = message.chat.id
     user_id = message.from_user.id
