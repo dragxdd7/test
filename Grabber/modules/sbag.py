@@ -1,12 +1,13 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pymongo import MongoClient
-from . import user_collection, Grabberu
+from . import user_collection, Grabberu, sruby
 from .block import block_dec, temp_block
-from . import sruby
+from . import check
 
 @Grabberu.on_message(filters.command("sbag"))
 @block_dec
+@sruby
 async def sbag(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
