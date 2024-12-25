@@ -110,7 +110,7 @@ async def redeem(client, message: Message):
                 del generated_codes[code]
 
             await message.reply_text(
-                f"Code redeemed successfully. {amount} tokens added to your balance. Remaining quantity: {details['quantity']}"
+                f"Code redeemed successfully. {amount} coins added to your balance. Remaining quantity: {details['quantity']}"
             )
         else:
             await message.reply_text("This code has already been redeemed the maximum number of times.")
