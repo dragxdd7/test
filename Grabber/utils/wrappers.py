@@ -58,7 +58,7 @@ def limit(func):
     return wrapper
 
 
-def check():
+def check(func):
     def decorator(func):
         @wraps(func)
         async def wrapper(client: Client, message: types.Message):
