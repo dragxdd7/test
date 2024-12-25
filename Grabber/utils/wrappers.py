@@ -13,12 +13,10 @@ def sudocmd(func):
         user_id = message.from_user.id
         sudo_user = await sudb.find_one({"user_id": user_id})
         if not sudo_user:
-            await message.reply_text("You are not authorized to use this command.")
             return
         return await func(client, message)
     return wrapper
 
-from functools import wraps
 from telegram import Update
 from telegram.ext import CallbackContext
 
