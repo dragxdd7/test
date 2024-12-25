@@ -44,7 +44,7 @@ async def check_stats(_, message: Message):
     user_data = await user_collection.find_one({'id': user_id})
     
     if not user_data:
-        return await message.reply_text("You need to pick slave first.")
+        return await message.reply_text("You need to start the bot first.")
     
     user_xp_data = await user_collection.find_one({'id': user_id})
     
