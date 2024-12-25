@@ -43,7 +43,7 @@ async def show_top_list(client, callback_query):
         else:
             value = custom_format_number(float(user[list_type].replace(',', ''))) if isinstance(user[list_type], str) else custom_format_number(user[list_type])
 
-        first_name = user.get('first_name', 'Pick-unknown')
+        first_name = user.get('first_name', 'unknown')
         first_word = first_name.split()[0] if ' ' in first_name else first_name
         top_users_message += f"{index + 1}. {first_word} - Ŧ{value}\n"
 
