@@ -42,8 +42,16 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         start_index = offset
         end_index = offset + results_per_page
 
-        # Handle collection-based queries
-        if query.startswith('collection.'):
+        # Handle different query types
+        if query.isdigit():
+            # Search by character ID
+            character_id = int(query)
+            all_characters = await collection.find(
+                {'id': character_id},
+                {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+            ).to_list(length=None)
+        elif query.startswith('collection.'):
+            # Search within a user's collection
             user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
             if user_id.isdigit():
                 if user_id in user_collection_cache:
@@ -70,30 +78,23 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     all_characters = []
             else:
                 all_characters = []
+        elif query:
+            # Search by name or anime
+            regex = re.compile(query, re.IGNORECASE)
+            all_characters = await collection.find(
+                {"$or": [{"name": regex}, {"anime": regex}]},
+                {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+            ).to_list(length=None)
         else:
-            # Handle ID-based and name/anime queries
-            if query.isdigit():
-                character_id = int(query)
-                all_characters = await collection.find(
-                    {'id': character_id},
-                    {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
-                ).to_list(length=None)
-            elif query:
-                regex = re.compile(query, re.IGNORECASE)
-                all_characters = await collection.find(
-                    {"$or": [{"name": regex}, {"anime": regex}]},
-                    {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
-                ).to_list(length=None)
+            # Load all characters if no specific query is provided
+            if 'all_characters' in all_characters_cache:
+                all_characters = all_characters_cache['all_characters']
             else:
-                # Load all characters if no specific query is provided
-                if 'all_characters' in all_characters_cache:
-                    all_characters = all_characters_cache['all_characters']
-                else:
-                    all_characters = await collection.find(
-                        {}, 
-                        {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
-                    ).to_list(length=None)
-                    all_characters_cache['all_characters'] = all_characters
+                all_characters = await collection.find(
+                    {}, 
+                    {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                ).to_list(length=None)
+                all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
 
