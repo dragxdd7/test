@@ -33,16 +33,20 @@ clear_all_caches()
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.inline_query.query
+        query = update.inline_query.query.strip()
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
 
-        if query.strip().isdigit():
-            character_id = int(query.strip())
-            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+        # Enhanced to allow direct ID search
+        if query.isdigit():
+            character_id = int(query)
+            all_characters = await collection.find(
+                {'id': character_id},
+                {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+            ).to_list(length=None)
         else:
             if query.startswith('collection.'):
                 user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
@@ -57,10 +61,16 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                         all_characters = {v['id']: v for v in user.get('characters', [])}.values()
                         if search_terms:
                             if search_terms[0].isdigit():
-                                all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
+                                all_characters = [
+                                    character for character in all_characters 
+                                    if str(character['id']) == search_terms[0]
+                                ]
                             else:
                                 regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime']) or regex.search(character['id'])]
+                                all_characters = [
+                                    character for character in all_characters 
+                                    if regex.search(character['name']) or regex.search(character['anime'])
+                                ]
                     else:
                         all_characters = []
                 else:
@@ -68,12 +78,18 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             else:
                 if query:
                     regex = re.compile(query, re.IGNORECASE)
-                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                    all_characters = await collection.find(
+                        {"$or": [{"name": regex}, {"anime": regex}]},
+                        {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                    ).to_list(length=None)
                 else:
                     if 'all_characters' in all_characters_cache:
                         all_characters = all_characters_cache['all_characters']
                     else:
-                        all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                        all_characters = await collection.find(
+                            {}, 
+                            {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                        ).to_list(length=None)
                         all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
@@ -157,5 +173,3 @@ async def check(update: Update, context: CallbackContext) -> None:
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
     await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
-
-
