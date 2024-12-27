@@ -10,7 +10,10 @@ from telegram.ext import InlineQueryHandler, CallbackQueryHandler, CallbackConte
 from . import user_collection, collection, application, db, capsify
 from .block import block_inl_ptb
 
+# Initialize a lock for async operations
 lock = asyncio.Lock()
+
+# Create necessary indexes for efficient querying
 db.characters.create_index([('id', DESCENDING)])
 db.characters.create_index([('anime', DESCENDING)])
 db.characters.create_index([('img_url', DESCENDING)])
@@ -19,15 +22,18 @@ db.user_collection.create_index([('characters.id', DESCENDING)])
 db.user_collection.create_index([('characters.name', DESCENDING)])
 db.user_collection.create_index([('characters.img_url', DESCENDING)])
 
+# Define caches with TTL
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
 
+# Function to clear all caches
 def clear_all_caches():
     all_characters_cache.clear()
     user_collection_cache.clear()
 
 
+# Clear caches on startup
 clear_all_caches()
 
 
@@ -76,7 +82,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
             ).to_list(length=None)
 
-        # Use cached results if query is empty
+        # Fallback to cached results if no query
         if not query:
             all_characters = all_characters_cache.get('all_characters') or await collection.find(
                 {}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
