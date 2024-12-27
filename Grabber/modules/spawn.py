@@ -92,6 +92,7 @@ async def remove_spawn_after_timeout(chat_id, character, timeout):
         del spawned_characters[chat_id]
 
 @app.on_message(filters.command("pick"))
+@block_dec
 async def guess(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
