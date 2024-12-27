@@ -4,6 +4,7 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from . import app, collection, user_collection, capsify, druby, sruby, group_user_totals_collection
 from .watchers import auction_watcher
+from .block import block_dec, temp_block
 
 DEFAULT_MODE_SETTINGS = {
     "auction": True
@@ -61,6 +62,7 @@ async def start_auction(chat_id):
         return True
 
 @app.on_message(filters.command("bid"))
+@block_dec
 async def place_bid(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
