@@ -4,9 +4,8 @@ from cachetools import TTLCache
 from pymongo import DESCENDING
 import asyncio
 
-from telegram import Update
-from telegram.ext import InlineQueryHandler, CallbackContext
-from telegram import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
+from telegram import Update, InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, InlineQueryResultPhoto as IQP
+from telegram.ext import InlineQueryHandler, CallbackQueryHandler, CallbackContext
 
 from . import user_collection, collection, application, db, capsify
 from .block import block_inl_ptb
@@ -15,6 +14,7 @@ lock = asyncio.Lock()
 db.characters.create_index([('id', DESCENDING)])
 db.characters.create_index([('anime', DESCENDING)])
 db.characters.create_index([('img_url', DESCENDING)])
+
 db.user_collection.create_index([('characters.id', DESCENDING)])
 db.user_collection.create_index([('characters.name', DESCENDING)])
 db.user_collection.create_index([('characters.img_url', DESCENDING)])
