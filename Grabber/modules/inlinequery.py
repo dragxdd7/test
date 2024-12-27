@@ -82,7 +82,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
             ).to_list(length=None)
 
-        # Fallback to cached results if no query
+        # Use cached results if query is empty
         if not query:
             all_characters = all_characters_cache.get('all_characters') or await collection.find(
                 {}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
@@ -120,7 +120,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                 )
             )
 
-        # Answer the inline query
+        # Answer the inline query with the results
         await update.inline_query.answer(results, next_offset=next_offset, cache_time=5)
 
 
@@ -130,13 +130,17 @@ async def check(update: Update, context: CallbackContext) -> None:
     user_id = query.from_user.id
     character_id = int(query.data.split('_')[1])
 
+    # Retrieve the user's character collection from the database
     user_data = await user_collection.find_one({'id': user_id}, {'characters': 1})
     characters = user_data.get('characters', [])
+    
+    # Count how many times the character appears in the user's collection
     quantity = sum(1 for char in characters if char['id'] == character_id)
 
+    # Show an alert with the quantity of the character the user has
     await query.answer(capsify(f"You have {quantity} of this character."), show_alert=True)
 
 
-# Add handlers
+# Add handlers for inline queries and callback queries
 application.add_handler(InlineQueryHandler(inlinequery, block=False))
 application.add_handler(CallbackQueryHandler(check))
