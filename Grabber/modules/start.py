@@ -58,7 +58,7 @@ async def startg(_, message):
     await message.reply_text(
         capsify("🚀 To start using me, please click the button below to initiate in DM."),
         reply_markup=IKM([
-            [IKB(capsify("Start in DM"), url=f"https://t.me/{BOT_NAME}")]
+            [IKB(capsify("Start in DM"), url=f"https://t.me/{BOT_USERNAME}")]
         ])
     )
 
