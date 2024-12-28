@@ -20,7 +20,7 @@ credits_text = (
 support_buttons = [
     [IKB(capsify("Support"), url=f"https://t.me/{SUPPORT_CHAT}"),
      IKB(capsify("Updates"), url=f"https://t.me/{UPDATE_CHAT}")],
-    [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_NAME}?startgroup=true")],
+    [IKB(capsify("Add Me Baby 🐥"), url=f"https://t.me/{BOT_USERNAME}?startgroup=true")],
     [IKB(capsify("Help"), url=f"https://t.me/{SUPPORT_CHAT}"),
      IKB(capsify("Credits"), callback_data="credits")]
 ]
