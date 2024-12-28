@@ -1,5 +1,5 @@
-from pyrogram import Client, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, filters
-from pyrogram.types import Message, CallbackQuery
+from pyrogram import Client,  filters
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, CallbackQuery
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
