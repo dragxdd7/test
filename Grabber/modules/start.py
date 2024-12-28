@@ -102,8 +102,9 @@ async def sdev(_, callback_query):
     dev_buttons = []
     async for user in devb.find():
         dev_id = user.get("user_id")
-        first_name = user.get("first_name", "Unknown")
         if dev_id:
+            user_data = user_collection.find_one({"id": dev_id})
+            first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             dev_buttons.append(IKB(capsify(first_name), user_id=dev_id))
 
     rows = [dev_buttons[i:i+3] for i in range(0, min(len(dev_buttons), 12), 3)]
@@ -111,6 +112,7 @@ async def sdev(_, callback_query):
         text=capsify("**Developers:**"),
         reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
+
 
 @app.on_callback_query(filters.regex("ssudo"))
 async def ssudo(_, callback_query):
@@ -124,8 +126,9 @@ async def ssudo(_, callback_query):
     sudo_buttons = []
     async for user in sudb.find():
         sudo_id = user.get("user_id")
-        first_name = user.get("first_name", "Unknown")
         if sudo_id:
+            user_data = user_collection.find_one({"id": sudo_id})
+            first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             sudo_buttons.append(IKB(capsify(first_name), user_id=sudo_id))
 
     rows = [sudo_buttons[i:i+3] for i in range(0, min(len(sudo_buttons), 12), 3)]
@@ -133,6 +136,7 @@ async def ssudo(_, callback_query):
         text=capsify("**Sudos:**"),
         reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
+
 
 @app.on_callback_query(filters.regex("suploader"))
 async def suploader(_, callback_query):
@@ -146,8 +150,9 @@ async def suploader(_, callback_query):
     uploader_buttons = []
     async for user in uploaderdb.find():
         uploader_id = user.get("user_id")
-        first_name = user.get("first_name", "Unknown")
         if uploader_id:
+            user_data = user_collection.find_one({"id": uploader_id})
+            first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             uploader_buttons.append(IKB(capsify(first_name), user_id=uploader_id))
 
     rows = [uploader_buttons[i:i+3] for i in range(0, min(len(uploader_buttons), 12), 3)]
