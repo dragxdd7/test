@@ -43,7 +43,12 @@ async def harem(client, message, page=0):
     total_count = len(unique_characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
-    keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=f"collection.{user_id}")]]
+    inline_query = f"collection.{user_id}"
+    if cmode != 'All':
+        inline_query += f".{cmode}"
+
+    keyboard = [[IKB(capsify(f"Inline ({total_count})"), switch_inline_query_current_chat=inline_query)]]
+    
     if total_pages > 1:
         nav_buttons = []
         if page > 0:
