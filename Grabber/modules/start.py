@@ -9,7 +9,7 @@ sudb = db.sudo
 devb = db.dev
 uploaderdb = db.uploader
 
-BOT_NAME = "Okarun"  
+BOT_NAME = "Okarun"
 start_text = f"👋 Hi, this is {BOT_NAME}, an anime-based games bot! Add me to your group to start your journey."
 credits_text = (
     "Bot Credits\n\n"
@@ -103,7 +103,7 @@ async def sdev(_, callback_query):
     async for user in devb.find():
         dev_id = user.get("user_id")
         if dev_id:
-            user_data = user_collection.find_one({"id": dev_id})
+            user_data = await user_collection.find_one({"id": dev_id})
             first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             dev_buttons.append(IKB(capsify(first_name), user_id=dev_id))
 
@@ -112,7 +112,6 @@ async def sdev(_, callback_query):
         text=capsify("**Developers:**"),
         reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
-
 
 @app.on_callback_query(filters.regex("ssudo"))
 async def ssudo(_, callback_query):
@@ -127,7 +126,7 @@ async def ssudo(_, callback_query):
     async for user in sudb.find():
         sudo_id = user.get("user_id")
         if sudo_id:
-            user_data = user_collection.find_one({"id": sudo_id})
+            user_data = await user_collection.find_one({"id": sudo_id})
             first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             sudo_buttons.append(IKB(capsify(first_name), user_id=sudo_id))
 
@@ -136,7 +135,6 @@ async def ssudo(_, callback_query):
         text=capsify("**Sudos:**"),
         reply_markup=IKM(rows + [[IKB(capsify("Back"), callback_data="credits")]])
     )
-
 
 @app.on_callback_query(filters.regex("suploader"))
 async def suploader(_, callback_query):
@@ -151,7 +149,7 @@ async def suploader(_, callback_query):
     async for user in uploaderdb.find():
         uploader_id = user.get("user_id")
         if uploader_id:
-            user_data = user_collection.find_one({"id": uploader_id})
+            user_data = await user_collection.find_one({"id": uploader_id})
             first_name = user_data.get("first_name", "Unknown") if user_data else "Unknown"
             uploader_buttons.append(IKB(capsify(first_name), user_id=uploader_id))
 
