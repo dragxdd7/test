@@ -109,6 +109,40 @@ async def cmode_callback(update: Update, context: CallbackContext) -> None:
         await query.answer("You cannot change someone else's collection mode.", show_alert=True)
         return
 
+    user_data = await user_collection.find_one({'id': user_id})
+    if not user_data:
+        await query.answer("User data not found.", show_alert=True)
+        return
+
+    if collection_mode == 'All':
+        await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': 'All'}})
+        new_caption = f"Collection mode set to: {collection_mode}"
+
+        username = update.effective_user.username
+
+        profile_photos = await context.bot.get_user_profile_photos(update.effective_user.id)
+        if profile_photos.total_count > 0:
+            file_id = profile_photos.photos[0][-1].file_id
+            file = await context.bot.get_file(file_id)
+            user_dp_url = file.file_path
+        else:
+            user_dp_url = None
+
+        img_path = create_cmode_image(username, user_id, 'All', user_dp_url)
+
+        reply_markup = IKM([])
+
+        await query.answer(f"Collection mode set to: {collection_mode}", show_alert=True)
+        await query.edit_message_media(media=InputMediaPhoto(open(img_path, 'rb')))
+        await query.edit_message_caption(caption=new_caption, reply_markup=reply_markup)
+        return
+
+    characters = [char for char in user_data.get('characters', []) if char.get('rarity', '') == collection_mode]
+    
+    if collection_mode != 'All' and not characters:
+        await query.answer(f"You don't have any characters with the rarity: {collection_mode}.", show_alert=True)
+        return
+
     await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
 
     username = update.effective_user.username
