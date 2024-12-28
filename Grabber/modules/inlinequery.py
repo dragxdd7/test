@@ -72,8 +72,8 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     all_characters = []
             else:
                 if query:
-                    regex = re.compile(query, re.IGNORECASE)
-                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}, {"id": regex}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                    regex = re.compile(f"^{query.strip()}$", re.IGNORECASE)  # Match exact ID or name
+                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}, {"id": int(query.strip()) if query.strip().isdigit() else None}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
                 else:
                     if 'all_characters' in all_characters_cache:
                         all_characters = all_characters_cache['all_characters']
