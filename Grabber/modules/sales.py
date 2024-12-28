@@ -181,7 +181,6 @@ async def view_sale_details(client, callback_query):
         f"ID: {sale['id']}\n"
     ))
 
-    bot_username = (await client.get_me()).username
     character_id = sale['id']
 
     buttons = [
