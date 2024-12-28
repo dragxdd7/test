@@ -61,7 +61,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
             if query.startswith('collection.'):
                 query_parts = query.split('.')
                 user_id = query_parts[1]
-                rarity = rarity_mapping.get(query_parts[2], None) if len(query_parts) > 2 else None
+                rarity = query_parts[2] if len(query_parts) > 2 else None
                 search_terms = ' '.join(query.split(' ')[1:])
 
                 if user_id.isdigit():
@@ -72,7 +72,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                         user_collection_cache[user_id] = user
 
                     if user:
-                        all_characters = {v['id']: v for v in user.get('characters', [])}.values()
+                        all_characters = user.get('characters', [])
                         if rarity:
                             all_characters = [character for character in all_characters if character.get('rarity') == rarity]
                         if search_terms:
