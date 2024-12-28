@@ -17,7 +17,7 @@ async def sudo_list(client, message: Message):
 
         user_list = []
         for user_id in sudo_list:
-            user_data = await user_collection.find_one({'user_id': user_id})
+            user_data = await user_collection.find_one({'id': user_id})
             if user_data:
                 first_name = user_data.get('first_name', 'Unknown')
                 user_list.append(f"• {first_name} (`{user_id}`)")
@@ -29,7 +29,7 @@ async def sudo_list(client, message: Message):
 
         response_text = f'Total sudos: {len(user_list)}\n\n' + '\n'.join(user_list)
         keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("sud_clos", callback_data=f"sud_clos_{message.from_user.id}")]]
+            [[InlineKeyboardButton("close", callback_data=f"sud_clos_{message.from_user.id}")]]
         )
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
     except Exception as e:
@@ -44,7 +44,7 @@ async def dev_list(client, message: Message):
 
         user_list = []
         for user_id in dev_users_list:
-            user_data = await user_collection.find_one({'user_id': user_id})
+            user_data = await user_collection.find_one({'id': user_id})
             if user_data:
                 first_name = user_data.get('first_name', 'Unknown')
                 user_list.append(f"• {first_name} (`{user_id}`)")
@@ -56,7 +56,7 @@ async def dev_list(client, message: Message):
 
         response_text = f'Total developers: {len(user_list)}\n\n' + '\n'.join(user_list)
         keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("sud_clos", callback_data=f"sud_clos_{message.from_user.id}")]]
+            [[InlineKeyboardButton("close", callback_data=f"sud_clos_{message.from_user.id}")]]
         )
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
     except Exception as e:
@@ -71,7 +71,7 @@ async def uploader_list(client, message: Message):
 
         user_list = []
         for user_id in uploader_users_list:
-            user_data = await user_collection.find_one({'user_id': user_id})
+            user_data = await user_collection.find_one({'id': user_id})
             if user_data:
                 first_name = user_data.get('first_name', 'Unknown')
                 user_list.append(f"• {first_name} (`{user_id}`)")
@@ -83,7 +83,7 @@ async def uploader_list(client, message: Message):
 
         response_text = f'Total uploaders: {len(user_list)}\n\n' + '\n'.join(user_list)
         keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("sud_clos", callback_data=f"sud_clos_{message.from_user.id}")]]
+            [[InlineKeyboardButton("close", callback_data=f"sud_clos_{message.from_user.id}")]]
         )
         await message.reply_text(capsify(response_text), reply_markup=keyboard)
     except Exception as e:
