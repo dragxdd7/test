@@ -181,11 +181,14 @@ async def view_sale_details(client, callback_query):
         f"ID: {sale['id']}\n"
     ))
 
-    buttons = []
-    if callback_query.from_user.id == buyer_id:
-        buttons.append([IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{sale['id']}_{target_user_id}_{buyer_id}")])
+    bot_username = (await client.get_me()).username
+    character_id = sale['id']
 
-    buttons.append([IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")])
+    buttons = [
+        [IKB(capsify("PURCHASE"), callback_data=f"SALE_PURCHASE_{character_id}_{target_user_id}_{buyer_id}")],
+        [IKB(capsify("INLINE"), switch_inline_query_current_chat=f"{character_id}")],
+        [IKB(capsify("BACK"), callback_data=f"BACK_TO_SALES_{target_user_id}_{buyer_id}")]
+    ]
 
     await callback_query.message.edit_text(sale_details, reply_markup=IKM(buttons))
 
