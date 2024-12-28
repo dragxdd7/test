@@ -40,6 +40,7 @@ async def harem(client, message, page=0):
         )
 
     harem_message += "--------------------------------------\n"
+    harem_message += capsify(f"Harem Mode: {cmode}\n")  # Added Harem Mode here
     total_count = len(unique_characters)
     harem_message += capsify(f"Total Characters: {total_count}")
 
