@@ -50,13 +50,14 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         # Check if the query is a number (character ID)
         if query.isdigit():
             character_id = int(query)
+            # Now we query the collection by 'id' field
             all_characters = await collection.find(
-                {'id': character_id},
+                {'id': character_id},  # Make sure we're matching on 'id'
                 {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
             ).to_list(length=None)
             
             if not all_characters:
-                # Handle the case when no character is found
+                # Handle the case when no character is found for that ID
                 all_characters = []
 
         elif query.startswith('collection.'):
