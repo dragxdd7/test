@@ -66,6 +66,8 @@ async def start_auction(chat_id):
 async def place_bid(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     if chat_id not in ongoing_auctions:
         await message.reply_text(capsify("❌ NO AUCTION IS CURRENTLY ACTIVE. PLEASE WAIT FOR THE NEXT AUCTION."))
         return
