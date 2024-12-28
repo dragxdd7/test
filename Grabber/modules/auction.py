@@ -103,8 +103,7 @@ async def finalize_auction(chat_id):
     await druby(winner_id, winning_bid)
     await user_collection.update_one({'user_id': winner_id}, {'$push': {'characters': auction_data}})
     
-    # Fetch the winner's name from the database
-    user_data = await user_collection.find_one({'user_id': winner_id})
+    user_data = await user_collection.find_one({'id': winner_id})
     winner_name = user_data.get('first_name', 'Unknown') if user_data else 'Unknown'
     
     caption = (
