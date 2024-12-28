@@ -1,5 +1,3 @@
-# Character Search Fix
-
 import re
 import time
 from cachetools import TTLCache
@@ -48,12 +46,19 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         end_index = offset + results_per_page
 
         all_characters = []
+        
+        # Check if the query is a number (character ID)
         if query.isdigit():
             character_id = int(query)
             all_characters = await collection.find(
                 {'id': character_id},
                 {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
             ).to_list(length=None)
+            
+            if not all_characters:
+                # Handle the case when no character is found
+                all_characters = []
+
         elif query.startswith('collection.'):
             parts = query.split('.')
             user_id = parts[1]
