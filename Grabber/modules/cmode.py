@@ -51,8 +51,8 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
 @block_dec_ptb
 async def cmode(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
-    #if temp_block(user_id):
-        #return
+    if temp_block(user_id):
+        return
     username = update.effective_user.username
 
     profile_photos = await context.bot.get_user_profile_photos(update.effective_user.id)
