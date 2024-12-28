@@ -38,16 +38,20 @@ clear_all_caches()
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
     async with lock:
-        query = update.inline_query.query
+        query = update.inline_query.query.strip()
         offset = int(update.inline_query.offset) if update.inline_query.offset else 0
 
         results_per_page = 15
         start_index = offset
         end_index = offset + results_per_page
 
-        if query.strip().isdigit():
-            character_id = int(query.strip())
-            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+        if query.isdigit():
+            # Lookup by exact character ID
+            character_id = int(query)
+            all_characters = await collection.find(
+                {'id': character_id}, 
+                {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+            ).to_list(length=None)
         else:
             if query.startswith('collection.'):
                 parts = query.split('.')
@@ -58,27 +62,45 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     if user_id in user_collection_cache:
                         user = user_collection_cache[user_id]
                     else:
-                        user = await user_collection.find_one({'id': int(user_id)}, {'characters': 1, 'first_name': 1})
+                        user = await user_collection.find_one(
+                            {'id': int(user_id)}, 
+                            {'characters': 1, 'first_name': 1}
+                        )
                         user_collection_cache[user_id] = user
 
                     if user:
                         all_characters = {v['id']: v for v in user.get('characters', [])}.values()
                         if rarity_filter:
                             rarity_name = rarity_map.get(rarity_filter, rarity_filter.capitalize())
-                            all_characters = [character for character in all_characters if character.get('rarity', '').lower() == rarity_name.lower()]
+                            all_characters = [
+                                character for character in all_characters 
+                                if character.get('rarity', '').lower() == rarity_name.lower()
+                            ]
                     else:
                         all_characters = []
                 else:
                     all_characters = []
             else:
+                # Search by name, anime, or partial ID
                 if query:
-                    regex = re.compile(f"^{query.strip()}$", re.IGNORECASE)  # Match exact ID or name
-                    all_characters = await collection.find({"$or": [{"name": regex}, {"anime": regex}, {"id": int(query.strip()) if query.strip().isdigit() else None}]}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                    regex = re.compile(query, re.IGNORECASE)
+                    all_characters = await collection.find(
+                        {"$or": [
+                            {"name": regex}, 
+                            {"anime": regex}, 
+                            {"id": int(query) if query.isdigit() else None}
+                        ]}, 
+                        {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                    ).to_list(length=None)
                 else:
+                    # Default to all characters
                     if 'all_characters' in all_characters_cache:
                         all_characters = all_characters_cache['all_characters']
                     else:
-                        all_characters = await collection.find({}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+                        all_characters = await collection.find(
+                            {}, 
+                            {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                        ).to_list(length=None)
                         all_characters_cache['all_characters'] = all_characters
 
         characters = list(all_characters)[start_index:end_index]
@@ -155,7 +177,7 @@ application.add_handler(InlineQueryHandler(inlinequery, block=False))
 async def check(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     user_id = query.from_user.id
-    character_id = query.data.split('_')[1]
+    character_id = int(query.data.split('_')[1])  # Ensure `character_id` is treated as an integer
 
     user_data = await user_collection.find_one({'id': user_id}, {'characters': 1})
     characters = user_data.get('characters', [])
