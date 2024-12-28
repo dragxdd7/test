@@ -1,4 +1,3 @@
-
 import re
 import time
 from cachetools import TTLCache
@@ -42,8 +41,15 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         end_index = offset + results_per_page
 
         if query.strip().isdigit():
-            character_id = int(query.strip())
-            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
+            try:
+                character_id = int(query.strip())
+                all_characters = await collection.find(
+                    {'id': {"$in": [character_id, str(character_id)]}}, 
+                    {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+                ).to_list(length=None)
+            except Exception as e:
+                print(f"Error while searching by ID: {e}")
+                all_characters = []
         else:
             if query.startswith('collection.'):
                 user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
@@ -61,7 +67,7 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                                 all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
                             else:
                                 regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime']) or regex.search(character['id'])]
+                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
                     else:
                         all_characters = []
                 else:
