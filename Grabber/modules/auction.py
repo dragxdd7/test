@@ -18,7 +18,7 @@ auction_bids = {}
 @app.on_message(filters.group, group=auction_watcher)
 async def check_auction_trigger(_, message):
     chat_id = message.chat.id
-    chat_modes = await user_collection.find_one({"chat_id": chat_id})
+    chat_modes = await group_user_totals_collection.find_one({"chat_id": chat_id})
     if not chat_modes:
         chat_modes = DEFAULT_MODE_SETTINGS.copy()
         chat_modes["chat_id"] = chat_id
@@ -101,8 +101,12 @@ async def finalize_auction(chat_id):
     winner_id = bid_data['user_id']
     winning_bid = bid_data['amount']
     await druby(winner_id, winning_bid)
-    await user_collection.update_one({'id': winner_id}, {'$push': {'characters': auction_data}})
-    winner_name = (await app.get_users(winner_id)).first_name
+    await user_collection.update_one({'user_id': winner_id}, {'$push': {'characters': auction_data}})
+    
+    # Fetch the winner's name from the database
+    user_data = await user_collection.find_one({'user_id': winner_id})
+    winner_name = user_data.get('first_name', 'Unknown') if user_data else 'Unknown'
+    
     caption = (
         f"🎉 {capsify('AUCTION ENDED!')} 🎉\n\n"
         f"👤 {capsify('WINNER')}: {winner_name}\n"
