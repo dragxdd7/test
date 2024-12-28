@@ -23,6 +23,11 @@ db.user_collection.create_index([('characters.img_url', DESCENDING)])
 all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
+rarity_map = {
+    "🟢": "Common", "🔵": "Medium", "🟠": "Rare", "🟡": "Legendary", "🪽": "Celestial", "🥵": "Divine", 
+    "🥴": "Special", "💎": "Premium", "🔮": "Limited", "🍭": "Cosplay", "💋": "Aura", "❄️": "Winter"
+}
+
 def clear_all_caches():
     all_characters_cache.clear()
     user_collection_cache.clear()
@@ -41,18 +46,14 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         end_index = offset + results_per_page
 
         if query.strip().isdigit():
-            try:
-                character_id = int(query.strip())
-                all_characters = await collection.find(
-                    {'id': {"$in": [character_id, str(character_id)]}}, 
-                    {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
-                ).to_list(length=None)
-            except Exception as e:
-                print(f"Error while searching by ID: {e}")
-                all_characters = []
+            character_id = int(query.strip())
+            all_characters = await collection.find({'id': character_id}, {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}).to_list(length=None)
         else:
             if query.startswith('collection.'):
-                user_id, *search_terms = query.split(' ')[0].split('.')[1], ' '.join(query.split(' ')[1:])
+                parts = query.split('.')
+                user_id = parts[1]
+                rarity_filter = parts[2] if len(parts) > 2 else None
+
                 if user_id.isdigit():
                     if user_id in user_collection_cache:
                         user = user_collection_cache[user_id]
@@ -62,12 +63,9 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
                     if user:
                         all_characters = {v['id']: v for v in user.get('characters', [])}.values()
-                        if search_terms:
-                            if search_terms[0].isdigit():
-                                all_characters = [character for character in all_characters if str(character['id']) == search_terms[0]]
-                            else:
-                                regex = re.compile(' '.join(search_terms), re.IGNORECASE)
-                                all_characters = [character for character in all_characters if regex.search(character['name']) or regex.search(character['anime'])]
+                        if rarity_filter:
+                            rarity_name = rarity_map.get(rarity_filter, rarity_filter.capitalize())
+                            all_characters = [character for character in all_characters if character.get('rarity', '').lower() == rarity_name.lower()]
                     else:
                         all_characters = []
                 else:
