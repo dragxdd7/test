@@ -196,13 +196,13 @@ async def view_sale_details(client, callback_query):
 async def purchase_character(client, callback_query):
     buyer_id = callback_query.from_user.id
     sale_id = int(callback_query.matches[0].group(1))
-    target_user_id = int(callback_query.matches[0].group(2))
+    target_user_id = int(callback_query.matches[0].group(3))
 
     if buyer_id != target_user_id:
         await callback_query.answer(capsify("THIS IS NOT FOR YOU, BAKA❗"), show_alert=True)
         return
 
-    seller_id = int(callback_query.matches[0].group(3))
+    seller_id = int(callback_query.matches[0].group(2))
 
     buyer = await user_collection.find_one({'id': buyer_id})
     seller = await user_collection.find_one({'id': seller_id})
