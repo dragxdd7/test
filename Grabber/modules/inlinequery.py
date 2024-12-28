@@ -1,7 +1,7 @@
 import re
 import time
 from cachetools import TTLCache
-from pymongo import MongoClient, DESCENDING
+from pymongo import DESCENDING
 import asyncio
 
 from telegram import Update
@@ -24,7 +24,7 @@ all_characters_cache = TTLCache(maxsize=10000, ttl=36000)
 user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
 rarity_map = {
-    "🟢": "Common", "🔵": "Medium", "🟠": "Rare", "🟡": "Legendary", "🪽": "Celestial", "🥵": "Divine", 
+    "🟢": "Common", "🔵": "Medium", "🟠": "Rare", "🟡": "Legendary", "🪽": "Celestial", "🥵": "Divine",
     "🥴": "Special", "💎": "Premium", "🔮": "Limited", "🍭": "Cosplay", "💋": "Aura", "❄️": "Winter"
 }
 
@@ -37,31 +37,32 @@ clear_all_caches()
 @block_inl_ptb
 async def inlinequery(update: Update, context: CallbackContext) -> None:
     start_time = time.time()
-    
     query = update.inline_query.query.strip()
     offset = int(update.inline_query.offset) if update.inline_query.offset else 0
-
     results_per_page = 15
     start_index = offset
     end_index = offset + results_per_page
-
     all_characters = []
 
-    if query.isdigit():
+    if not query:
+        if 'all_characters' in all_characters_cache:
+            all_characters = all_characters_cache['all_characters']
+        else:
+            all_characters = await collection.find(
+                {}, 
+                {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
+            ).to_list(length=None)
+            all_characters_cache['all_characters'] = all_characters
+    elif query.isdigit():
         character_id = int(query)
         all_characters = await collection.find(
             {'id': {"$in": [character_id, str(character_id)]}},  
             {'name': 1, 'anime': 1, 'img_url': 1, 'id': 1, 'rarity': 1, 'price': 1}
         ).to_list(length=None)
-        
-        if not all_characters:
-            all_characters = []
-
     elif query.startswith('collection.'):
         parts = query.split('.')
         user_id = parts[1]
         rarity_filter = parts[2] if len(parts) > 2 else None
-
         if user_id.isdigit():
             if user_id in user_collection_cache:
                 user = user_collection_cache[user_id]
@@ -71,7 +72,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
                     {'characters': 1, 'first_name': 1}
                 )
                 user_collection_cache[user_id] = user
-
             if user:
                 all_characters = {v['id']: v for v in user.get('characters', [])}.values()
                 if rarity_filter:
@@ -88,7 +88,6 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
         ).to_list(length=None)
 
     characters = list(all_characters)[start_index:end_index]
-
     character_ids = [character['id'] for character in characters]
     anime_names = list(set(character['anime'] for character in characters))
 
@@ -106,14 +105,12 @@ async def inlinequery(update: Update, context: CallbackContext) -> None:
 
     global_count_dict = {item['_id']: item['count'] for item in global_counts}
     anime_count_dict = {item['_id']: item['count'] for item in anime_counts}
-
     next_offset = str(end_index) if len(characters) == results_per_page else ""
-
     results = []
+
     for character in characters:
         global_count = global_count_dict.get(character['id'], 0)
         anime_characters = anime_count_dict.get(character['anime'], 0)
-
         price = character.get('price', 'Unknown')
 
         if query.startswith('collection.'):
