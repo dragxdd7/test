@@ -344,10 +344,12 @@ async def random_sales_command(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
         return
+
+    loading_message = await message.reply(capsify("LOADING RANDOM SALES... PLEASE WAIT ❗"))
     users_with_sales = await user_collection.find({'sales_slot': {'$exists': True, '$ne': []}}).to_list(length=None)
 
     if not users_with_sales:
-        await message.reply(capsify("NO USERS CURRENTLY HAVE CHARACTERS IN SALES❗"))
+        await loading_message.edit(capsify("NO USERS CURRENTLY HAVE CHARACTERS IN SALES❗"))
         return
 
     import random
@@ -359,7 +361,7 @@ async def random_sales_command(client, message):
 
     sales_list += capsify("\nUSE: /SALES USER_ID TO VIEW THEIR SALES SLOT❗")
 
-    await message.reply(
+    await loading_message.edit(
         sales_list,
-        reply_markup=IKM([[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{message.from_user.id}")]])
+        reply_markup=IKM([[IKB(capsify("CLOSE"), callback_data=f"SALE_SLOT_CLOSE_{user_id}")]])
     )
