@@ -25,7 +25,7 @@ user_collection_cache = TTLCache(maxsize=10000, ttl=60)
 
 rarity_map = {
     "🟢": "Common", "🔵": "Medium", "🟠": "Rare", "🟡": "Legendary", "🪽": "Celestial", "🥵": "Divine",
-    "🥴": "Special", "💎": "Premium", "🔮": "Limited", "🍭": "Cosplay", "💋": "Aura", "❄️": "Winter", "🔥": "Drip", "🍥": "Retro"
+    "🥴": "Special", "💎": "Premium", "🔮": "Limited", "🍭": "Cosplay", "💋": "Aura", "❄️": "Winter", "⚡": "Drip", "🍥": "Retro"
 }
 
 def clear_all_caches():
