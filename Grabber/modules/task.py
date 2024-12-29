@@ -14,7 +14,12 @@ async def suggestion_command(client, message):
 
     user_id = message.from_user.id
     chat_id = message.chat.id
-    text = message.caption.strip() if message.photo else message.text.strip()
+
+    # Handle text or photo caption gracefully
+    if message.photo:
+        text = message.caption.strip() if message.caption else ""
+    else:
+        text = message.text.strip() if message.text else ""
 
     if "#suggestion" not in text.lower():
         return
