@@ -3,7 +3,7 @@ from telegram.ext import CommandHandler, CallbackContext, CallbackQueryHandler
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import application, user_collection, capsify 
+from . import application, user_collection, capsify
 from .block import block_dec_ptb, block_cbq, temp_block
 
 FONT_PATH = "Fonts/font.ttf"
@@ -75,6 +75,7 @@ async def cmode(update: Update, context: CallbackContext) -> None:
         [IKB("🪽 Celestial", callback_data=f"cmode:celestial:{user_id}"), IKB("💎 Premium", callback_data=f"cmode:premium:{user_id}")],
         [IKB("🔵 Medium", callback_data=f"cmode:medium:{user_id}"), IKB("🟡 Legendary", callback_data=f"cmode:legendary:{user_id}")],
         [IKB("💋 Aura", callback_data=f"cmode:aura:{user_id}"), IKB("❄️ Winter", callback_data=f"cmode:winter:{user_id}")],
+        [IKB("🔥 Drip", callback_data=f"cmode:drip:{user_id}"), IKB("🍥 Retro", callback_data=f"cmode:retro:{user_id}")],
         [IKB("All", callback_data=f"cmode:all:{user_id}")]
     ]
     reply_markup = IKM(cmode_buttons)
@@ -98,7 +99,9 @@ async def cmode_callback(update: Update, context: CallbackContext) -> None:
         'legendary': '🟡 Legendary',
         'aura': '💋 Aura',
         'winter': '❄️ Winter',
-        'all': 'All'
+        'all': 'All',
+        'drip': '🔥 Drip',
+        'retro': '🍥 Retro'
     }
 
     _, rarity, user_id = data.split(':')
