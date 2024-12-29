@@ -2,7 +2,7 @@ import random
 import asyncio
 from pyrogram import filters
 from pyrogram.errors import PeerIdInvalid, FloodWait
-from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
+from . import user_collection, app, capsify, dev_filter, group_user_totals_collection, top_global_groups_collection
 
 @app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(_, message):
@@ -50,7 +50,7 @@ async def broadcast(_, message):
         if message_count % 7 == 0:
             await asyncio.sleep(2)
 
-    all_groups = await group_user_totals_collection.find({}).to_list(length=None)
+    all_groups = await top_global_groups_collection.find({}).to_list(length=None)
     unique_group_ids = set(group["group_id"] for group in all_groups)
 
     for group_id in unique_group_ids:
