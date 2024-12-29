@@ -24,14 +24,14 @@ async def suggestion_command(client, message):
             chat_id=SUGGESTION_CHANNEL_ID,
             text=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{message.id}")]
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/dragons_support/{message.id}")]
             ])
         )
 
         await message.reply(
             capsify(f"Your suggestion has been added! Please check the status using the button below."),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{sent_message.id}")],
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/okarun_suggestion/{sent_message.id}")],
                 [InlineKeyboardButton(capsify("Join @dragons_support"), url="https://t.me/dragons_support")]
             ])
         )
