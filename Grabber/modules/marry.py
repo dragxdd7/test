@@ -7,7 +7,6 @@ from .block import block_dec, temp_block
 
 cooldowns = {}
 
-
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
         user = await user_collection.find_one({'id': receiver_id}, {'characters': 1})
@@ -29,89 +28,32 @@ async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '�
     except Exception:
         return []
 
-async def send_error_report(client, message, error_message):
-    report_message = (
-        f"{capsify('Error')}: {error_message}\n"
-        f"{capsify('Please report this issue')}: @YourSupportBot"
-    )
-    await client.send_message(
-        chat_id=message.chat.id,
-        text=report_message,
-        reply_to_message_id=message.id
-    )
-
-async def handle_marriage(client, message, receiver_id):
+async def get_user_cooldown(user_id):
     try:
-        unique_characters = await get_unique_characters(receiver_id)
-        if not unique_characters:
-            await send_error_report(client, message, "Failed to retrieve characters. Please try again later.")
-            return
-
-        await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': {'$each': unique_characters}}})
-
-        for character in unique_characters:
-            caption = (
-                f"{capsify('Congratulations')}! {message.from_user.first_name}, {capsify('you are now married')}! "
-                f"{capsify('Here is your character')}:\n"
-                f"Name: {character['name']}\n"
-                f"Rarity: {character['rarity']}\n"
-                f"Anime: {character['anime']}\n"
-            )
-            await client.send_photo(
-                chat_id=message.chat.id,
-                photo=character['img_url'],
-                caption=caption,
-                reply_to_message_id=message.id
-            )
-
+        cooldown = await cooldown_collection.find_one({'id': user_id})
+        return cooldown['timestamp'] if cooldown else None
     except Exception as e:
-        await send_error_report(client, message, str(e))
+        print(f"Error retrieving cooldown for {user_id}: {str(e)}")
+        return None
 
-async def handle_dice(client, message, receiver_id):
+async def set_user_cooldown(user_id, timestamp):
     try:
-        dice_message = await client.send_dice(chat_id=message.chat.id)
-        value = int(dice_message.dice.value)
-
-        if value in [1, 2, 5, 6]:
-            unique_characters = await get_unique_characters(receiver_id)
-            if not unique_characters:
-                await send_error_report(client, message, "Failed to retrieve characters. Please try again later.")
-                return
-
-            for character in unique_characters:
-                await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': character}})
-
-            for character in unique_characters:
-                caption = (
-                    f"{capsify('Congratulations')}! {message.from_user.first_name}, {capsify('you are now married')}! "
-                    f"{capsify('Here is your character')}:\n"
-                    f"Name: {character['name']}\n"
-                    f"Rarity: {character['rarity']}\n"
-                    f"Anime: {character['anime']}\n"
-                )
-                await client.send_photo(
-                    chat_id=message.chat.id,
-                    photo=character['img_url'],
-                    caption=caption,
-                    reply_to_message_id=message.id
-                )
-        else:
-            await client.send_message(
-                chat_id=message.chat.id,
-                text=f"{message.from_user.first_name}, {capsify('your marriage proposal was rejected and she ran away')}! 🤡",
-                reply_to_message_id=message.id
-            )
-
+        await cooldown_collection.update_one(
+            {'id': user_id},
+            {'$set': {'timestamp': timestamp}},
+            upsert=True
+        )
     except Exception as e:
-        await send_error_report(client, message, str(e))
+        print(f"Error saving cooldown for {user_id}: {str(e)}")
 
-@app.on_message(filters.command("dice"))
 async def dice_command(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
         return
-    if user_id in cooldowns and time.time() - cooldowns[user_id] < 3600:
-        cooldown_time = int(3600 - (time.time() - cooldowns[user_id]))
+
+    last_cooldown = await get_user_cooldown(user_id)
+    if last_cooldown and time.time() - last_cooldown < 3600:
+        cooldown_time = int(3600 - (time.time() - last_cooldown))
         hours, remainder = divmod(cooldown_time, 3600)
         minutes, seconds = divmod(remainder, 60)
         await client.send_message(
@@ -121,7 +63,7 @@ async def dice_command(client, message):
         )
         return
 
-    cooldowns[user_id] = time.time()
+    await set_user_cooldown(user_id, time.time())
 
     if user_id == 7162166061:
         await client.send_message(
