@@ -7,8 +7,6 @@ from .block import block_dec, temp_block
 
 cooldowns = {}
 
-def capsify(text):
-    return text.upper()
 
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
