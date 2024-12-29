@@ -9,6 +9,9 @@ SUGGESTION_CHANNEL_ID = -1002325746754
 
 @app.on_message(filters.text | filters.photo, group=suggest_watcher)
 async def suggestion_command(client, message):
+    if message.from_user is None:
+        return
+
     user_id = message.from_user.id
     chat_id = message.chat.id
     text = message.caption.strip() if message.photo else message.text.strip()
@@ -47,7 +50,6 @@ async def suggestion_command(client, message):
                 [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/okarun_suggestion/{sent_message.id}")]
             ])
         )
-
     else:
         await message.reply(
             capsify("You can only submit suggestions in the official suggestions group."),
