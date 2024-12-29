@@ -55,6 +55,19 @@ async def is_blocked(user_id) -> bool:
 async def unblock(user_id):
     await bdb.delete_one({'user_id': user_id})
 
+async def save_block_reason(user_id: int, reason: str):
+    await bdb.update_one(
+        {'user_id': user_id},
+        {'$set': {'reason': reason}},
+        upsert=True
+    )
+async def get_block_reason(user_id):
+    result = await bdb.find_one(
+        {'user_id': user_id},
+        {'reason': 1}
+    )
+    return result.get('reason') if result else None
+
 @app.on_message(filters.command("block") & sudo_filter)
 async def block_command(client, message: Message):
     if message.reply_to_message:
