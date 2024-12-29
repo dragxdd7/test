@@ -13,8 +13,8 @@ class Client(PyrogramClient):
 
 OWNER_ID = "7185106962"
 GROUP_ID = "-1002225496870"
-#TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"
-TOKEN = "7567371385:AAFDbypym37NXvpdaGPTOZZtFwphrOCnr78"
+TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"
+#TOKEN = "7567371385:AAFDbypym37NXvpdaGPTOZZtFwphrOCnr78"
 mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
 PHOTO_URL = [
     "https://files.catbox.moe/oai7m9.mp4"
