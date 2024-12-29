@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 from datetime import datetime as dt
 import random
 from . import app, db, add, deduct, show, collection, user_collection, capsify
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 sdb = db.new_store
 user_db = db.bought
@@ -211,6 +211,7 @@ async def confirm_handler(_, query):
 
 
 @app.on_callback_query(filters.regex(r"^clos_"))
+@block_cbq
 async def close_handler(_, query):
     _, user_id = query.data.split("_")
     if int(user_id) == query.from_user.id:
