@@ -46,6 +46,8 @@ async def set_user_cooldown(user_id, timestamp):
     except Exception as e:
         print(f"Error saving cooldown for {user_id}: {str(e)}")
 
+@app.on_message(filters.command("marry"))
+@block_dec
 async def dice_command(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
@@ -76,7 +78,3 @@ async def dice_command(client, message):
     receiver_id = message.from_user.id
     await handle_dice(client, message, receiver_id)
 
-@app.on_message(filters.command("marry"))
-@block_dec
-async def marry_command(client, message):
-    await dice_command(client, message)
