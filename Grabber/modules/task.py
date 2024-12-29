@@ -31,7 +31,7 @@ async def suggestion_command(client, message):
         await message.reply(
             capsify(f"Your suggestion has been added! Please check the status using the button below."),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{sent_message.message_id}")],
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{sent_message.id}")],
                 [InlineKeyboardButton(capsify("Join @dragons_support"), url="https://t.me/dragons_support")]
             ])
         )
