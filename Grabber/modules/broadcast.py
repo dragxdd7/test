@@ -1,17 +1,11 @@
+import random
+import asyncio
 from pyrogram import filters
 from pyrogram.errors import PeerIdInvalid, FloodWait
-import asyncio
-from . import app, capsify, dev_filter, user_collection, top_global_groups_collection
-
-broadcast_stats = {
-    "success_count": 0,
-    "fail_count": 0,
-    "skipped_count": 0
-}
+from . import user_collection, app, capsify, dev_filter, group_user_totals_collection, top_global_groups_collection
 
 @app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(_, message):
-    global broadcast_stats
     replied_message = message.reply_to_message
     if not replied_message:
         await message.reply_text(capsify("❌ Please reply to a message to broadcast it."))
@@ -19,16 +13,15 @@ async def broadcast(_, message):
 
     await message.reply_text(capsify("📢 Broadcast started! Sending message to all users and groups..."))
 
-    # Reset stats
-    broadcast_stats = {"success_count": 0, "fail_count": 0, "skipped_count": 0}
-
     user_cursor = user_collection.find({})
+    success_count = 0
+    fail_count = 0
     message_count = 0
 
     async for user in user_cursor:
         user_id = user.get('user_id')
         if user_id is None:
-            broadcast_stats["skipped_count"] += 1
+            fail_count += 1
             continue
 
         try:
@@ -44,15 +37,15 @@ async def broadcast(_, message):
             elif replied_message.video:
                 await app.send_video(user_id, replied_message.video.file_id, caption=media_caption)
 
-            broadcast_stats["success_count"] += 1
+            success_count += 1
             message_count += 1
         except PeerIdInvalid:
-            broadcast_stats["fail_count"] += 1
+            fail_count += 1
         except FloodWait as e:
             await asyncio.sleep(e.value)
             continue
         except Exception:
-            broadcast_stats["fail_count"] += 1
+            fail_count += 1
 
         if message_count % 7 == 0:
             await asyncio.sleep(2)
@@ -74,29 +67,19 @@ async def broadcast(_, message):
             elif replied_message.video:
                 await app.send_video(group_id, replied_message.video.file_id, caption=media_caption)
 
-            broadcast_stats["success_count"] += 1
+            success_count += 1
             message_count += 1
         except PeerIdInvalid:
-            broadcast_stats["fail_count"] += 1
+            fail_count += 1
         except FloodWait as e:
             await asyncio.sleep(e.value)
             continue
         except Exception:
-            broadcast_stats["fail_count"] += 1
+            fail_count += 1
 
         if message_count % 7 == 0:
             await asyncio.sleep(2)
 
     await message.reply_text(capsify(f"✅ Broadcast completed!\n"
-                                     f"Success: {broadcast_stats['success_count']}\n"
-                                     f"Failures: {broadcast_stats['fail_count']}\n"
-                                     f"Skipped: {broadcast_stats['skipped_count']}"))
-
-
-@app.on_message(filters.command("batats") & dev_filter)
-async def broadcast_stats_command(_, message):
-    global broadcast_stats
-    await message.reply_text(capsify(f"📊 Broadcast Stats:\n"
-                                     f"✅ Success: {broadcast_stats['success_count']}\n"
-                                     f"❌ Failures: {broadcast_stats['fail_count']}\n"
-                                     f"⏩ Skipped: {broadcast_stats['skipped_count']}"))
+                                     f"Success: {success_count}\n"
+                                     f"Failures: {fail_count}"))
