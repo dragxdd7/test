@@ -3,6 +3,7 @@ from pyrogram.errors import PeerIdInvalid
 from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
 import random
 import asyncio
+from pyrogram.types import Message 
 
 @app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(client: Client, message: Message):
