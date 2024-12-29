@@ -1,11 +1,14 @@
 import asyncio
 import random
 import time
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler
-from Grabber import application, user_collection, collection
+from pyrogram import Client, filters
+from . import user_collection, collection, capsify, app
+from .block import block_dec, temp_block
 
 cooldowns = {}
+
+def capsify(text):
+    return text.upper()
 
 async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '🔵 Medium', '🟠 Rare', '🟡 Legendary']):
     try:
@@ -28,47 +31,53 @@ async def get_unique_characters(receiver_id, target_rarities=['🟢 Common', '�
     except Exception:
         return []
 
-async def send_error_report(context, update, error_message):
-    keyboard = [
-        [InlineKeyboardButton("Report Error", url=f"tg://msg?to=-1002413377777&text={error_message}")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await context.bot.send_message(chat_id=update.message.chat_id, 
-                                    text=f"Error: {error_message}\nPlease report this issue.", 
-                                    reply_to_message_id=update.message.message_id, 
-                                    reply_markup=reply_markup)
+async def send_error_report(client, message, error_message):
+    report_message = (
+        f"{capsify('Error')}: {error_message}\n"
+        f"{capsify('Please report this issue')}: @YourSupportBot"
+    )
+    await client.send_message(
+        chat_id=message.chat.id,
+        text=report_message,
+        reply_to_message_id=message.id
+    )
 
-async def handle_marriage(context, update, receiver_id):
+async def handle_marriage(client, message, receiver_id):
     try:
         unique_characters = await get_unique_characters(receiver_id)
         if not unique_characters:
-            await send_error_report(context, update, "Failed to retrieve characters. Please try again later.")
+            await send_error_report(client, message, "Failed to retrieve characters. Please try again later.")
             return
 
         await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': {'$each': unique_characters}}})
 
         for character in unique_characters:
             caption = (
-                f"Congratulations! {update.message.from_user.first_name}, you are now married! Here is your character:\n"
+                f"{capsify('Congratulations')}! {message.from_user.first_name}, {capsify('you are now married')}! "
+                f"{capsify('Here is your character')}:\n"
                 f"Name: {character['name']}\n"
                 f"Rarity: {character['rarity']}\n"
                 f"Anime: {character['anime']}\n"
             )
-            await context.bot.send_photo(chat_id=update.message.chat_id, photo=character['img_url'], caption=caption, reply_to_message_id=update.message.message_id)
+            await client.send_photo(
+                chat_id=message.chat.id,
+                photo=character['img_url'],
+                caption=caption,
+                reply_to_message_id=message.id
+            )
 
     except Exception as e:
-        await send_error_report(context, update, str(e))
+        await send_error_report(client, message, str(e))
 
-async def handle_dice(context, update, receiver_id):
+async def handle_dice(client, message, receiver_id):
     try:
-        xx = await context.bot.send_dice(chat_id=update.message.chat_id)
-        value = int(xx.dice.value)
+        dice_message = await client.send_dice(chat_id=message.chat.id)
+        value = int(dice_message.dice.value)
 
         if value in [1, 2, 5, 6]:
             unique_characters = await get_unique_characters(receiver_id)
-
             if not unique_characters:
-                await send_error_report(context, update, "Failed to retrieve characters. Please try again later.")
+                await send_error_report(client, message, "Failed to retrieve characters. Please try again later.")
                 return
 
             for character in unique_characters:
@@ -76,44 +85,58 @@ async def handle_dice(context, update, receiver_id):
 
             for character in unique_characters:
                 caption = (
-                    f"Congratulations! {update.message.from_user.first_name}, you are now married! Here is your character:\n"
+                    f"{capsify('Congratulations')}! {message.from_user.first_name}, {capsify('you are now married')}! "
+                    f"{capsify('Here is your character')}:\n"
                     f"Name: {character['name']}\n"
                     f"Rarity: {character['rarity']}\n"
                     f"Anime: {character['anime']}\n"
                 )
-                await context.bot.send_photo(chat_id=update.message.chat_id, photo=character['img_url'], caption=caption, reply_to_message_id=update.message.message_id)
-
+                await client.send_photo(
+                    chat_id=message.chat.id,
+                    photo=character['img_url'],
+                    caption=caption,
+                    reply_to_message_id=message.id
+                )
         else:
-            await context.bot.send_message(chat_id=update.message.chat_id, 
-                                           text=f"{update.message.from_user.first_name}, your marriage proposal was rejected and she ran away! 🤡", 
-                                           reply_to_message_id=update.message.message_id)
+            await client.send_message(
+                chat_id=message.chat.id,
+                text=f"{message.from_user.first_name}, {capsify('your marriage proposal was rejected and she ran away')}! 🤡",
+                reply_to_message_id=message.id
+            )
 
     except Exception as e:
-        await send_error_report(context, update, str(e))
+        await send_error_report(client, message, str(e))
 
-async def dice_command(update: Update, context):
-    chat_id = update.message.chat_id
-    user_id = update.message.from_user.id
-
+@app.on_message(filters.command("dice"))
+async def dice_command(client, message):
+    user_id = message.from_user.id
+    if temp_block(user_id):
+        return
     if user_id in cooldowns and time.time() - cooldowns[user_id] < 3600:
         cooldown_time = int(3600 - (time.time() - cooldowns[user_id]))
         hours, remainder = divmod(cooldown_time, 3600)
         minutes, seconds = divmod(remainder, 60)
-        await context.bot.send_message(chat_id=chat_id, 
-                                       text=f"Please wait {hours} hours, {minutes} minutes, and {seconds} seconds before rolling again.", 
-                                       reply_to_message_id=update.message.message_id)
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=capsify(f"Please wait {hours} hours, {minutes} minutes, and {seconds} seconds before rolling again."),
+            reply_to_message_id=message.id
+        )
         return
 
     cooldowns[user_id] = time.time()
 
     if user_id == 7162166061:
-        await context.bot.send_message(chat_id=chat_id, 
-                                       text="You are banned from using this command.", 
-                                       reply_to_message_id=update.message.message_id)
+        await client.send_message(
+            chat_id=message.chat.id,
+            text=capsify("You are banned from using this command."),
+            reply_to_message_id=message.id
+        )
         return
 
-    receiver_id = update.message.from_user.id
-    await handle_dice(context, update, receiver_id)
+    receiver_id = message.from_user.id
+    await handle_dice(client, message, receiver_id)
 
-application.add_handler(CommandHandler("dice", dice_command, block=False))
-application.add_handler(CommandHandler("marry", dice_command, block=False))
+@app.on_message(filters.command("marry"))
+@block_dec
+async def marry_command(client, message):
+    await dice_command(client, message)
