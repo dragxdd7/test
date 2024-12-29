@@ -32,7 +32,7 @@ rarity_map = {
     10: "🍭 Cosplay",
     11: "💋 Aura",
     12: "❄️ Winter",
-    13: "🔥 Drip",
+    13: "⚡ Drip",
     14: "🍥 Retro"
 }
 
