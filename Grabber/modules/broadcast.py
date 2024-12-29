@@ -4,7 +4,7 @@ from . import user_collection, app, capsify, dev_filter, group_user_totals_colle
 import random
 import asyncio
 
-@Client.on_message(filters.command("broadcast") & dev_filter)
+@app.on_message(filters.command("broadcast") & dev_filter)
 async def broadcast(client: Client, message: Message):
     if not message.reply_to_message:
         await message.reply_text("Please reply to a message to broadcast.")
