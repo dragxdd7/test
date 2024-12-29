@@ -1,7 +1,7 @@
 from . import db, app, sudo_filter
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from pyrogram import Client, filters
-import time 
+import time
 from . import capsify
 from .watchers import block_watcher
 
@@ -15,7 +15,6 @@ def temp_block(user_id):
         if int(time.time() - t_block[user_id]) > 600:
             t_block.pop(user_id)
     return user_id in t_block
-
 
 @app.on_message(filters.group, group=block_watcher)
 async def block_cwf(_, m: Message):
@@ -66,11 +65,20 @@ async def block_command(client, message: Message):
         except:
             return await message.reply(capsify("Either reply to a user or provide an ID."))
 
+    reason = None
+    if "-r" in message.text:
+        reason_start_index = message.text.index("-r") + 3
+        reason = message.text[reason_start_index:].strip()
+
     if await is_blocked(target_id):
         return await message.reply(capsify("User is already blocked."))
 
     await block(target_id)
-    await message.reply(capsify("User blocked permanently."))
+
+    if reason:
+        await save_block_reason(target_id, reason)
+
+    await message.reply(capsify(f"User blocked permanently. Reason: {reason}" if reason else "User blocked permanently."))
 
 @app.on_message(filters.command("unblock") & sudo_filter)
 async def unblock_command(client, message: Message):
@@ -94,7 +102,11 @@ def block_dec(func):
     async def wrapper(client, message: Message):
         user_id = message.from_user.id
         if await is_blocked(user_id) or user_id in block_dic:
-            return
+            reason = await get_block_reason(user_id)
+            if reason:
+                return await message.reply(capsify(f"You have been blocked from using me. Reason: {reason}"))
+            else:
+                return await message.reply(capsify("You have been blocked from using me. Reason: Not specified."))
         return await func(client, message)
     return wrapper
 
@@ -136,7 +148,6 @@ async def close_callback(client: Client, callback_query: CallbackQuery):
     await callback_query.message.delete()
     await callback_query.answer(capsify("Closed"), show_alert=False)
 
-
 from telegram import Update
 from telegram.ext import CallbackContext
 
@@ -165,5 +176,3 @@ def block_inl_ptb(func):
             return
         return await func(update, context)
     return wrapper
-
-
