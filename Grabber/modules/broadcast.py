@@ -1,4 +1,4 @@
-from pyrogram import filters
+from pyrogram import filters, Client 
 from pyrogram.errors import PeerIdInvalid
 from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
 import random
