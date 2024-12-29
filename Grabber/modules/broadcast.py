@@ -1,49 +1,85 @@
-from pyrogram import filters, Client 
-from pyrogram.errors import PeerIdInvalid
-from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
 import random
 import asyncio
-from pyrogram.types import Message 
+from pyrogram import filters
+from pyrogram.errors import PeerIdInvalid, FloodWait
+from . import user_collection, app, capsify, dev_filter, group_user_totals_collection
 
 @app.on_message(filters.command("broadcast") & dev_filter)
-async def broadcast(client: Client, message: Message):
-    if not message.reply_to_message:
-        await message.reply_text("Please reply to a message to broadcast.")
+async def broadcast(_, message):
+    replied_message = message.reply_to_message
+    if not replied_message:
+        await message.reply_text(capsify("❌ Please reply to a message to broadcast it."))
         return
 
-    all_users = await user_collection.find({}).to_list(length=None)
-    all_groups = await group_user_totals_collection.find({}).to_list(length=None)
+    await message.reply_text(capsify("📢 Broadcast started! Sending message to all users and groups..."))
 
-    unique_user_ids = set(user["user_id"] for user in all_users if "user_id" in user)
-    unique_group_ids = set(group["group_id"] for group in all_groups)
+    user_cursor = user_collection.find({})
+    success_count = 0
+    fail_count = 0
+    message_count = 0
 
-    total_sent = 0
-    total_failed = 0
+    async for user in user_cursor:
+        user_id = user.get('user_id')
+        if user_id is None:
+            fail_count += 1
+            continue
 
-    for user_id in unique_user_ids:
         try:
-            await client.forward_messages(
-                chat_id=user_id,
-                from_chat_id=message.chat.id,
-                message_ids=message.reply_to_message.message_id,
-            )
-            total_sent += 1
+            if replied_message.text:
+                await app.send_message(user_id, replied_message.text)
+
+            media_caption = replied_message.caption if replied_message.caption else ""
+
+            if replied_message.document:
+                await app.send_document(user_id, replied_message.document.file_id, caption=media_caption)
+            elif replied_message.photo:
+                await app.send_photo(user_id, replied_message.photo.file_id, caption=media_caption)
+            elif replied_message.video:
+                await app.send_video(user_id, replied_message.video.file_id, caption=media_caption)
+
+            success_count += 1
+            message_count += 1
+        except PeerIdInvalid:
+            fail_count += 1
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            continue
         except Exception:
-            total_failed += 1
+            fail_count += 1
+
+        if message_count % 7 == 0:
+            await asyncio.sleep(2)
+
+    all_groups = await group_user_totals_collection.find({}).to_list(length=None)
+    unique_group_ids = set(group["group_id"] for group in all_groups)
 
     for group_id in unique_group_ids:
         try:
-            await client.forward_messages(
-                chat_id=group_id,
-                from_chat_id=message.chat.id,
-                message_ids=message.reply_to_message.message_id,
-            )
-            total_sent += 1
-        except Exception:
-            total_failed += 1
+            if replied_message.text:
+                await app.send_message(group_id, replied_message.text)
 
-    await message.reply_text(
-        f"Broadcast report:\n\n"
-        f"Total messages sent successfully: {total_sent}\n"
-        f"Total messages failed: {total_failed}"
-    )
+            media_caption = replied_message.caption if replied_message.caption else ""
+
+            if replied_message.document:
+                await app.send_document(group_id, replied_message.document.file_id, caption=media_caption)
+            elif replied_message.photo:
+                await app.send_photo(group_id, replied_message.photo.file_id, caption=media_caption)
+            elif replied_message.video:
+                await app.send_video(group_id, replied_message.video.file_id, caption=media_caption)
+
+            success_count += 1
+            message_count += 1
+        except PeerIdInvalid:
+            fail_count += 1
+        except FloodWait as e:
+            await asyncio.sleep(e.value)
+            continue
+        except Exception:
+            fail_count += 1
+
+        if message_count % 7 == 0:
+            await asyncio.sleep(2)
+
+    await message.reply_text(capsify(f"✅ Broadcast completed!\n"
+                                     f"Success: {success_count}\n"
+                                     f"Failures: {fail_count}"))
