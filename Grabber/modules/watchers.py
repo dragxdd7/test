@@ -7,3 +7,4 @@ spawn_watcher = 6
 auction_watcher = 7
 block_watcher = 8
 character_watcher = 9
+suggest_watcher = 10
