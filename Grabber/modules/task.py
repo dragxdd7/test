@@ -20,7 +20,7 @@ async def suggestion_command(client, message):
             await message.reply(capsify("Please provide a suggestion in your message after #suggestion."))
             return
 
-        await client.send_message(
+        sent_message = await client.send_message(
             chat_id=SUGGESTION_CHANNEL_ID,
             text=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
             reply_markup=InlineKeyboardMarkup([
@@ -31,10 +31,13 @@ async def suggestion_command(client, message):
         await message.reply(
             capsify(f"Your suggestion has been added! Please check the status using the button below."),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{message.message_id}")],
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{sent_message.message_id}")],
                 [InlineKeyboardButton(capsify("Join @dragons_support"), url="https://t.me/dragons_support")]
             ])
         )
+
+        await asyncio.sleep(60)
+        await message.reply(capsify("You can now make another suggestion."))
 
     else:
         await message.reply(
