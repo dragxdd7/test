@@ -39,7 +39,7 @@ async def suggestion_command(client, message):
         await reply_message.pin(disable_notification=True)
 
         await asyncio.sleep(60)
-        await message.reply(capsify("You can now make another suggestion."))
+        
 
     else:
         await message.reply(
