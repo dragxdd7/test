@@ -15,7 +15,8 @@ GUESS_TIMEOUT = 60
 
 async def get_random_character():
     all_characters = await collection.find({
-        'id': {'$gte': '01', '$lte': '1100'}
+        'id': {'$gte': '01', '$lte': '1100'},
+        'name': {'$nin': ['Medusa', 'Xenova', 'Yei']}  # Exclude these names
     }).to_list(length=None)
     return random.choice(all_characters)
 
