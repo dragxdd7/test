@@ -32,76 +32,10 @@ rarity_map = {
     10: "🍭 Cosplay",
     11: "💋 Aura",
     12: "❄️ Winter"
+    13: "🔥 Drip",
+    14: "🍥 Retro"
 }
 
-@app.on_message(filters.command('sexkjshs') & sudo_filter)
-async def upload(client: Client, message: Message):
-    args = message.text.split(maxsplit=4)[1:]
-    if len(args) != 4:
-        await message.reply_text(
-            "Wrong ❌️ format...  eg. /upload Img_url muzan-kibutsuji Demon-slayer 3\n\n"
-            "img_url character-name anime-name rarity-number\n\n"
-            "Rarity map:\n"
-            "1 🟢 Common\n"
-            "2 🔵 Medium\n"
-            "3 🟠 Rare\n"
-            "4 🟡 Legendary\n"
-            "5 🪽 Celestial\n"
-            "6 🥵 Divine\n"
-            "7 🥴 Special\n"
-            "8 💎 Premium\n"
-            "9 🔮 Limited\n"
-            "10 🍭 Cosplay",
-            "11 💋 Aura",
-            "12 ❄️ Winter"
-        )
-        return
-
-    character_name = args[1].replace('-', ' ').title()
-    anime = args[2].replace('-', ' ').title()
-
-    try:
-        urllib.request.urlopen(args[0])
-    except:
-        await message.reply_text('Invalid URL.')
-        return
-
-    try:
-        rarity = rarity_map[int(args[3])]
-    except KeyError:
-        await message.reply_text('Invalid rarity. Please use a number between 1 and 10.')
-        return
-
-    id = str(await get_next_sequence_number('character_id')).zfill(2)
-    price = random.randint(60000, 80000)
-
-    character = {
-        'img_url': args[0],
-        'name': character_name,
-        'anime': anime,
-        'rarity': rarity,
-        'price': price,
-        'id': id
-    }
-
-    message_id = await client.send_photo(
-        chat_id=CHARA_CHANNEL_ID,
-        photo=args[0],
-        caption=(
-            f'<b>Waifu Name:</b> {character_name}\n'
-            f'<b>Anime Name:</b> {anime}\n'
-            f'<b>Quality:</b> {rarity}\n'
-            f'<b>Price:</b> {price}\n'
-            f'<b>ID:</b> {id}\n'
-            f'Added by <a href="tg://user?id={message.from_user.id}">'
-            f'{message.from_user.first_name}</a>'
-        ),
-        parse_mode='HTML'
-    ).message_id
-
-    character['message_id'] = message_id
-    await collection.insert_one(character)
-    await message.reply_text('WAIFU ADDED....')
 
 @app.on_message(filters.command('delete') & sudo_filter)
 async def delete(client: Client, message: Message):
