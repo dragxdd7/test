@@ -83,3 +83,31 @@ async def broadcast(_, message):
     await message.reply_text(capsify(f"✅ Broadcast completed!\n"
                                      f"Success: {success_count}\n"
                                      f"Failures: {fail_count}"))
+
+from pyrogram import Client, filters
+from pyrogram.errors import PeerIdInvalid, FloodWait, UserNotParticipant
+
+
+chat_ids = [
+    -1002233702363, -1001993907977, -1002060846814, -1001990873024, -1002062532290,
+]
+
+
+@app.on_message(filters.command("bt") & dev_filter )
+async def bt_command(client, message):
+    if message.reply_to_message:
+        forwarded_message = message.reply_to_message
+        successful_count = 0
+        failed_count = 0
+
+        for chat_id in chat_ids:
+            try:
+                await client.forward_messages(chat_id, forwarded_message.chat.id, forwarded_message.message_id)
+                successful_count += 1
+            except (PeerIdInvalid, FloodWait, UserNotParticipant) as e:
+                failed_count += 1
+            except Exception as e:
+                failed_count += 1
+
+        report = f"Broadcast completed.\nSuccessfully forwarded: {successful_count}\nFailed to forward: {failed_count}"
+        await message.reply(report)
