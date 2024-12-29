@@ -3,7 +3,6 @@ from pyrogram.errors import PeerIdInvalid, FloodWait
 import asyncio
 from . import app, capsify, dev_filter, user_collection, top_global_groups_collection
 
-# Global variables to store stats
 broadcast_stats = {
     "success_count": 0,
     "fail_count": 0,
