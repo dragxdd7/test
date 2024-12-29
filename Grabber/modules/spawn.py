@@ -80,7 +80,7 @@ async def remove_spawn_after_timeout(chat_id, character, timeout):
             chat_id,
             photo=character['img_url'],
             caption=capsify(
-                f"❌ OOPS, THE WAIFU JUST ESCAPED! 🏃‍♀️\n\n"
+                f"❌ OOPS, THE CHARACTER JUST ESCAPED! 🏃‍♀️\n\n"
                 f"👤 {capsify('NAME')}: {character['name']}\n"
                 f"📺 {capsify('ANIME')}: {character['anime']}\n"
                 f"⭐ {capsify('RARITY')}: {character['rarity']}\n"
