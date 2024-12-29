@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import app, capsify, user_collection, collection
 from .watchers import suggest_watcher
+import asyncio
 
 SUPPORT_CHAT_ID = -1002225496870
 SUGGESTION_CHANNEL_ID = -1002325746754
