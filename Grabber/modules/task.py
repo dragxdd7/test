@@ -36,11 +36,7 @@ async def suggestion_command(client, message):
             ])
         )
 
-        await reply_message.pin(disable_notification=True)
-
-        await asyncio.sleep(60)
         
-
     else:
         await message.reply(
             capsify("You can only submit suggestions in the official suggestions group."),
