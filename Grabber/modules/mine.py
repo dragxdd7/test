@@ -16,8 +16,6 @@ def generate_minefield(size, bombs):
 
 @app.on_message(filters.command("mines"))
 @block_dec
-@nopvt
-@limit
 async def mines(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
