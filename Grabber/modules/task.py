@@ -28,13 +28,14 @@ async def suggestion_command(client, message):
             ])
         )
 
-        await message.reply(
+        reply_message = await message.reply(
             capsify(f"Your suggestion has been added! Please check the status using the button below."),
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/okarun_suggestion/{sent_message.id}")],
-                [InlineKeyboardButton(capsify("Join @dragons_support"), url="https://t.me/dragons_support")]
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/okarun_suggestion/{sent_message.id}")]
             ])
         )
+
+        await sent_message.pin(notify=False)
 
         await asyncio.sleep(60)
         await message.reply(capsify("You can now make another suggestion."))
