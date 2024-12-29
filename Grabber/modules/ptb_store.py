@@ -23,7 +23,7 @@ async def get_character(id: int):
 
 
 async def get_available_characters():
-    excluded_rarities = ["💋 Aura", "❄️ Winter", "🔥 Drip"]
+    excluded_rarities = ["💋 Aura", "❄️ Winter", "⚡ Drip"]
     characters = await collection.find().to_list(None)
     filtered = [
         char for char in characters
