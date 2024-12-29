@@ -7,11 +7,11 @@ import asyncio
 SUPPORT_CHAT_ID = -1002225496870
 SUGGESTION_CHANNEL_ID = -1002325746754
 
-@app.on_message(filters.text, group=suggest_watcher)
+@app.on_message(filters.text | filters.photo, group=suggest_watcher)
 async def suggestion_command(client, message):
     user_id = message.from_user.id
     chat_id = message.chat.id
-    text = message.text.strip()
+    text = message.caption.strip() if message.photo else message.text.strip()
 
     if "#suggestion" not in text.lower():
         return
@@ -21,22 +21,33 @@ async def suggestion_command(client, message):
             await message.reply(capsify("Please provide a suggestion in your message after #suggestion."))
             return
 
-        sent_message = await client.send_message(
-            chat_id=SUGGESTION_CHANNEL_ID,
-            text=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/dragons_support/{message.id}")]
-            ])
-        )
+        if message.photo:
+            # Send message with photo to the suggestion channel
+            sent_message = await client.send_photo(
+                chat_id=SUGGESTION_CHANNEL_ID,
+                photo=message.photo.file_id,
+                caption=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/dragons_support/{message.id}")]
+                ])
+            )
+        else:
+            # Send text message to the suggestion channel
+            sent_message = await client.send_message(
+                chat_id=SUGGESTION_CHANNEL_ID,
+                text=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/dragons_support/{message.id}")]
+                ])
+            )
 
-        reply_message = await message.reply(
+        await message.reply(
             capsify(f"Your suggestion has been added! Please check the status using the button below."),
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/okarun_suggestion/{sent_message.id}")]
             ])
         )
 
-        
     else:
         await message.reply(
             capsify("You can only submit suggestions in the official suggestions group."),
