@@ -24,7 +24,7 @@ async def suggestion_command(client, message):
             chat_id=SUGGESTION_CHANNEL_ID,
             text=f"{capsify('#new_suggestion')}\n{capsify(text)}\n{capsify('Status: pending...')}",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{message.message_id}")]
+                [InlineKeyboardButton(capsify("Check Status"), url=f"https://t.me/{message.chat.username}/{message.id}")]
             ])
         )
 
