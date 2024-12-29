@@ -40,6 +40,11 @@ async def mines(client, message):
         return
 
     user_balance = await sruby(user_id)
+    max_bet = int(user_balance * 0.4)
+    if amount > max_bet:
+        await message.reply_text(capsify(f"Your bet amount cannot exceed 40% of your total rubies. The maximum bet is {max_bet} rubies."))
+        return
+
     if user_balance < amount:
         await message.reply_text(capsify("Insufficient rubies to make the bet."))
         return
