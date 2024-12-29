@@ -47,10 +47,6 @@ async def pwaifu(client: Client, message):
     if temp_block(user_id):
         return
 
-    if user_id == 7162166061:
-        await message.reply_text(f"Sorry {first_name}, you are banned from using this command.")
-        return
-
     now = datetime.now()
     last_claim_date = await get_claim_time(user_id)
 
@@ -61,14 +57,14 @@ async def pwaifu(client: Client, message):
             hours, remainder = divmod(remaining_time.seconds, 3600)
             minutes, _ = divmod(remainder, 60)
             formatted_time = f"{hours:02}:{minutes:02}"
-            await message.reply_text(f"Please wait for `after {formatted_time}` to claim your next waifu.", quote=True)
+            await message.reply_text(capsify(f"Please wait for `after {formatted_time}` to claim your next waifu."), quote=True)
             return
 
     await set_claim_time(user_id, now)
 
     chars = await get_chars()
     if not chars:
-        await message.reply_text("No new waifus available to claim.", quote=True)
+        await message.reply_text(capsify("No new waifus available to claim."), quote=True)
         return
 
     try:
@@ -77,14 +73,14 @@ async def pwaifu(client: Client, message):
 
         img_urls = [char['img_url'] for char in chars]
         captions = [
-            f"Congratulations {first_name}! You have received a new waifu for your harem 💕!\n"
-            f"Name: {char['name']}\n"
-            f"Rarity: {char['rarity']}\n"
-            f"Anime: {char['anime']}\n"
+            capsify(f"Congratulations {first_name}! You have received a new waifu for your harem 💕!\n"
+                    f"Name: {char['name']}\n"
+                    f"Rarity: {char['rarity']}\n"
+                    f"Anime: {char['anime']}\n")
             for char in chars
         ]
         media_group = [InputMediaPhoto(media=img_url, caption=caption) for img_url, caption in zip(img_urls, captions)]
         await message.reply_media_group(media_group)
     except Exception as e:
         print(f"Error in pwaifu: {e}")
-        await message.reply_text("An error occurred while processing your request.", quote=True)
+        await message.reply_text(capsify("An error occurred while processing your request."), quote=True)
