@@ -1,7 +1,7 @@
 from pyrogram import Client, filters
 from pyrogram.types import InputMediaPhoto
 from datetime import datetime, timedelta
-from . import ac, rc, app, user_collection, collection
+from . import ac, rc, app, user_collection, collection, capsify 
 from .block import block_dec, temp_block
 
 async def get_claim_time(user_id):
