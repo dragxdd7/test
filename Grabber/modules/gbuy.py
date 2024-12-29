@@ -37,7 +37,7 @@ async def gbuy(client, message):
         await message.reply_text(capsify("Character not found. Please provide a valid character ID."))
         return
 
-    restricted_rarities = ["❄️ Winter", "💋 Aura"]
+    restricted_rarities = ["❄️ Winter", "💋 Aura", "⚡ Drip"]
     if character.get('rarity') in restricted_rarities:
         await message.reply_text(capsify("This character cannot be purchased."))
         return
