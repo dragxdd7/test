@@ -3,7 +3,7 @@ from itertools import groupby
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import user_collection, capsify, app
-from .block import temp_block
+from .block import temp_block, block_cbq
 
 @app.on_message(filters.command("harem"))
 async def harem(client, message, page=0):
@@ -87,6 +87,7 @@ async def harem(client, message, page=0):
     await message.reply_text(harem_message, reply_markup=markup)
 
 @app.on_callback_query(filters.regex(r"harem:"))
+@block_cbq
 async def harem_callback(client, callback_query):
     data = callback_query.data
 
