@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from Grabber import user_collection
 from . import capsify, app
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 from pyrogram import Client, filters
 
 @app.on_message(filters.command("gift"))
