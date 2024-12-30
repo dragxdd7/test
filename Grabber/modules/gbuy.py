@@ -59,7 +59,7 @@ async def gbuy(client, message):
     ags[msg.message_id] = user_id
 
 @app.on_callback_query(filters.regex(r"^(bg|cg):"))
-@block_cbq
+#@block_cbq
 async def hgq(client, query: CallbackQuery):
     user_id = query.from_user.id
     data = query.data.split(":")
