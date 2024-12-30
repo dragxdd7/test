@@ -129,9 +129,9 @@ def block_cbq(func):
         if await is_blocked(user_id) or user_id in block_dic:
             reason = await get_block_reason(user_id)
             if reason:
-                return await callback_query.answer(capsify(f"You have been blocked from using me.\n Reason: {reason}"))
+                return await callback_query.answer(capsify(f"You have been blocked from using me.\n Reason: {reason}"), show_alert=True)
             else:
-                return await callback_query.answer(capsify("You have been blocked from using me.\n Reason: Not specified."))
+                return await callback_query.answer(capsify("You have been blocked from using me.\n Reason: Not specified."), show_alert=True)
         return await func(client, callback_query)
     return wrapper
 
