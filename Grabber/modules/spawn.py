@@ -5,7 +5,7 @@ from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from . import collection, user_collection, group_user_totals_collection, top_global_groups_collection, app, capsify, show, deduct
 from asyncio import Lock
 from .watchers import character_watcher
-from .block import temp_block, block_dec
+from .block import temp_block, block_dec, block_cbq
 
 message_counts = {}
 spawn_locks = {}
@@ -147,6 +147,7 @@ async def guess(_, message):
         del spawned_characters[chat_id]
 
 @app.on_callback_query(filters.regex("^count_"))
+@block_cbq
 async def handle_count_button(_, callback_query):
     user_id = callback_query.from_user.id
     character_id = callback_query.data.split("_")[1]
@@ -160,6 +161,7 @@ async def handle_count_button(_, callback_query):
 
 
 @app.on_callback_query(filters.regex("^name_"))
+@block_cbq
 async def handle_name_button(_, callback_query):
     chat_id = callback_query.message.chat.id
     character_id = callback_query.data.split("_")[1]
