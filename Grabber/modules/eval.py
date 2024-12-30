@@ -14,6 +14,7 @@ from pyrogram.types import (InlineKeyboardButton,
 
 from . import app as Client, dev_filter
 from . import capsify
+from .block import block_cbq
 
 
 async def aexec(code, client, message):
@@ -102,7 +103,7 @@ async def executor(client, message):
                     ),
                     InlineKeyboardButton(
                         text="🗑",
-                        callback_data=f"close_{m.from_user.id}",
+                        callback_data=f"eval_close_{m.from_user.id}",
                     ),
                 ]
             ]
@@ -112,6 +113,7 @@ async def executor(client, message):
         )
 
 @Client.on_callback_query(filters.regex(r"runtime"))
+@block_cbq
 async def runtime_func_cq(_, cq):
     runtime = cq.data.split(None, 1)[1]
     await cq.answer(runtime, show_alert=True)
