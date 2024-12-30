@@ -3,6 +3,7 @@ from pyrogram import filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from pyrogram.enums import ChatMemberStatus
 from . import group_user_totals_collection, app, capsify
+from .block import block_dec, block_cbq
 
 message_counts = {}
 spawn_locks = {}
@@ -10,6 +11,7 @@ spawned_characters = {}
 chat_locks = {}
 
 @app.on_message(filters.command("mode"))
+@block_dec
 async def mode_command(_, message):
     chat_id = message.chat.id
     user_id = message.from_user.id
@@ -88,6 +90,7 @@ async def mode_command(_, message):
     )
 
 @app.on_callback_query(filters.regex("^toggle_"))
+@block_cbq
 async def toggle_mode(_, callback_query):
     chat_id = callback_query.message.chat.id
     user_id = callback_query.from_user.id
@@ -171,6 +174,7 @@ async def toggle_mode(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("^close_settings$"))
+@block_cbq
 async def close_settings(_, callback_query):
     user_id = callback_query.from_user.id
     user_status = (await app.get_chat_member(callback_query.message.chat.id, user_id)).status
