@@ -14,13 +14,10 @@ cooldown_users = {}
 GUESS_TIMEOUT = 60
 
 async def get_random_character():
-    all_characters = await collection.find({
-        'name': {'$nin': ['Medusa', 'Xenova', 'Yei']}  # Exclude these names
-    }).to_list(length=None)
+    all_characters = await collection.find({}).to_list(length=None)
     return random.choice(all_characters)
 
 @app.on_message(filters.command("guess"))
-@nopvt
 @block_dec
 async def guess(client, message: Message):
     chat_id = message.chat.id
