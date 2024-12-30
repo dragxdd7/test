@@ -131,11 +131,12 @@ async def block_cbq(func):
             if is_user_blocked or user_id in block_dic:
                 reason = await get_block_reason(user_id)
                 reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
-                return await callback_query.answer(
-                    capsify(f"You have been blocked.\n{reason_text}"), 
-                    show_alert=True
-                )
-        return await func(client, callback_query)
+                response_text = capsify(f"You have been blocked.\n{reason_text}")
+                return await callback_query.answer(response_text, show_alert=True)
+        if callable(func):
+            return await func(client, callback_query)
+        else:
+            raise TypeError(f"`func` is not callable. Received: {type(func)}")
     return wrapper
 
 async def get_all_blocked_users():
