@@ -2,7 +2,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
 from Grabber import user_collection
 from . import capsify, app
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 MAX_SALES_SLOT = 5
 MIN_SALE_PRICE = 10000
@@ -157,6 +157,7 @@ async def sales_command(client, message):
 
 
 @app.on_callback_query(filters.regex(r"VIEW_SALE_(\d+)_(\d+)_(\d+)"))
+@block_cbq
 async def view_sale_details(client, callback_query):
     slot_index = int(callback_query.matches[0].group(1)) - 1
     target_user_id = int(callback_query.matches[0].group(2))
@@ -193,6 +194,7 @@ async def view_sale_details(client, callback_query):
 
 
 @app.on_callback_query(filters.regex(r"SALE_PURCHASE_(\d+)_(\d+)_(\d+)"))
+@block_cbq
 async def purchase_character(client, callback_query):
     buyer_id = callback_query.from_user.id
     sale_id = int(callback_query.matches[0].group(1))
@@ -256,6 +258,7 @@ async def purchase_character(client, callback_query):
     )
 
 @app.on_callback_query(filters.regex(r"BACK_TO_SALES_(\d+)_(\d+)"))
+@block_cbq
 async def back_to_sales(client, callback_query):
     seller_id = int(callback_query.matches[0].group(1))
     buyer_id = int(callback_query.matches[0].group(2))
@@ -302,6 +305,7 @@ async def back_to_sales(client, callback_query):
 
 
 @app.on_callback_query(filters.regex(r"SALE_SLOT_CLOSE_(\d+)"))
+@block_cbq
 async def sale_slot_close(client, callback_query):
     target_user_id = int(callback_query.matches[0].group(1))
 
