@@ -91,7 +91,7 @@ async def block_command(client, message: Message):
     if reason:
         await save_block_reason(target_id, reason)
 
-    await message.reply(capsify(f"User blocked permanently. Reason: {reason}" if reason else "User blocked permanently."))
+    await message.reply(capsify(f"User blocked permanently.\n Reason: {reason}" if reason else "User blocked permanently."))
 
 @app.on_message(filters.command("unblock") & sudo_filter)
 async def unblock_command(client, message: Message):
