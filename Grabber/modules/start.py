@@ -79,6 +79,7 @@ async def cred(_, message):
     )
 
 @app.on_callback_query(filters.regex("credits"))
+@block_cbq
 async def credcb(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify(credits_text),
@@ -91,6 +92,7 @@ async def credcb(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("sdev"))
+@block_cbq
 async def sdev(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading developer names..."),
@@ -114,6 +116,7 @@ async def sdev(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("ssudo"))
+@block_cbq
 async def ssudo(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading sudo names..."),
@@ -137,6 +140,7 @@ async def ssudo(_, callback_query):
     )
 
 @app.on_callback_query(filters.regex("suploader"))
+@block_cbq
 async def suploader(_, callback_query):
     await callback_query.edit_message_text(
         text=capsify("Loading uploader names..."),
