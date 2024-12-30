@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM, Message, CallbackQuery
 
 from . import user_collection, app, capsify
-from .block import block_dec, block_cbq, temp_block
+from .block import block_dec, block_cbq, temp_block, block_cbq
 
 @app.on_message(filters.command("fav"))
 @block_dec
