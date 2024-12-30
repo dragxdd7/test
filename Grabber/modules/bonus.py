@@ -113,7 +113,7 @@ async def bonus_claim_handler(_, query):
     await query.edit_message_text(caption, reply_markup=markup)
 
 @app.on_callback_query(filters.regex(r"^bo_close_"))
-£@block_cbq
+#@block_cbq
 async def close_bonus_handler(_, query):
     try:
         _, bonus_type, user_id = query.data.split("_")
