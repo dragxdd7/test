@@ -126,13 +126,15 @@ def block_dec(func):
 async def block_cbq(func):
     async def wrapper(client, callback_query):
         user_id = callback_query.from_user.id if callback_query.from_user else None
-        if user_id and (await is_blocked(user_id) or user_id in block_dic):
-            reason = await get_block_reason(user_id)
-            reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
-            return await callback_query.answer(
-                capsify(f"You have been blocked.\n{reason_text}"), 
-                show_alert=True
-            )
+        if user_id:
+            is_user_blocked = await is_blocked(user_id)
+            if is_user_blocked or user_id in block_dic:
+                reason = await get_block_reason(user_id)
+                reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
+                return await callback_query.answer(
+                    capsify(f"You have been blocked.\n{reason_text}"), 
+                    show_alert=True
+                )
         return await func(client, callback_query)
     return wrapper
 
