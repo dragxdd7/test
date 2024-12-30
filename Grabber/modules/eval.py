@@ -113,7 +113,7 @@ async def executor(client, message):
         )
 
 @Client.on_callback_query(filters.regex(r"runtime"))
-#@block_cbq
+@block_cbq
 async def runtime_func_cq(_, cq):
     runtime = cq.data.split(None, 1)[1]
     await cq.answer(runtime, show_alert=True)
