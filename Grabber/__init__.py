@@ -2,6 +2,7 @@ from pyrogram import Client as PyrogramClient
 from telegram.ext import Application
 from motor.motor_asyncio import AsyncIOMotorClient
 from resolve_peer import ResolvePeer
+from config import *
 
 class Client(PyrogramClient):
     def __init__(self, *args, **kwargs):
@@ -11,20 +12,7 @@ class Client(PyrogramClient):
         obj = ResolvePeer(self)
         return await obj.resolve_peer(id)
 
-OWNER_ID = "7185106962"
-GROUP_ID = "-1002225496870"
-TOKEN = "6942284208:AAEqhwtoY8kDsB_W9NQx0QuUnO-JSs8CoSA"#pick
 #TOKEN = "7567371385:AAFDbypym37NXvpdaGPTOZZtFwphrOCnr78"#Okarun
-mongo_url = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
-PHOTO_URL = [
-    "https://files.catbox.moe/oai7m9.mp4"
-]
-SUPPORT_CHAT = "dragona_support"
-UPDATE_CHAT = "PickBotUpdatesHQ"
-BOT_USERNAME = "Okarun_Game_bot"
-CHARA_CHANNEL_ID = -1002235251549
-api_id = 20457610
-api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
 
 application = Application.builder().token(TOKEN).build()
 Grabberu = Client(
