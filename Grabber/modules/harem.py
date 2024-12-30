@@ -87,7 +87,7 @@ async def harem(client, message, page=0):
     await message.reply_text(harem_message, reply_markup=markup)
 
 @app.on_callback_query(filters.regex(r"harem:"))
-@block_cbq
+#@block_cbq
 async def harem_callback(client, callback_query):
     data = callback_query.data
 
