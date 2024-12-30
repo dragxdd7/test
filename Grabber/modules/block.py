@@ -123,20 +123,9 @@ def block_dec(func):
         return await func(client, message)
     return wrapper
 
-async def block_cbq(func):
-    async def wrapper(client, callback_query):
-        user_id = callback_query.from_user.id if callback_query.from_user else None
-        if user_id:
-            is_user_blocked = await is_blocked(user_id)
-            if is_user_blocked or user_id in block_dic:
-                reason = await get_block_reason(user_id)
-                reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
-                response_text = capsify(f"You have been blocked.\n{reason_text}")
-                return await callback_query.answer(response_text, show_alert=True)
-        if callable(func):
-            return await func(client, callback_query)
-        else:
-            raise TypeError(f"`func` is not callable. Received: {type(func)}")
+def block_cbq(func):
+    def wrapper(client, callback_query):
+        return func(client, callback_query)
     return wrapper
 
 async def get_all_blocked_users():
