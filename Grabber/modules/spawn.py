@@ -147,7 +147,7 @@ async def guess(_, message):
         del spawned_characters[chat_id]
 
 @app.on_callback_query(filters.regex("^count_"))
-#@block_cbq
+@block_cbq
 async def handle_count_button(_, callback_query):
     user_id = callback_query.from_user.id
     character_id = callback_query.data.split("_")[1]
@@ -161,7 +161,7 @@ async def handle_count_button(_, callback_query):
 
 
 @app.on_callback_query(filters.regex("^name_"))
-#@block_cbq
+@block_cbq
 async def handle_name_button(_, callback_query):
     chat_id = callback_query.message.chat.id
     character_id = callback_query.data.split("_")[1]
