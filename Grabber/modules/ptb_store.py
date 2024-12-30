@@ -102,6 +102,7 @@ async def store_handler(_, message):
 
 
 @app.on_callback_query(filters.regex(r"^page_"))
+@block_cbq
 async def page_handler(_, query):
     _, user_id, page = query.data.split("_")
     if int(user_id) != query.from_user.id:
@@ -134,6 +135,7 @@ async def page_handler(_, query):
 
 
 @app.on_callback_query(filters.regex(r"^buy_"))
+@block_cbq
 async def buy_handler(_, query):
     _, user_id, char_index = query.data.split("_")
     if int(user_id) != query.from_user.id:
@@ -164,6 +166,7 @@ async def buy_handler(_, query):
 
 
 @app.on_callback_query(filters.regex(r"^con_"))
+@block_cbq
 async def confirm_handler(_, query):
     _, user_id, char_id = query.data.split("_")
     if int(user_id) != query.from_user.id:
