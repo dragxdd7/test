@@ -2,7 +2,7 @@ from pyrogram import Client as PyrogramClient
 from telegram.ext import Application
 from motor.motor_asyncio import AsyncIOMotorClient
 from resolve_peer import ResolvePeer
-from config import *
+from .config import *
 
 class Client(PyrogramClient):
     def __init__(self, *args, **kwargs):
