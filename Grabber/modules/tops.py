@@ -3,7 +3,7 @@ from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, collection, user_collection, capsify 
 from .profile import custom_format_number
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 @app.on_message(filters.command("tops"))
 @block_dec
@@ -52,6 +52,7 @@ async def show_top_list(client, callback_query):
     await callback_query.message.edit_text(top_users_message, reply_markup=reply_markup)
 
 @app.on_callback_query(filters.regex(r"^back_to_menu$"))
+@block_cbq
 async def back_to_menu(client, callback_query):
     buttons = [
         [IKB(capsify("🏅 Gold"), callback_data="top_gold"),
