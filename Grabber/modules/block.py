@@ -117,17 +117,22 @@ def block_dec(func):
         if await is_blocked(user_id) or user_id in block_dic:
             reason = await get_block_reason(user_id)
             if reason:
-                return await message.reply(capsify(f"You have been blocked from using me. Reason: {reason}"))
+                return await message.reply(capsify(f"You have been blocked from using me.\n Reason: {reason}"))
             else:
-                return await message.reply(capsify("You have been blocked from using me. Reason: Not specified."))
+                return await message.reply(capsify("You have been blocked from using me.\n Reason: Not specified."))
         return await func(client, message)
     return wrapper
 
-def block_cbq(func):
+async def block_cbq(func):
     async def wrapper(client, callback_query):
         user_id = callback_query.from_user.id if callback_query.from_user else None
         if user_id and (await is_blocked(user_id) or user_id in block_dic):
-            return await callback_query.answer(capsify("You have been blocked."), show_alert=True)
+            reason = await get_block_reason(user_id)
+            reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
+            return await callback_query.answer(
+                capsify(f"You have been blocked.\n{reason_text}"), 
+                show_alert=True
+            )
         return await func(client, callback_query)
     return wrapper
 
@@ -135,12 +140,17 @@ async def get_all_blocked_users():
     blocked_users = await db.block.find().to_list(None)
     return [user['user_id'] for user in blocked_users]
 
-@app.on_message(filters.command("blocklist") & sudo_filter)
 async def blocklist_command(client: Client, message: Message):
-    blocked_users = await get_all_blocked_users()
+    blocked_users = await db.block.find().to_list(None)
     if not blocked_users:
         return await message.reply(capsify("No users are currently blocked."))
-    user_list = "\n".join([f"- User ID: {user_id}" for user_id in blocked_users])
+
+    user_list = "\n".join(
+        [
+            f"- User ID: {user['user_id']} (Reason: {user.get('reason', 'Not specified')})"
+            for user in blocked_users
+        ]
+    )
     text = capsify(f"Blocked Users:\n{user_list}")
     await message.reply(
         text,
@@ -155,7 +165,12 @@ async def close_callback(client: Client, callback_query: CallbackQuery):
     caller_user_id = callback_query.from_user.id
 
     if command_user_id != caller_user_id:
-        await callback_query.answer(capsify("Who are you to tell me what to do?"), show_alert=True)
+        reason = await get_block_reason(caller_user_id)
+        reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
+        await callback_query.answer(
+            capsify(f"Who are you to tell me what to do?\n{reason_text}"), 
+            show_alert=True
+        )
         return
 
     await callback_query.message.delete()
@@ -176,7 +191,12 @@ def block_cbq_ptb(func):
     async def wrapper(update: Update, context: CallbackContext):
         user_id = update.effective_user.id if update.effective_user else None
         if user_id and (await is_blocked(user_id) or user_id in block_dic):
-            await update.callback_query.answer(capsify("You have been blocked."), show_alert=True)
+            reason = await get_block_reason(user_id)
+            reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
+            await update.callback_query.answer(
+                capsify(f"You have been blocked.\n{reason_text}"), 
+                show_alert=True
+            )
             return
         return await func(update, context)
     return wrapper
@@ -185,7 +205,9 @@ def block_inl_ptb(func):
     async def wrapper(update: Update, context: CallbackContext):
         user_id = update.effective_user.id if update.effective_user else None
         if user_id and (await is_blocked(user_id) or user_id in block_dic):
-            await update.inline_query.answer(capsify("You have been blocked."))
+            reason = await get_block_reason(user_id)
+            reason_text = f"Reason: {reason}" if reason else "Reason: Not specified."
+            await update.inline_query.answer(capsify(f"You have been blocked.\n{reason_text}"))
             return
         return await func(update, context)
     return wrapper
