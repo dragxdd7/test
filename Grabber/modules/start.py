@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as 
 import random
 from . import user_collection, app, capsify
 from Grabber import *
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 sudb = db.sudo
 devb = db.dev
