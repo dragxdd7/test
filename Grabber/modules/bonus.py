@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton as IKB, InlineKeyboardMarkup as IKM
 from . import app, db, capsify, user_collection, add
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 bonus_db = db.bonus
 
@@ -64,6 +64,7 @@ async def bonus_handler(_, message):
     await message.reply_text(caption, reply_markup=markup)
 
 @app.on_callback_query(filters.regex(r"^bonus_"))
+@block_cbq
 async def bonus_claim_handler(_, query):
     _, bonus_type, user_id = query.data.split("_")
     user_id = int(user_id)
@@ -112,6 +113,7 @@ async def bonus_claim_handler(_, query):
     await query.edit_message_text(caption, reply_markup=markup)
 
 @app.on_callback_query(filters.regex(r"^bo_close_"))
+@block_cbq
 async def close_bonus_handler(_, query):
     try:
         _, bonus_type, user_id = query.data.split("_")
