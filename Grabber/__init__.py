@@ -12,7 +12,6 @@ class Client(PyrogramClient):
         obj = ResolvePeer(self)
         return await obj.resolve_peer(id)
 
-#TOKEN = "7567371385:AAFDbypym37NXvpdaGPTOZZtFwphrOCnr78"#Okarun
 
 application = Application.builder().token(TOKEN).build()
 Grabberu = Client(
