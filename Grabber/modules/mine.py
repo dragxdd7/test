@@ -4,7 +4,7 @@ from Grabber import app, user_collection
 import random
 from . import aruby, druby, sruby, capsify, nopvt, limit
 import time
-from .block import block_dec, temp_block
+from .block import block_dec, temp_block, block_cbq
 
 def generate_minefield(size, bombs):
     minefield = ['💎'] * size
@@ -73,6 +73,7 @@ async def mines(client, message):
     )
 
 @app.on_callback_query(filters.regex(r"^\d+_\d+$"))
+@block_cbq
 async def mines_button(client, query: CallbackQuery):
     user_id, index = map(int, query.data.split('_'))
     if user_id != query.from_user.id:
