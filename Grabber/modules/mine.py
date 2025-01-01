@@ -97,8 +97,9 @@ async def mines_button(client, query: CallbackQuery):
         await query.answer(capsify("This tile is already revealed."), show_alert=True)
         return
 
-    if time.time() - user_data.get("last_click_time", 0) < 1:
-        await query.answer(capsify("Slow down ❕"), show_alert=True)
+    if time.time() - user_data.get("last_click_time", 0) < 5:
+        remaining_time = 5 - (time.time() - user_data.get("last_click_time", 0))
+        await query.answer(capsify(f"Please maintain a 5-second gap between clicks. Wait for {int(remaining_time)} seconds."), show_alert=True)
         return
 
     revealed[index] = True
@@ -106,6 +107,8 @@ async def mines_button(client, query: CallbackQuery):
         {"id": user_id},
         {"$set": {"game_data.revealed": revealed, "last_click_time": time.time()}}
     )
+
+    await time.sleep(5)
 
     if minefield[index] == '💣':
         await druby(user_id, amount)
