@@ -6,7 +6,7 @@ from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as 
 from datetime import datetime
 from pyrogram import Client, filters 
 
-@app.on_message(filters.command(["gift", "sgift"))
+@app.on_message(filters.command(["gift", "sgift"]))
 @block_dec
 async def gift(client: Client, message: Message):
     user_id = message.from_user.id
