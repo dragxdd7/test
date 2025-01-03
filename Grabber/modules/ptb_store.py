@@ -69,7 +69,7 @@ async def format_character_info(character):
     )
 
 
-@app.on_message(filters.command("store"))
+@app.on_message(filters.command(["store", "shop", "market"]))
 @block_dec
 async def store_handler(_, message):
     user_id = message.from_user.id
