@@ -17,7 +17,6 @@ async def fav(client: Client, message: Message):
         return
 
     character_id = message.command[1]
-
     user = await user_collection.find_one({'id': user_id})
     if not user:
         await message.reply_text(capsify('You have not got any Slave yet...'))
@@ -33,9 +32,10 @@ async def fav(client: Client, message: Message):
     else:
         keyboard = IKM(
             [
+                [IKB(capsify("INLINE"), switch_inline_query_current_chat=f"{character_id}")],
                 [
-                    IKB(capsify("Confirm"), callback_data=f'confirm_{character_id}'),
-                    IKB(capsify("Cancel"), callback_data=f'cancel_{character_id}')
+                    IKB(capsify("CONFIRM"), callback_data=f'confirm_{user_id}_{character_id}'),
+                    IKB(capsify("CANCEL"), callback_data=f'cancel_{user_id}_{character_id}')
                 ]
             ]
         )
@@ -56,16 +56,19 @@ async def handle_confirmation(user_id, character_id, character=None):
 async def button(client: Client, callback_query: CallbackQuery):
     user_id = callback_query.from_user.id
     data = callback_query.data
+    action, cmd_user_id, character_id = data.split('_')
+
+    if int(cmd_user_id) != user_id:
+        await callback_query.answer("This is not for you baka ❗", show_alert=True)
+        return
 
     if callback_query.message.chat.id == -1002225496870:
-        character_id = data.split('_')[1]
-        if data.startswith('confirm_'):
+        if action == "confirm":
             await handle_confirmation(user_id, character_id)
         else:
             await callback_query.message.edit_text(capsify('Operation canceled.'))
     else:
-        if data.startswith('confirm_'):
-            character_id = data.split('_')[1]
+        if action == "confirm":
             user = await user_collection.find_one({'id': user_id})
             if user:
                 character = next((c for c in user['characters'] if c['id'] == character_id), None)
@@ -77,5 +80,5 @@ async def button(client: Client, callback_query: CallbackQuery):
                     await callback_query.message.edit_text(capsify('This slave is not in your list'))
             else:
                 await callback_query.message.edit_text(capsify('You have not got any slave yet...'))
-        elif data.startswith('cancel_'):
+        elif action == "cancel":
             await callback_query.message.edit_text(capsify('Operation canceled.'))
