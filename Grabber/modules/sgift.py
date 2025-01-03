@@ -3,6 +3,7 @@ from . import capsify, app
 from .block import block_dec, temp_block, block_cbq
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as IKB
+from datetime import datetime
 
 @app.on_message(filters.command("gift"))
 @block_dec
