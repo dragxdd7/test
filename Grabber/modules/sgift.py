@@ -92,7 +92,7 @@ async def gift(client, message):
     gifts_left = 10 - daily_gift_count
     success_message = (
         f"{capsify('🎁 Successfully Gifted')}\n\n"
-        f"{capsify('♦️ NAME:')} {capsify(character['name'])} {character.get('emoji', '[🥎]')}\n"
+        f"{capsify('♦️ NAME:')} {capsify(character['name'])} \n"
         f"{capsify('🧧 ANIME:')} {capsify(character['anime'])}\n"
         f"{capsify('🆔:')} {character['id']:03}\n"
         f"{capsify('🌟:')} {character.get('rarity', '🔮 Limited')}\n\n"
