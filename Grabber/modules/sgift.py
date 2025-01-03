@@ -7,118 +7,91 @@ from datetime import datetime
 
 @app.on_message(filters.command("gift"))
 @block_dec
-async def gift(client, message):
-    sender_id = message.from_user.id
+async def gift(client: Client, message: Message):
     user_id = message.from_user.id
     if temp_block(user_id):
         return
 
-    if not message.reply_to_message:
-        await message.reply(capsify("You need to reply to a user's message to gift a character!"))
-        return
-
-    receiver_id = message.reply_to_message.from_user.id
-    receiver_first_name = message.reply_to_message.from_user.first_name
-
-    if sender_id == receiver_id:
-        await message.reply(capsify("You can't gift a character to yourself!"))
-        return
-    if temp_block(sender_id):
-        return
-
-    if len(message.command) != 2:
-        await message.reply(capsify("You need to provide a character ID!"))
+    if len(message.command) < 2:
+        await message.reply_text(capsify('Please provide Slave ID...'))
         return
 
     character_id = message.command[1]
-    sender = await user_collection.find_one({'id': sender_id})
 
-    if not sender:
-        sender = {
-            'id': sender_id,
-            'characters': [],
-            'daily_gift_count': 0,
-            'last_reset': None,
-        }
-        await user_collection.insert_one(sender)
-
-    last_reset = sender.get('last_reset')
-    daily_gift_count = sender.get('daily_gift_count', 0)
-
-    if not last_reset or datetime.fromisoformat(last_reset).date() < datetime.utcnow().date():
-        daily_gift_count = 0
-        await user_collection.update_one(
-            {'id': sender_id}, 
-            {'$set': {'daily_gift_count': 0, 'last_reset': datetime.utcnow().isoformat()}}
-        )
-
-    if daily_gift_count >= 10:
-        await message.reply(capsify("You have reached your daily gift limit. Try again tomorrow!"))
+    user = await user_collection.find_one({'id': user_id})
+    if not user:
+        await message.reply_text(capsify('You have not got any character yet...'))
         return
 
-    character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
-
+    character = next((c for c in user['characters'] if c['id'] == character_id), None)
     if not character:
-        await message.reply(capsify(f"You do not have a character with ID {character_id}!"))
+        await message.reply_text(capsify('This character is not in your harem'))
         return
 
-    gifts_left = 10 - daily_gift_count
-    success_message = (
-        f"{capsify('🎁 CONFIRM GIFTING')}\n\n"
-        f"{capsify('♦️ NAME:')} {capsify(character['name'])} \n"
-        f"{capsify('🧧 ANIME:')} {capsify(character['anime'])}\n"
-        f"{capsify('🆔:')} {character['id']:03}\n"
-        f"{capsify('🌟:')} {character.get('rarity', '🔮 LIMITED')}\n\n"
-        f"{capsify('GIFTS LEFT:')} {gifts_left}"
-    )
-    keyboard = IKM([
-        [IKB(capsify("INLINE"), switch_inline_query_current_chat=f"{character_id}")],
+    gifts_left = user.get('gifts_left', 0)
+    if gifts_left <= 0:
+        await message.reply_text(capsify('You have no gifts left for today.'))
+        return
+
+    keyboard = IKM(
         [
-            IKB(capsify("CONFIRM"), callback_data=f"con_gift:{sender_id}:{character_id}:{receiver_id}"),
-            IKB(capsify("CANCEL"), callback_data=f"can_gift:{sender_id}")
+            [
+                IKB(capsify("Confirm"), callback_data=f'confirm_gift_{character_id}'),
+                IKB(capsify("Cancel"), callback_data=f'cancel_gift_{character_id}')
+            ]
         ]
-    ])
-    await message.reply(success_message, reply_markup=keyboard)
+    )
+    await message.reply_text(
+        capsify(f'Do you want to gift {character["name"]}? You have {gifts_left} gift(s) left.'),
+        reply_markup=keyboard
+    )
 
-@app.on_callback_query(filters.regex(r"^(con_gift|can_gift):"))
+async def handle_gift_confirmation(user_id, character_id, character=None):
+    if character:
+        user = await user_collection.find_one({'id': user_id})
+        if user:
+            gifts_left = user.get('gifts_left', 0)
+            if gifts_left > 0:
+                user['gifts_left'] = gifts_left - 1
+                await user_collection.update_one({'id': user_id}, {'$set': {'gifts_left': user['gifts_left']}})
+                await app.send_message(user_id, capsify(f'You successfully gifted {character["name"]}!'))
+                await app.send_message(user_id, capsify(f'You now have {user["gifts_left"]} gift(s) left.'))
+            else:
+                await app.send_message(user_id, capsify('You have no gifts left to gift today.'))
+    else:
+        await app.send_message(user_id, capsify('You have not got any character yet...'))
+
+@app.on_callback_query(filters.regex(r'^(confirm_gift_|cancel_gift_)'))
 @block_cbq
-async def gift_callback(client, callback_query):
-    action, sender_id, *data = callback_query.data.split(":")
-    sender_id = int(sender_id)
+async def gift_button(client: Client, callback_query: CallbackQuery):
+    user_id = callback_query.from_user.id
+    data = callback_query.data
 
-    if callback_query.from_user.id != sender_id:
-        await callback_query.answer("This is not for you baka ❗", show_alert=True)
-        return
-
-    if action == "can_gift":
-        await callback_query.message.edit(capsify("GIFT CANCELED SUCCESSFULLY!"))
-        return
-
-    if action == "con_gift":
-        character_id, receiver_id = data
-        receiver_id = int(receiver_id)
-
-        sender = await user_collection.find_one({'id': sender_id})
-        if not sender:
-            await callback_query.message.edit(capsify("SENDER DATA NOT FOUND!"))
-            return
-
-        character = next((character for character in sender.get('characters', []) if character.get('id') == character_id), None)
-        if not character:
-            await callback_query.message.edit(capsify("CHARACTER NOT FOUND IN YOUR INVENTORY!"))
-            return
-
-        sender_characters = sender.get('characters', [])
-        sender_characters = [char for char in sender_characters if char['id'] != character_id]
-        await user_collection.update_one({'id': sender_id}, {'$set': {'characters': sender_characters}})
-
-        receiver = await user_collection.find_one({'id': receiver_id})
-        if receiver:
-            await user_collection.update_one({'id': receiver_id}, {'$push': {'characters': character}})
-        else:
-            await user_collection.insert_one({
-                'id': receiver_id,
-                'characters': [character],
-            })
-
-        await callback_query.message.edit(capsify("GIFT SENT SUCCESSFULLY!"))
+    if callback_query.message.chat.id == -1002225496870:
+        character_id = data.split('_')[2]
+        if data.startswith('confirm_gift_'):
+            user = await user_collection.find_one({'id': user_id})
+            if user:
+                character = next((c for c in user['characters'] if c['id'] == character_id), None)
+                if character:
+                    await handle_gift_confirmation(user_id, character_id, character)
+                else:
+                    await callback_query.message.edit_text(capsify('This slave is not in your list'))
+            else:
+                await callback_query.message.edit_text(capsify('You have not got any character yet...'))
+        elif data.startswith('cancel_gift_'):
+            await callback_query.message.edit_text(capsify('Gift canceled.'))
+    else:
+        if data.startswith('confirm_gift_'):
+            character_id = data.split('_')[2]
+            user = await user_collection.find_one({'id': user_id})
+            if user:
+                character = next((c for c in user['characters'] if c['id'] == character_id), None)
+                if character:
+                    await handle_gift_confirmation(user_id, character_id, character)
+                else:
+                    await callback_query.message.edit_text(capsify('This character is not in your list'))
+            else:
+                await callback_query.message.edit_text(capsify('You have not got any character yet...'))
+        elif data.startswith('cancel_gift_'):
+            await callback_query.message.edit_text(capsify('Gift canceled.'))
