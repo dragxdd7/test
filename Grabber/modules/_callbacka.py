@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext, CallbackQueryHandler, CommandHandler
 from Grabber import application
-from .cmode import cmode_callback
+#from .cmode import cmode_callback
 from Grabber.utils.button import button_click as bc
 #from .harem import harem_callback as hc
 from .info import check
@@ -17,8 +17,6 @@ async def cbq(update: Update, context: CallbackContext):
     data = query.data
     if data.startswith('check_'):
         await check(update, context)
-    elif data.startswith('cmode'):
-        await cmode_callback(update, context)
     elif data.startswith('confirm_trade'):
         await confirm_trade(update, context)
     elif data.startswith('cancel_trade'):
