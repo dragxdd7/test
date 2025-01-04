@@ -9,7 +9,7 @@ from .block import block_dec, temp_block, block_cbq
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
 
-def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
+def create_cmode_image(username, user_id, current_rarity, dp_path=None):
     img = Image.open(BG_IMAGE_PATH).convert("RGBA")
     img = img.resize((275, 183))
     d = ImageDraw.Draw(img)
@@ -27,9 +27,8 @@ def create_cmode_image(username, user_id, current_rarity, user_dp_url=None):
     dp_x = (img.width - dp_size[0]) // 2
     dp_y = 10
 
-    if user_dp_url:
-        response = requests.get(user_dp_url)
-        user_dp = Image.open(BytesIO(response.content)).convert("RGBA")
+    if dp_path:
+        user_dp = Image.open(dp_path).convert("RGBA")
         user_dp = user_dp.resize(dp_size, Image.ANTIALIAS)
         mask = Image.new("L", dp_size, 0)
         draw_mask = ImageDraw.Draw(mask)
@@ -57,18 +56,19 @@ async def cmode(client, message):
 
     try:
         chat_member = await client.get_chat_member(message.chat.id, user_id)
-        user_dp = chat_member.user.photo
-        user_dp_url = user_dp.big_file_id if user_dp else None
-    except Exception:
-        user_dp_url = None
+        user_dp = chat_member.user.photo.big_file_id if chat_member.user.photo else None
+    except Exception as e:
+        user_dp = None
 
     user_data = await user_collection.find_one({'id': user_id})
     current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
 
-    if user_dp_url:
-        dp_path = await client.download_media(user_dp_url)
-    else:
-        dp_path = None
+    dp_path = None
+    if user_dp:
+        try:
+            dp_path = await client.download_media(user_dp)
+        except Exception:
+            dp_path = None
 
     img_path = create_cmode_image(username, user_id, current_rarity, dp_path)
 
