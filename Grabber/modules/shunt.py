@@ -9,7 +9,6 @@ from . import user_collection, app, dev_filter
 from .block import block_dec, temp_block
 
 MUST_JOIN = "dragons_support"
-LOG_GROUP_CHAT_ID = -1002243796014
 cooldown_duration_shunt = 60
 
 dungeon_sets = {
@@ -54,9 +53,6 @@ dungeon_sets = {
 last_usage_time_shunt = {}
 user_last_command_times = {}
 
-async def send_log(log_message):
-    await app.send_message(LOG_GROUP_CHAT_ID, log_message)
-
 @app.on_message(filters.command(["shunt"]))
 async def shunt_command(client, message):
     user_id = message.from_user.id
@@ -68,8 +64,6 @@ async def shunt_command(client, message):
         return await message.reply_text("You are sending commands too quickly. Please wait for a moment.")
 
     user_last_command_times[user_id] = current_time
-
-    await send_log(f"Command shunt used by user `{user_id}`")
 
     try:
         if user_id in last_usage_time_shunt:
@@ -111,7 +105,6 @@ async def shunt_command(client, message):
         last_usage_time_shunt[user_id] = current_time
 
     except Exception as e:
-        await send_log(f"Error occurred in shunt_command: {e}")
         await message.reply_text("An error occurred while processing your request. Please try again later.")
 
 @app.on_message(filters.command(["rgold"]) & dev_filter)
