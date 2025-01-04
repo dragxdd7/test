@@ -3,7 +3,7 @@ from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as 
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import user_collection
+from . import user_collection, collection, app , capsify 
 from .block import temp_block, block_dec
 
 FONT_PATH = "Fonts/font.ttf"
