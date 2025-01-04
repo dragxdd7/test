@@ -112,31 +112,43 @@ async def unblock_command(client, message: Message):
 block_dic = {}
 
 def block_dec(func=None, *, access="both"):
-    def decorator(func):
-        async def wrapper(client, message: Message):
-            user_id = message.from_user.id
-            chat_type = message.chat.type
+    if func is None:
+        def decorator(func):
+            async def wrapper(client, message: Message):
+                user_id = message.from_user.id
+                chat_type = message.chat.type
 
-            if await is_blocked(user_id) or user_id in block_dic:
-                reason = await get_block_reason(user_id)
-                if reason:
-                    return await message.reply(capsify(f"You have been blocked from using me.\nReason: {reason}"))
-                else:
-                    return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
+                if await is_blocked(user_id) or user_id in block_dic:
+                    reason = await get_block_reason(user_id)
+                    if reason:
+                        return await message.reply(capsify(f"You have been blocked from using me.\nReason: {reason}"))
+                    else:
+                        return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
 
-            if access == "private" and chat_type != "private":
-                return await message.reply(capsify("This command can only be used in private chats."))
-            elif access == "group" and chat_type not in ["group", "supergroup"]:
-                return await message.reply(capsify("This command can only be used in groups."))
+                if access == "private" and chat_type != "private":
+                    return await message.reply(capsify("This command can only be used in private chats."))
+                elif access == "group" and chat_type not in ["group", "supergroup"]:
+                    return await message.reply(capsify("This command can only be used in groups."))
 
-            return await func(client, message)
+                return await func(client, message)
 
-        return wrapper
+            return wrapper
+        return decorator
 
-    if func:
-        return decorator(func)
+    async def wrapper(client, message: Message):
+        user_id = message.from_user.id
+        chat_type = message.chat.type
 
-    return decorator
+        if await is_blocked(user_id) or user_id in block_dic:
+            reason = await get_block_reason(user_id)
+            if reason:
+                return await message.reply(capsify(f"You have been blocked from using me.\nReason: {reason}"))
+            else:
+                return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
+
+        return await func(client, message)
+
+    return wrapper
 
 def block_cbq(func):
     async def wrapper(client, callback_query: CallbackQuery):
