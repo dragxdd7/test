@@ -1,4 +1,4 @@
-from quart import Quart, render_template, jsonify, request
+"""from quart import Quart, render_template, jsonify, request
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import random
@@ -99,4 +99,4 @@ async def druby(user_id, balance):
         await user_data_collection.update_one({"id": user_id}, {"$set": {"rubies": new_balance}}, upsert=True)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000)"""
