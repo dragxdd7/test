@@ -69,7 +69,7 @@ async def cmode(update: Update, context: CallbackContext) -> None:
     img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
 
     cmode_buttons = [
-        [IKB("🟠 Rare", callback_data=f"cmode:rare:{user_id}"), IKB("🥴 Spacial", callback_data=f"cmode:spacial:{user_id}")],
+        [IKB("🟠 Rare", callback_data=f"cmode:rare:{user_id}"), IKB("🥴 Special", callback_data=f"cmode: special:{user_id}")],
         [IKB("💮 Exclusive", callback_data=f"cmode:exclusive:{user_id}"), IKB("🍭 Cosplay", callback_data=f"cmode:cosplay:{user_id}")],
         [IKB("🥵 Divine", callback_data=f"cmode:divine:{user_id}"), IKB("🔮 Limited", callback_data=f"cmode:limited:{user_id}")],
         [IKB("🪽 Celestial", callback_data=f"cmode:celestial:{user_id}"), IKB("💎 Premium", callback_data=f"cmode:premium:{user_id}")],
@@ -88,7 +88,7 @@ async def cmode_callback(update: Update, context: CallbackContext) -> None:
 
     rarity_modes = {
         'rare': '🟠 Rare',
-        'spacial': '🥴 Spacial',
+        'special': '🥴 Special',
         'exclusive': '💮 Exclusive',
         'cosplay': '🍭 Cosplay',
         'divine': '🥵 Divine',
