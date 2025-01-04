@@ -84,7 +84,7 @@ async def cmode(client, message):
     ]
     reply_markup = IKM(cmode_buttons)
 
-    await message.reply_photo(message.chat.id, photo=img_path, caption="Choose your collection mode:", reply_markup=reply_markup)
+    await message.reply_photo(photo=img_path, caption="Choose your collection mode:", reply_markup=reply_markup)
 
 @app.on_callback_query(filters.regex(r"^cmode:"))
 async def cmode_callback(client, callback_query):
