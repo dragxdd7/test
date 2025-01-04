@@ -3,8 +3,7 @@ from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as 
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import user_collection, collection, app , capsify 
-from .block import temp_block, block_dec
+from . import user_collection, app
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
@@ -55,19 +54,25 @@ async def cmode(client, message):
         return
     username = message.from_user.username
 
-    profile_photos = await client.get_chat_photos(user_id)
-    if profile_photos:
-        user_dp_url = profile_photos[0].file_id
-    else:
+    try:
+        chat_member = await client.get_chat_member(message.chat.id, user_id)
+        user_dp = chat_member.user.photo
+        user_dp_url = user_dp.big_file_id if user_dp else None
+    except Exception as e:
         user_dp_url = None
 
     user_data = await user_collection.find_one({'id': user_id})
     current_rarity = user_data.get('collection_mode', 'All') if user_data else 'All'
 
-    img_path = create_cmode_image(username, user_id, current_rarity, user_dp_url)
+    if user_dp_url:
+        dp_path = await client.download_media(user_dp_url)
+    else:
+        dp_path = None
+
+    img_path = create_cmode_image(username, user_id, current_rarity, dp_path)
 
     cmode_buttons = [
-        [IKB("🟠 Rare", f"cmode:rare:{user_id}"), IKB("🥴 Special", f"cmode: special:{user_id}")],
+        [IKB("🟠 Rare", f"cmode:rare:{user_id}"), IKB("🥴 Special", f"cmode:special:{user_id}")],
         [IKB("💮 Exclusive", f"cmode:exclusive:{user_id}"), IKB("🍭 Cosplay", f"cmode:cosplay:{user_id}")],
         [IKB("🥵 Divine", f"cmode:divine:{user_id}"), IKB("🔮 Limited", f"cmode:limited:{user_id}")],
         [IKB("🪽 Celestial", f"cmode:celestial:{user_id}"), IKB("💎 Premium", f"cmode:premium:{user_id}")],
@@ -116,13 +121,20 @@ async def cmode_callback(client, callback_query):
     if collection_mode == 'All':
         await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': 'All'}})
         username = callback_query.from_user.username
-        profile_photos = await client.get_chat_photos(user_id)
-        if profile_photos:
-            user_dp_url = profile_photos[0].file_id
-        else:
+
+        try:
+            chat_member = await client.get_chat_member(callback_query.message.chat.id, user_id)
+            user_dp = chat_member.user.photo
+            user_dp_url = user_dp.big_file_id if user_dp else None
+        except Exception as e:
             user_dp_url = None
 
-        img_path = create_cmode_image(username, user_id, 'All', user_dp_url)
+        if user_dp_url:
+            dp_path = await client.download_media(user_dp_url)
+        else:
+            dp_path = None
+
+        img_path = create_cmode_image(username, user_id, 'All', dp_path)
 
         await callback_query.edit_message_media(InputMediaPhoto(img_path))
         await callback_query.edit_message_caption(f"Collection mode set to: {collection_mode}")
@@ -136,12 +148,19 @@ async def cmode_callback(client, callback_query):
 
     await user_collection.update_one({'id': user_id}, {'$set': {'collection_mode': collection_mode}})
     username = callback_query.from_user.username
-    profile_photos = await client.get_chat_photos(user_id)
-    if profile_photos:
-        user_dp_url = profile_photos[0].file_id
-    else:
+
+    try:
+        chat_member = await client.get_chat_member(callback_query.message.chat.id, user_id)
+        user_dp = chat_member.user.photo
+        user_dp_url = user_dp.big_file_id if user_dp else None
+    except Exception as e:
         user_dp_url = None
 
-    img_path = create_cmode_image(username, user_id, collection_mode, user_dp_url)
+    if user_dp_url:
+        dp_path = await client.download_media(user_dp_url)
+    else:
+        dp_path = None
+
+    img_path = create_cmode_image(username, user_id, collection_mode, dp_path)
     await callback_query.edit_message_media(InputMediaPhoto(img_path))
     await callback_query.edit_message_caption(f"Rarity edited to: {collection_mode}")
