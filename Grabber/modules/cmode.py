@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import user_collection, app
-from .block import block_dec, temp_block , block_cbq
+from .block import block_dec, temp_block, block_cbq
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
@@ -59,7 +59,7 @@ async def cmode(client, message):
         chat_member = await client.get_chat_member(message.chat.id, user_id)
         user_dp = chat_member.user.photo
         user_dp_url = user_dp.big_file_id if user_dp else None
-    except Exception as e:
+    except Exception:
         user_dp_url = None
 
     user_data = await user_collection.find_one({'id': user_id})
@@ -127,7 +127,7 @@ async def cmode_callback(client, callback_query):
             chat_member = await client.get_chat_member(callback_query.message.chat.id, user_id)
             user_dp = chat_member.user.photo
             user_dp_url = user_dp.big_file_id if user_dp else None
-        except Exception as e:
+        except Exception:
             user_dp_url = None
 
         if user_dp_url:
@@ -154,7 +154,7 @@ async def cmode_callback(client, callback_query):
         chat_member = await client.get_chat_member(callback_query.message.chat.id, user_id)
         user_dp = chat_member.user.photo
         user_dp_url = user_dp.big_file_id if user_dp else None
-    except Exception as e:
+    except Exception:
         user_dp_url = None
 
     if user_dp_url:
