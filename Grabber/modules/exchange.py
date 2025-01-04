@@ -25,16 +25,25 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
 
     user_data = await user_collection.find_one({'id': user_id})
     if not user_data:
-        await user_collection.insert_one({'id': user_id, 'exchange_count': 0, 'last_exchange': now.date()})
+        await user_collection.insert_one({
+            'id': user_id,
+            'exchange_count': 0,
+            'last_exchange': datetime.datetime.combine(now.date(), datetime.time.min, tz)
+        })
         exchange_count = 0
     else:
         exchange_count = user_data.get('exchange_count', 0)
-        last_exchange = user_data.get('last_exchange', now.date())
-        if last_exchange != now.date():
+        last_exchange = user_data.get('last_exchange', None)
+        if last_exchange is None or last_exchange.date() != now.date():
             exchange_count = 0
             await user_collection.update_one(
                 {'id': user_id},
-                {'$set': {'exchange_count': 0, 'last_exchange': now.date()}}
+                {
+                    '$set': {
+                        'exchange_count': 0,
+                        'last_exchange': datetime.datetime.combine(now.date(), datetime.time.min, tz)
+                    }
+                }
             )
 
     if exchange_count >= 3:
@@ -74,7 +83,7 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         await message.reply_text(capsify("An error occurred while processing the exchange."))
         return
 
-    new_characters = user_characters[:index_to_remove] + user_characters[index_to_remove+1:]
+    new_characters = user_characters[:index_to_remove] + user_characters[index_to_remove + 1:]
 
     await user_collection.update_one(
         {'id': user_id},
