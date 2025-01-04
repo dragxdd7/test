@@ -11,7 +11,7 @@ cooldown_duration_roll = 30
 last_usage_time_roll = {}
 
 @app.on_message(filters.command(["dart"]))
-@block_dec(acess="private")
+@block_dec(access="private")
 async def roll_dart(client: Client, message: t.Message):
     user_id = message.from_user.id
     if temp_block(user_id):
