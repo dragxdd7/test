@@ -139,6 +139,7 @@ async def get_all_blocked_users():
     blocked_users = await db.block.find().to_list(None)
     return [user['user_id'] for user in blocked_users]
 
+@app.on_message(filters.command("blocklist") & sudo_filter)
 async def blocklist_command(client: Client, message: Message):
     blocked_users = await db.block.find().to_list(None)
     if not blocked_users:
