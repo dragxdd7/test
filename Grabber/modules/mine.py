@@ -4,6 +4,7 @@ from Grabber import app, user_collection
 import random
 from . import aruby, druby, sruby, capsify, nopvt, limit
 import time
+import asyncio  # Import asyncio for async sleep
 from .block import block_dec, temp_block, block_cbq
 
 def generate_minefield(size, bombs):
@@ -12,7 +13,6 @@ def generate_minefield(size, bombs):
     for pos in bomb_positions:
         minefield[pos] = '💣'
     return minefield
-
 
 @app.on_message(filters.command("mines"))
 @block_dec
@@ -108,7 +108,7 @@ async def mines_button(client, query: CallbackQuery):
         {"$set": {"game_data.revealed": revealed, "last_click_time": time.time()}}
     )
 
-    await time.sleep(5)
+    await asyncio.sleep(5)  # Fixed to use asyncio.sleep
 
     if minefield[index] == '💣':
         await druby(user_id, amount)
