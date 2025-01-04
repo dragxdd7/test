@@ -3,7 +3,8 @@ from pyrogram.types import InlineKeyboardMarkup as IKM, InlineKeyboardButton as 
 from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
-from . import user_collection, temp_block, block_dec
+from . import user_collection
+from .block temp_block, block_dec
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
