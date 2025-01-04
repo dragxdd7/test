@@ -125,9 +125,9 @@ def block_dec(func=None, *, access="both"):
                     else:
                         return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
 
-                if access == "private" and chat_type != "private":
+                if access == "private" and chat_type != "PRIVATE":
                     return await message.reply(capsify("This command can only be used in private chats."))
-                elif access == "group" and chat_type not in ["group", "supergroup"]:
+                elif access == "group" and chat_type not in ["GROUP", "SUPERGROUP"]:
                     return await message.reply(capsify("This command can only be used in groups."))
 
                 return await func(client, message)
