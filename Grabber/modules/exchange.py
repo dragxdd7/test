@@ -95,13 +95,15 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         {'$push': {'characters': desired_character}}
     )
 
+    updated_exchange_count = exchange_count + 1
     await user_collection.update_one(
         {'id': user_id},
-        {'$inc': {'exchange_count': 1}}
+        {'$set': {'exchange_count': updated_exchange_count}}
     )
 
+    remaining_exchanges = 3 - updated_exchange_count
     await message.reply_text(capsify(f"Exchange successful! You exchanged {your_character_id} for {desired_character['name']}."))
-    await message.reply_text(capsify(f"You have {3 - (exchange_count + 1)} exchanges remaining."))
+    await message.reply_text(capsify(f"You have {remaining_exchanges} exchanges remaining."))
 
 @app.on_message(filters.command("exchange"))
 @block_dec
