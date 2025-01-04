@@ -35,6 +35,7 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
         exchange_count = user_data.get('exchange_count', 0)
         last_exchange = user_data.get('last_exchange', None)
         if last_exchange is None or last_exchange.date() != now.date():
+            # Reset exchange count and update the last_exchange date for a new day
             exchange_count = 0
             await user_collection.update_one(
                 {'id': user_id},
@@ -97,9 +98,11 @@ async def exchange_command(client: Client, message: Message, args: list[str]) ->
 
     updated_exchange_count = exchange_count + 1
     remaining_exchanges = 3 - updated_exchange_count
+
+    # Update exchange count and last_exchange
     await user_collection.update_one(
         {'id': user_id},
-        {'$set': {'exchange_count': updated_exchange_count}}
+        {'$set': {'exchange_count': updated_exchange_count, 'last_exchange': now}}
     )
 
     await message.reply_text(capsify(f"Exchange successful! You exchanged {your_character_id} for {desired_character['name']}."))
