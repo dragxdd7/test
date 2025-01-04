@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 import requests
 from io import BytesIO
 from . import user_collection
-from .block temp_block, block_dec
+from .block import temp_block, block_dec
 
 FONT_PATH = "Fonts/font.ttf"
 BG_IMAGE_PATH = "Images/cmode.jpg"
