@@ -111,14 +111,7 @@ async def unblock_command(client, message: Message):
 
 block_dic = {}
 
-from enum import Enum
-
-class Access(Enum):
-    BOTH = "both"
-    PRIVATE = "private"
-    GROUP = "group"
-
-def block_dec(func=None, *, access=Access.BOTH):
+def block_dec(func=None, *, access="both"):
     if func is None:
         def decorator(func):
             async def wrapper(client, message: Message):
@@ -132,12 +125,10 @@ def block_dec(func=None, *, access=Access.BOTH):
                     else:
                         return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
 
-                if access == Access.PRIVATE and chat_type != "private":
+                if access == "private" and chat_type != "private":
                     return await message.reply(capsify("This command can only be used in private chats."))
-                elif access == Access.GROUP and chat_type not in ["group", "supergroup"]:
+                elif access == "group" and chat_type not in ["group", "supergroup"]:
                     return await message.reply(capsify("This command can only be used in groups."))
-                elif access == Access.BOTH:
-                    pass
 
                 return await func(client, message)
 
@@ -155,16 +146,10 @@ def block_dec(func=None, *, access=Access.BOTH):
             else:
                 return await message.reply(capsify("You have been blocked from using me.\nReason: Not specified."))
 
-        if access == Access.PRIVATE and chat_type != "private":
-            return await message.reply(capsify("This command can only be used in private chats."))
-        elif access == Access.GROUP and chat_type not in ["group", "supergroup"]:
-            return await message.reply(capsify("This command can only be used in groups."))
-        elif access == Access.BOTH:
-            pass
-
         return await func(client, message)
 
     return wrapper
+
 
 def block_cbq(func):
     async def wrapper(client, callback_query: CallbackQuery):
