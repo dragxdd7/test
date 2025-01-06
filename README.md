@@ -86,7 +86,7 @@ For a complete list of commands, refer to the original bot.
 - `/eval` - Developer special command
 - `/stats` - Lists number or groups and users
 - `/addsudo` - add a user go bot sudo
-- `/adddev` - add a user to bot character uploader (don't forget to add your self and dev using this command after first startup)
+- `/adddev` - add a user to bot character uploader (don't forget to add your self as dev using this command after first startup)
 
 - `/addsudo` - add a yser to bots dev 
 
