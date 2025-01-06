@@ -64,7 +64,7 @@ use Rarity Number accordingly rarity Map
 - `/ctop` - List the users with biggest harem (current chat)
 - `/changetime` - Change the frequency of character spawn
 
-and much more you many refer gi orignal bot for commands 
+and much more you many refer to orignal bot for commands 
 
 ## UPLOADER COMMANDS..
 - `/upload` - Add a new character to the database 
@@ -84,11 +84,11 @@ and much more you many refer gi orignal bot for commands
 
 ### Heroku
 - Fork The Repository
-- Go to [`config.py`](./shivu/config.py)
+- Go to [`config.py`](./Grabber/config.py)
 - Fill the All variables and Go to heroku. and deploy Your forked Repository
 
 ### Local Deploy/VPS
-- Fill variables in [`config.py`](./shivu/config.py) 
+- Fill variables in [`config.py`](./Grabber/config.py) 
 - Open your VPS terminal (we're using Debian based) and run the following:
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y           
@@ -110,16 +110,16 @@ The Source is licensed under GNU PUBLIC LICENCE , and hence
 ## Appreciation
 If you appreciate this Code, make sure to star ✨ the repository.
 
-## DEVELOPERS
-- Alpha 
-Github ~ Github.com/AlphaLike
-Telegram ~ NorthYankton.t.me
+## Developers  
 
-- Berlin 
-Github ~ Github.com/AfraidXd
-Telegram ~ wtfberlin.t.me
+### **Alpha**  
+- **GitHub:** [AlphaLike](https://github.com/AlphaLike)  
+- **Telegram:** [NorthYankton](https://NorthYankton.t.me)  
 
-- Delta 
-Github ~ Github.com/Geektyper
+### **Berlin**  
+- **GitHub:** [AfraidXd](https://github.com/AfraidXd)  
+- **Telegram:** [wtfberlin](https://wtfberlin.t.me)  
 
-Telegram ~ Notygeek.t.me
+### **Delta**  
+- **GitHub:** [Geektyper](https://github.com/Geektyper)  
+- **Telegram:** [Notygeek](https://Notygeek.t.me)
