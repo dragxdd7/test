@@ -65,7 +65,7 @@ async def startp(_, message):
 
     random_video = random.choice(PHOTO_URL)
     await _.send_video(
-        chat_id=user_id,
+        chat_id=id,
         video=random_video,
         caption=capsify(start_text),
         reply_markup=IKM(support_buttons)
