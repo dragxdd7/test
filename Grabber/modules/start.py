@@ -35,14 +35,24 @@ async def startp(_, message):
     username = user.username
     first_name = user.first_name
 
-    user_collection.update_one(
-        {"user_id": user_id},
-        {
-            "$set": {
+    user_data = await user_collection.find_one({"user_id": user_id})
+
+    if user_data:
+        user_collection.update_one(
+            {"id": user_id},
+            {
+                "$set": {
+                    "username": username,
+                    "first_name": first_name
+                }
+            }
+        )
+    else:
+        user_collection.insert_one(
+            {
+                "id": user_id,
                 "username": username,
-                "first_name": first_name
-            },
-            "$setOnInsert": {
+                "first_name": first_name,
                 "balance": None,
                 "saved_amount": None,
                 "characters": None,
@@ -51,9 +61,7 @@ async def startp(_, message):
                 "created_at": None,
                 "loan_amount": None
             }
-        },
-        upsert=True
-    )
+        )
 
     random_video = random.choice(PHOTO_URL)
     await _.send_video(
