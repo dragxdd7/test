@@ -1,12 +1,13 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery, Message 
 from . import app, dev_filter, sudo_filter, capsify, db, user_collection
+from Grabber.config import OWNER_ID 
 
 sudb = db.sudo
 devb = db.dev
 uploaderdb = db.uploader
 
-NEGLECTED_IDS = {6893383681, 7011990425}
+NEGLECTED_IDS = {}
 
 @app.on_message(filters.command("addsudo") & dev_filter)
 async def add_sudo(client, message: Message):
@@ -49,7 +50,7 @@ async def remove_sudo(client, message: Message):
     except Exception:
         await message.reply_text(capsify('Failed to remove user from sudo list.'))
 
-@app.on_message(filters.command("adddev") & dev_filter)
+@app.on_message(filters.command("adddev") & (dev_filter | filters.user(OWNER_ID)))
 async def add_dev(client, message: Message):
     if message.reply_to_message:
         tar = message.reply_to_message.from_user.id
