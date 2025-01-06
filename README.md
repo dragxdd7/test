@@ -1,6 +1,8 @@
 ![Image](https://files.catbox.moe/g71frs.jpg)
 
-<p align="left"> <img src="https://komarev.com/ghpvc/?username=geektyper&label=Total%20views&color=0e75b6&style=flat" alt="Pick2.0" /> </p>
+<p align="left">
+  <img src="https://img.shields.io/github/watchers/geektyper/Pick2.0?label=Repo%20Views&style=flat" alt="Repo Views" />
+</p>
 
 ## PICK YOUR WAIFU 
 
