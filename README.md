@@ -114,11 +114,11 @@ If you appreciate this Code, make sure to star ✨ the repository.
 
 ### **Alpha**  
 - **GitHub:** [AlphaLike](https://github.com/AlphaLike)  
-- **Telegram:** [NorthYankton](https://NorthYankton.t.me)  
+- **Telegram:** [NorthYankton](https://North_Yankton.t.me)  
 
 ### **Berlin**  
 - **GitHub:** [AfraidXd](https://github.com/AfraidXd)  
-- **Telegram:** [wtfberlin](https://wtfberlin.t.me)  
+- **Telegram:** [berlin](https://wtfberlin.t.me)  
 
 ### **Delta**  
 - **GitHub:** [Geektyper](https://github.com/Geektyper)  
