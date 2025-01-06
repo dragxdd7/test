@@ -27,19 +27,21 @@ support_buttons = [
 
 @app.on_message(filters.command("start") & filters.private)
 @block_dec
+from datetime import datetime
+
 async def startp(_, message):
-    user_id = message.from_user.id
-    if temp_block(user_id):
+    id = message.from_user.id
+    if temp_block(id):
         return
-    user = await _.get_users(user_id)
+    user = await _.get_users(id)
     username = user.username
     first_name = user.first_name
 
-    user_data = await user_collection.find_one({"id": user_id})
+    user_data = await user_collection.find_one({"id": id})
 
     if user_data:
         user_collection.update_one(
-            {"id": user_id},
+            {"id": id},
             {
                 "$set": {
                     "username": username,
@@ -50,16 +52,14 @@ async def startp(_, message):
     else:
         user_collection.insert_one(
             {
-                "id": user_id,
+                "id": id,
                 "username": username,
                 "first_name": first_name,
-                "balance": None,
-                "saved_amount": None,
-                "characters": None,
-                "gender": None,
-                "profile_media": None,
-                "created_at": None,
-                "loan_amount": None
+                "balance": 0,
+                "saved_amount": 0,
+                "characters": [],
+                "created_at": datetime.now(),
+                "loan_amount": 0
             }
         )
 
