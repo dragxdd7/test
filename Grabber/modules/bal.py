@@ -28,4 +28,10 @@ async def balance(client: Client, message: Message):
     loan_amount = user_data.get('loan_amount', 0)
 
     formatted_balance = f"🔹 COINS: `{balance_amount:,.0f}`\n"
-    formatted_saved = f"🔸 AMOUNT SAVED: `{saved_amount:
+    formatted_saved = f"🔸 AMOUNT SAVED: `{saved_amount:,.0f}`\n"
+    formatted_loan = f"🔻 LOAN AMOUNT: `{loan_amount:,.0f}`\n"
+
+    balance_message = formatted_balance + formatted_saved + formatted_loan
+    balance_message = capsify(balance_message)
+
+    await message.reply_text(balance_message)
