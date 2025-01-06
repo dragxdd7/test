@@ -35,29 +35,21 @@ async def startp(_, message):
     username = user.username
     first_name = user.first_name
 
-    user_data = await user_collection.find_one({"user_id": user_id}, projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'gender': 1, 'profile_media': 1, 'created_at': 1, 'loan_amount': 1})
-
-    balance = user_data.get('balance', None)
-    saved_amount = user_data.get('saved_amount', None)
-    characters = user_data.get('characters', None)
-    gender = user_data.get('gender', None)
-    profile_media = user_data.get('profile_media', None)
-    created_at = user_data.get('created_at', None)
-    loan_amount = user_data.get('loan_amount', None)
-
     user_collection.update_one(
         {"user_id": user_id},
         {
             "$set": {
                 "username": username,
-                "first_name": first_name,
-                "balance": balance,
-                "saved_amount": saved_amount,
-                "characters": characters,
-                "gender": gender,
-                "profile_media": profile_media,
-                "created_at": created_at,
-                "loan_amount": loan_amount
+                "first_name": first_name
+            },
+            "$setOnInsert": {
+                "balance": None,
+                "saved_amount": None,
+                "characters": None,
+                "gender": None,
+                "profile_media": None,
+                "created_at": None,
+                "loan_amount": None
             }
         },
         upsert=True
