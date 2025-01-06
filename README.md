@@ -1,6 +1,6 @@
 ![Image](https://files.catbox.moe/g71frs.jpg)
 
-<p align="left"> <img src="https://komarev.com/ghpvc/?username=geektyper&label=Total%20views&color=0e75b6&style=flat" alt="geektyper" /> </p>
+<p align="left"> <img src="https://komarev.com/ghpvc/?username=geektyper&label=Total%20views&color=0e75b6&style=flat" alt="Pick2.0" /> </p>
 
 ## PICK YOUR WAIFU 
 
