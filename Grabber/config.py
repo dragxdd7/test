@@ -1,6 +1,6 @@
 import os
 
-OWNER_ID = "7185106962"
+OWNER_ID = "7455169019"
 GROUP_ID = "-1002225496870"
 TOKEN = os.getenv("BOT_TOKEN")
 api_id = 20457610
