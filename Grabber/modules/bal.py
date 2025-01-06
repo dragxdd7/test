@@ -41,4 +41,4 @@ async def balance(client: Client, message: Message):
         await message.reply_text(balance_message)
 
 
-Remove the if user_data thing
+#Remove the if user_data logic if needed 
