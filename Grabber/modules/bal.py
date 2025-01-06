@@ -39,6 +39,3 @@ async def balance(client: Client, message: Message):
         balance_message = "please start the bot in dm to register"
         balance_message = capsify(balance_message)
         await message.reply_text(balance_message)
-
-
-#Remove the if user_data logic if needed 
