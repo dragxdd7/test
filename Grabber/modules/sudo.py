@@ -91,7 +91,7 @@ async def remove_dev(client, message: Message):
     except Exception:
         await message.reply_text(capsify('Failed to remove user from dev list.'))
 
-@app.on_message(filters.command("adduploader") & sudo_filter)
+@app.on_message(filters.command("adduploader") & dev_filter)
 async def add_uploader(client, message: Message):
     if message.reply_to_message:
         tar = message.reply_to_message.from_user.id
@@ -159,7 +159,7 @@ async def sudo_list(client, message: Message):
     except Exception as e:
         await message.reply_text(capsify(f'Error fetching sudo list: {str(e)}'))
 
-@app.on_message(filters.command("devlist") & sudo_filter)
+@app.on_message(filters.command("devlist") & dev_filter)
 async def dev_list(client, message: Message):
     try:
         dev_users_list = await devb.distinct('user_id')
