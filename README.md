@@ -1,1 +1,125 @@
-# PICK2.0
+![Image](https://files.catbox.moe/g71frs.jpg)
+
+## PICK YOUR WAIFU 
+
+
+![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)<br> [![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)<br>
+[![Support Group!](https://img.shields.io/badge/Join%20Group-↗-green)](https://t.me/bots_core)
+
+
+_**Available On Telegram As 
+[Okarun Game Bot](https://t.me/Okarun_game_bot) and**_
+_Ask for Help in our [Support Chat](https://t.me/bots_core)_
+
+## About The Repository
+● This is an Open Source Implementation of Character Catcher Bot for Telegram
+- For Example, Grab/Hunt/Protecc/Collect etc.. These Types of Bot You must have seen it on your telegram groups..
+- This bot sends characters in group after every 100 Messages Of Groups Then any user can Guess that character's Name Using /pick Command.
+
+- Now you can also deploy this type of bot. Using our source, we've used Python-Telegram-Bot V20.6 and Also lil bit Pyrogram. Enjoy!
+
+## HOW TO UPLOAD CHARACTERS?
+
+Format: 
+```
+/upload 
+character-name 
+anime-name 
+rarity-number
+
+(with replying to an image)
+```
+
+
+
+
+use Rarity Number accordingly rarity Map
+
+| Number | Rarity     |
+|------|---------------|  
+| 1    | 🟢 Common      |  
+| 2    | 🔵 Medium      |  
+| 3    | 🟠 Rare        |  
+| 4    | 🟡 Legendary   |  
+| 5    | 🪽 Celestial   |  
+| 6    | 🥵 Divine      |  
+| 7    | 🥴 Special     |  
+| 8    | 💎 Premium     |  
+| 9    | 🔮 Limited     |  
+| 10   | 🍭 Cosplay     |  
+| 11   | 💋 Aura        |  
+| 12   | ❄️ Winter      |  
+| 13   | ⚡ Drip        |  
+| 14   | 🍥 Retro       |
+
+
+## USER COMMANDS
+- `/pick` - Guess the character
+- `/fav` - Add a character to favorites
+- `/strade` - Trade a character with another user
+- `/gift` - Gift a character to another user
+- `/collection` - Check your harem collection
+- `/tops` - List of top global gold coins and ruby users
+- `/pay` - to pay coins 
+- `/ctop` - List the users with biggest harem (current chat)
+- `/changetime` - Change the frequency of character spawn
+
+and much more you many refer gi orignal bot for commands 
+
+## UPLOADER COMMANDS..
+- `/upload` - Add a new character to the database 
+- `/delete` - Delete a character from the database 
+- `/update` - Update stats of a character in the database 
+
+## DEV COMMANDS
+- `/eval` - Developer special command
+- `/stats` - Lists number or groups and users
+- `/addsudo` - add a user go bot sudo
+- `/adddev` - add a user to bot character uploader
+
+- `/addsudo` - add a yser to bots dev 
+
+- ` /sh`
+## DEPLOYMENT METHODS
+
+### Heroku
+- Fork The Repository
+- Go to [`config.py`](./shivu/config.py)
+- Fill the All variables and Go to heroku. and deploy Your forked Repository
+
+### Local Deploy/VPS
+- Fill variables in [`config.py`](./shivu/config.py) 
+- Open your VPS terminal (we're using Debian based) and run the following:
+```bash
+sudo apt-get update && sudo apt-get upgrade -y           
+
+sudo apt-get install python3-pip -y          
+sudo pip3 install -U pip
+
+git clone https://github.com/<YourUsername>/Pick2.0 && cd Pick2.0
+
+pip3 install -U -r requirements.txt          
+
+sudo apt install tmux && tmux          
+python3 -m Grabber
+```       
+
+## License
+The Source is licensed under GNU PUBLIC LICENCE , and hence 
+
+## Appreciation
+If you appreciate this Code, make sure to star ✨ the repository.
+
+## DEVELOPERS
+- Alpha 
+Github ~ Github.com/AlphaLike
+Telegram ~ NorthYankton.t.me
+
+- Berlin 
+Github ~ Github.com/AfraidXd
+Telegram ~ wtfberlin.t.me
+
+- Delta 
+Github ~ Github.com/Geektyper
+
+Telegram ~ Notygeek.t.me
