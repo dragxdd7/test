@@ -45,7 +45,7 @@ async def xprofile(client, message):
     try:
         user_data = await user_collection.find_one(
             {'id': user_id},
-            projection={'balance': 1, 'saved_amount': 1, 'characters': 1, 'gender': 1, 'profile_media': 1, 'created_at': 1}
+            projection={'balance': 1}
         )
 
         if user_data:
