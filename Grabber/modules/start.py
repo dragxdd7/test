@@ -4,6 +4,8 @@ import random
 from . import user_collection, app, capsify
 from Grabber import *
 from .block import block_dec, temp_block, block_cbq
+from datetime import datetime
+
 
 sudb = db.sudo
 devb = db.dev
@@ -27,8 +29,6 @@ support_buttons = [
 
 @app.on_message(filters.command("start") & filters.private)
 @block_dec
-from datetime import datetime
-
 async def startp(_, message):
     id = message.from_user.id
     if temp_block(id):
