@@ -113,7 +113,7 @@ If you appreciate this Code, make sure to star ✨ the repository.
 ## Developers  
 
 ### **Alpha**  
-- **GitHub:** [AlphaLike](https://github.com/AlphaLike)  
+- **GitHub:** [AlphaLike](https://github.com/Alpha-Like)  
 - **Telegram:** [NorthYankton](https://North_Yankton.t.me)  
 
 ### **Berlin**  
