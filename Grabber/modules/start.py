@@ -35,7 +35,7 @@ async def startp(_, message):
     username = user.username
     first_name = user.first_name
 
-    user_data = await user_collection.find_one({"user_id": user_id})
+    user_data = await user_collection.find_one({"id": user_id})
 
     if user_data:
         user_collection.update_one(
