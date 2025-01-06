@@ -55,18 +55,27 @@ use Rarity Number accordingly rarity Map
 | 14   | 🍥 Retro       |
 
 
-## USER COMMANDS
-- `/pick` - Guess the character
-- `/fav` - Add a character to favorites
-- `/strade` - Trade a character with another user
-- `/gift` - Gift a character to another user
-- `/collection` - Check your harem collection
-- `/tops` - List of top global gold coins and ruby users
-- `/pay` - to pay coins 
-- `/ctop` - List the users with biggest harem (current chat)
-- `/changetime` - Change the frequency of character spawn
+## User Commands  
 
-and much more you many refer to orignal bot for commands 
+### **Gameplay Commands**  
+- `/pick` - Guess the character.  
+- `/fav` - Add a character to your favorites.  
+- `/strade` - Trade a character with another user.  
+- `/gift` - Gift a character to another user.  
+- `/collection` - View your harem collection.  
+
+### **Leaderboards and Rankings**  
+- `/tops` - View the global leaderboard for gold coins and ruby users.  
+- `/ctop` - List the users with the largest harem in the current chat.  
+
+### **Economy and Payments**  
+- `/pay` - Pay coins to other users.  
+
+### **Bot Configuration**  
+- `/changetime` - Adjust the frequency of character spawns.  
+
+**And much more!**  
+For a complete list of commands, refer to the original bot.
 
 ## UPLOADER COMMANDS..
 - `/upload` - Add a new character to the database 
@@ -81,7 +90,7 @@ and much more you many refer to orignal bot for commands
 
 - `/addsudo` - add a yser to bots dev 
 
-- ` /sh`
+- ` /sh` -  use bash commands
 ## DEPLOYMENT METHODS
 
 ### Heroku
