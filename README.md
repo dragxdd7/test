@@ -9,9 +9,7 @@
 [![Support Group!](https://img.shields.io/badge/Join%20Group-↗-green)](https://t.me/bots_core)
 
 
-_**Available On Telegram As 
-[Okarun Game Bot](https://t.me/Okarun_game_bot) and**_
-_Ask for Help in our [Support Chat](https://t.me/bots_core)_
+
 
 ## About The Repository
 ● This is an Open Source Implementation of Character Catcher Bot for Telegram
