@@ -23,12 +23,12 @@
 ![Image](https://files.catbox.moe/viwd36.jpg)
 Format: 
 ```
-/upload 
+(with an image) 
 character-name 
 anime-name 
 rarity-number
 
-(with replying to an image)
+/upload (replying to character details)
 ```
 
 
