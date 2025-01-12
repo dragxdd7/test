@@ -20,6 +20,7 @@
 
 ## HOW TO UPLOAD CHARACTERS?
 
+![Image](https://files.catbox.moe/viwd36.jpg)
 Format: 
 ```
 /upload 
