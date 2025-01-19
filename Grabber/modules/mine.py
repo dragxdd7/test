@@ -4,47 +4,47 @@ from Grabber import app, user_collection
 import random
 from . import aruby, druby, sruby, capsify, nopvt, limit
 import time
-import asyncio  # Import asyncio for async sleep
+import asyncio
 from .block import block_dec, temp_block, block_cbq
 
 def generate_minefield(size, bombs):
-    minefield = [&#x27;ðŸ’Ž&#x27;] * size
+    minefield = ['💎'] * size
     bomb_positions = random.sample(range(size), bombs)
     for pos in bomb_positions:
-        minefield[pos] = &#x27;ðŸ’£&#x27;
+        minefield[pos] = '💣'
     return minefield
 
-@app.on_message(filters.command(&quot;mines&quot;))
+@app.on_message(filters.command("mines"))
 @block_dec
 async def mines(client, message):
     user_id = message.from_user.id
     if temp_block(user_id):
         return
-    user_data = await user_collection.find_one({&quot;id&quot;: user_id})
-    last_game_time = user_data.get(&quot;last_game_time&quot;, 0) if user_data else 0
+    user_data = await user_collection.find_one({"id": user_id})
+    last_game_time = user_data.get("last_game_time", 0) if user_data else 0
 
-    if time.time() - last_game_time &lt; 300:
+    if time.time() - last_game_time < 300:
         remaining_time = int(300 - (time.time() - last_game_time))
-        await message.reply_text(capsify(f&quot;Please wait {remaining_time} seconds before starting a new game.&quot;))
+        await message.reply_text(capsify(f"Please wait {remaining_time} seconds before starting a new game."))
         return
 
     try:
         amount = int(message.command[1])
         bombs = int(message.command[2])
-        if amount &lt; 1 or bombs &lt; 1:
-            raise ValueError(&quot;Invalid bet amount or bomb count.&quot;)
+        if amount < 1 or bombs < 1:
+            raise ValueError("Invalid bet amount or bomb count.")
     except (IndexError, ValueError):
-        await message.reply_text(capsify(&quot;Use /mines [amount] [bombs]&quot;))
+        await message.reply_text(capsify("Use /mines [amount] [bombs]"))
         return
 
     user_balance = await sruby(user_id)
     max_bet = int(user_balance * 0.5)
-    if amount &gt; max_bet:
-        await message.reply_text(capsify(f&quot;Your bet amount cannot exceed 50% of your total rubies. The maximum bet is {max_bet} rubies.&quot;))
+    if amount > max_bet:
+        await message.reply_text(capsify(f"Your bet amount cannot exceed 50% of your total rubies. The maximum bet is {max_bet} rubies."))
         return
 
-    if user_balance &lt; amount:
-        await message.reply_text(capsify(&quot;Insufficient rubies to make the bet.&quot;))
+    if user_balance < amount:
+        await message.reply_text(capsify("Insufficient rubies to make the bet."))
         return
 
     size = 25
@@ -52,124 +52,122 @@ async def mines(client, message):
     base_multiplier = bombs / 10
 
     game_data = {
-        &#x27;amount&#x27;: amount,
-        &#x27;minefield&#x27;: minefield,
-        &#x27;revealed&#x27;: [False] * size,
-        &#x27;bombs&#x27;: bombs,
-        &#x27;game_active&#x27;: True,
-        &#x27;multiplier&#x27;: 1 + base_multiplier
+        "amount": amount,
+        "minefield": minefield,
+        "revealed": [False] * size,
+        "bombs": bombs,
+        "game_active": True,
+        "multiplier": 1 + base_multiplier
     }
 
-    await user_collection.update_one({&quot;id&quot;: user_id}, {&quot;$set&quot;: {&quot;game_data&quot;: game_data}}, upsert=True)
+    await user_collection.update_one({"id": user_id}, {"$set": {"game_data": game_data}}, upsert=True)
 
     keyboard = [
-        [IKB(&quot; &quot;, callback_data=f&quot;{user_id}_{i}&quot;) for i in range(j, j + 5)]
+        [IKB(" ", callback_data=f"{user_id}_{i}") for i in range(j, j + 5)]
         for j in range(0, size, 5)
     ]
     reply_markup = IKM(keyboard)
     await message.reply_text(
-        capsify(f&quot;Choose a tile:\n\n**Current Multiplier:** {game_data[&#x27;multiplier&#x27;]:.2f}x\n**Bet Amount:** {amount} rubies&quot;),
+        capsify(f"Choose a tile:\n\n**Current Multiplier:** {game_data['multiplier']:.2f}x\n**Bet Amount:** {amount} rubies"),
         reply_markup=reply_markup
     )
 
-@app.on_callback_query(filters.regex(r&quot;^\d+_\d+$&quot;))
+@app.on_callback_query(filters.regex(r"^\d+_\d+$"))
 @block_cbq
 async def mines_button(client, query: CallbackQuery):
-    user_id, index = map(int, query.data.split(&#x27;_&#x27;))
+    user_id, index = map(int, query.data.split('_'))
     if user_id != query.from_user.id:
-        await query.answer(capsify(&quot;This is not your game.&quot;), show_alert=True)
+        await query.answer(capsify("This is not your game."), show_alert=True)
         return
 
-    user_data = await user_collection.find_one({&quot;id&quot;: user_id})
-    game_data = user_data.get(&quot;game_data&quot;) if user_data else None
+    user_data = await user_collection.find_one({"id": user_id})
+    game_data = user_data.get("game_data") if user_data else None
 
-    if not game_data or not game_data[&#x27;game_active&#x27;]:
-        await query.answer(capsify(&quot;Game has already ended.&quot;), show_alert=True)
+    if not game_data or not game_data["game_active"]:
+        await query.answer(capsify("Game has already ended."), show_alert=True)
         return
 
     index = int(index)
-    minefield = game_data[&#x27;minefield&#x27;]
-    revealed = game_data[&#x27;revealed&#x27;]
-    amount = game_data[&#x27;amount&#x27;]
-    multiplier = game_data[&#x27;multiplier&#x27;]
+    minefield = game_data["minefield"]
+    revealed = game_data["revealed"]
+    amount = game_data["amount"]
+    multiplier = game_data["multiplier"]
 
     if revealed[index]:
-        await query.answer(capsify(&quot;This tile is already revealed.&quot;), show_alert=True)
+        await query.answer(capsify("This tile is already revealed."), show_alert=True)
         return
 
-    if time.time() - user_data.get(&quot;last_click_time&quot;, 0) &lt; 5:
-        remaining_time = 5 - (time.time() - user_data.get(&quot;last_click_time&quot;, 0))
-        await query.answer(capsify(f&quot;Please maintain a 5-second gap between clicks. Wait for {int(remaining_time)} seconds.&quot;), show_alert=True)
+    if time.time() - user_data.get("last_click_time", 0) < 5:
+        remaining_time = 5 - (time.time() - user_data.get("last_click_time", 0))
+        await query.answer(capsify(f"Please maintain a 5-second gap between clicks. Wait for {int(remaining_time)} seconds."), show_alert=True)
         return
 
     revealed[index] = True
     await user_collection.update_one(
-        {&quot;id&quot;: user_id},
-        {&quot;$set&quot;: {&quot;game_data.revealed&quot;: revealed, &quot;last_click_time&quot;: time.time()}}
+        {"id": user_id},
+        {"$set": {"game_data.revealed": revealed, "last_click_time": time.time()}}
     )
 
-    await asyncio.sleep(5)  # Fixed to use asyncio.sleep
+    await asyncio.sleep(5)
 
-    if minefield[index] == &#x27;ðŸ’£&#x27;:
+    if minefield[index] == '💣':
         await druby(user_id, amount)
         await query.message.edit_text(
-            capsify(f&quot;ðŸ’£ You hit the bomb! Game over! You lost {amount} rubies.&quot;),
+            capsify(f"💣 You hit the bomb! Game over! You lost {amount} rubies."),
             reply_markup=None
         )
-        await user_collection.update_one({&quot;id&quot;: user_id}, {&quot;$set&quot;: {&quot;last_game_time&quot;: time.time(), &quot;game_data&quot;: None}})
+        await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
         return
 
-    multiplier += game_data[&#x27;bombs&#x27;] / 10
-    game_data[&#x27;multiplier&#x27;] = multiplier
+    multiplier += game_data["bombs"] / 10
+    game_data["multiplier"] = multiplier
 
-    if all(revealed[i] or minefield[i] == &#x27;ðŸ’£&#x27; for i in range(len(minefield))):
+    if all(revealed[i] or minefield[i] == '💣' for i in range(len(minefield))):
         winnings = int(amount * multiplier)
         await aruby(user_id, winnings)
         await query.message.edit_text(
-            capsify(f&quot;ðŸŽ‰ You revealed all the safe tiles! You win {winnings} rubies!&quot;),
+            capsify(f"🎉 You revealed all the safe tiles! You win {winnings} rubies!"),
             reply_markup=None
         )
-        await user_collection.update_one({&quot;id&quot;: user_id}, {&quot;$set&quot;: {&quot;last_game_time&quot;: time.time(), &quot;game_data&quot;: None}})
+        await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
         return
 
-    await user_collection.update_one({&quot;id&quot;: user_id}, {&quot;$set&quot;: {&quot;game_data&quot;: game_data}})
+    await user_collection.update_one({"id": user_id}, {"$set": {"game_data": game_data}})
 
     keyboard = [
-        [IKB(minefield[i] if revealed[i] else &quot; &quot;, callback_data=f&quot;{user_id}_{i}&quot;)
+        [IKB(minefield[i] if revealed[i] else " ", callback_data=f"{user_id}_{i}")
          for i in range(j, j + 5)]
         for j in range(0, len(minefield), 5)
     ]
-    keyboard.append([IKB(f&quot;Cash Out ({int(amount * multiplier)} rubies)&quot;, callback_data=f&quot;{user_id}_cash_out&quot;)])
+    keyboard.append([IKB(f"Cash Out ({int(amount * multiplier)} rubies)", callback_data=f"{user_id}_cash_out")])
     reply_markup = IKM(keyboard)
 
     await query.message.edit_text(
-        capsify(f&quot;Choose a tile:\n\n**Current Multiplier:** {multiplier:.2f}x&quot;),
+        capsify(f"Choose a tile:\n\n**Current Multiplier:** {multiplier:.2f}x"),
         reply_markup=reply_markup
     )
 
-@app.on_callback_query(filters.regex(r&quot;^\d+_cash_out$&quot;))
+@app.on_callback_query(filters.regex(r"^\d+_cash_out$"))
 async def cash_out(client, query: CallbackQuery):
-    user_id = int(query.data.split(&#x27;_&#x27;)[0])
+    user_id = int(query.data.split('_')[0])
     if user_id != query.from_user.id:
-        await query.answer(capsify(&quot;This is not your game.&quot;), show_alert=True)
+        await query.answer(capsify("This is not your game."), show_alert=True)
         return
 
-    user_data = await user_collection.find_one({&quot;id&quot;: user_id})
-    game_data = user_data.get(&quot;game_data&quot;) if user_data else None
+    user_data = await user_collection.find_one({"id": user_id})
+    game_data = user_data.get("game_data") if user_data else None
 
-    if not game_data or not game_data[&#x27;game_active&#x27;]:
-        await query.answer(capsify(&quot;Game has already ended.&quot;), show_alert=True)
+    if not game_data or not game_data["game_active"]:
+        await query.answer(capsify("Game has already ended."), show_alert=True)
         return
 
-    amount = game_data[&#x27;amount&#x27;]
-    winnings = int(amount * game_data[&#x27;multiplier&#x27;]) - amount
-
-    if winnings &lt; 0:
-        winnings = 0  # Prevent negative winnings
+    amount = game_data["amount"]
+    winnings = int(amount * game_data["multiplier"]) - amount
+    winnings = max(winnings, 0)
 
     await aruby(user_id, winnings)
     await query.message.edit_text(
-        capsify(f&quot;ðŸ’° You cashed out! You won {winnings} rubies.&quot;),
+        capsify(f"💰 You cashed out! You won {winnings} rubies."),
         reply_markup=None
     )
-    await user_collection.update_one({&quot;id&quot;: user_id}, {&quot;$set&quot;: {&quot;last_game_time&quot;: time.time(), &quot;game_data&quot;: None}})
+    await user_collection.update_one({"id": user_id}, {"$set": {"last_game_time": time.time(), "game_data": None}})
