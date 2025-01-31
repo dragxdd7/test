@@ -39,8 +39,11 @@ async def executor(client, message):
     m = message
     if len(message.command) < 2:
         return await edit_or_reply(
-            message, text=capsify("Give me some command to execute.")
+            message, 
+            text="<blockquote>" + capsify("Give me some command to execute.") + "</blockquote>",
+            parse_mode="HTML"
         )
+
     try:
         cmd = message.text.split(" ", maxsplit=1)[1]
     except IndexError:
