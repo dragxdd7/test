@@ -1,6 +1,6 @@
 from pyrogram import Client, filters
 from . import collection, user_collection, sudo_filter, app, dev_filter
-from config import LOG_CHAT_ID 
+from config import LOG_CHAT_ID
 
 
 async def give_character(receiver_id, character_id):
