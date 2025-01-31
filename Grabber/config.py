@@ -8,7 +8,7 @@ api_hash = "aea00e5d96c3eb15647ca25c0f93a234"
 PHOTO_URL = ["https://files.catbox.moe/oai7m9.mp4"]
 SUPPORT_CHAT = "HiddenLeafVillagee"
 UPDATE_CHAT = "HiddenLeafVillagee"
-BOT_USERNAME = "testingsabo"
+BOT_USERNAME = "saboxtestbot"
 CHARA_CHANNEL_ID = -1002309327815
 MONGO_URL = "mongodb+srv://xdragxt:drag123@dragtest.2b4zj.mongodb.net/?retryWrites=true&w=majority&appName=dragtest/"
 DATABASE_NAME = "testdb"
