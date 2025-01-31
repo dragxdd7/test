@@ -26,18 +26,18 @@ async def balance(client: Client, message: Message):
         saved_amount = int(await sbank(user_id) or 0)
         loan_amount = user_data.get('loan_amount', 0)
 
-        # Use Markdown formatting
+        # Use HTML formatting since blockquotes are not supported in Markdown
         balance_message = capsify(
-            f"💰 *WALLET CHECK-IN* 💰\n\n"
-            f"✨ *Your Treasure Chest:* `{balance_amount:,}` coins\n"
-            f"🏦 *Vault Savings:* `{saved_amount:,}` coins\n"
-            f"💸 *Outstanding Loan:* `{loan_amount:,}` coins\n\n"
-            f"🔹 _Spend wisely, adventurer!_ 🔹"
+            f"<b>💰 WALLET CHECK-IN 💰</b>\n\n"
+            f"<blockquote>✨ <b>Your Treasure Chest:</b> {balance_amount:,} coins</blockquote>\n"
+            f"<blockquote>🏦 <b>Vault Savings:</b> {saved_amount:,} coins</blockquote>\n"
+            f"<blockquote>💸 <b>Outstanding Loan:</b> {loan_amount:,} coins</blockquote>\n\n"
+            f"<i>🔹 Spend wisely, adventurer! 🔹</i>"
         )
 
-        await message.reply_text(balance_message, parse_mode="Markdown")
+        await message.reply_text(balance_message, parse_mode="html")
     else:
         await message.reply_text(
-            capsify("⚠️ *YOU HAVEN'T STARTED YET! DM THE BOT TO REGISTER.*"),
-            parse_mode="Markdown"
+            capsify("<b>⚠️ YOU HAVEN'T STARTED YET!</b> DM THE BOT TO REGISTER."),
+            parse_mode="html"
         )
