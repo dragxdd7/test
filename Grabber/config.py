@@ -1,15 +1,16 @@
 import os
 
-OWNER_ID = 7455169019
-GROUP_ID = "-1002225496870"
-TOKEN = os.getenv("BOT_TOKEN")
-api_id = 20457610
-api_hash = "b7de0dfecd19375d3f84dbedaeb92537"
+OWNER_ID = 7361622601
+GROUP_ID = "-1002382022736"
+TOKEN = os.getenv("TOKEN")
+api_id = 7155513
+api_hash = "aea00e5d96c3eb15647ca25c0f93a234"
 PHOTO_URL = ["https://files.catbox.moe/oai7m9.mp4"]
-SUPPORT_CHAT = "dragona_support"
-UPDATE_CHAT = "PickBotUpdatesHQ"
-BOT_USERNAME = "Okarun_Game_bot"
+SUPPORT_CHAT = ""
+UPDATE_CHAT = ""
+BOT_USERNAME = "testing sabo"
 CHARA_CHANNEL_ID = -1002235251549
-MONGO_URL = "mongodb+srv://ishitaroy657boobs:vUKC7qfTpj0oTbii@cluster0.ct6shax.mongodb.net/"
-DATABASE_NAME = "Character_catcher"
-LOG_CHAT_ID = -1002203193964
+MONGO_URL = "mongodb+srv://xdragxt:drag123@dragtest.2b4zj.mongodb.net/?retryWrites=true&w=majority&appName=dragtest/"
+DATABASE_NAME = "testdb"
+LOG_CHAT_ID = -1002382022736
+TOKEN = "7527408650:AAEB-iYs6N9kAbnkSukqmXU28LEQubTOgOk"
