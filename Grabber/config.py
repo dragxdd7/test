@@ -13,4 +13,4 @@ CHARA_CHANNEL_ID = -1002235251549
 MONGO_URL = "mongodb+srv://xdragxt:drag123@dragtest.2b4zj.mongodb.net/?retryWrites=true&w=majority&appName=dragtest/"
 DATABASE_NAME = "testdb"
 LOG_CHAT_ID = -1002382022736
-TOKEN = "7527408650:AAEB-iYs6N9kAbnkSukqmXU28LEQubTOgOk"
+
