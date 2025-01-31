@@ -9,7 +9,7 @@ from .block import block_dec, temp_block
 @block_dec
 async def balance(client: Client, message: Message):
     if not message.from_user:
-        await message.reply_text(capsify("ERROR: UNABLE TO IDENTIFY YOU."))
+        await message.reply_text("⚠️ <b>COULDN'T RETRIEVE USER INFORMATION.</b>", parse_mode="HTML")
         return
 
     user_id = message.from_user.id
@@ -26,18 +26,17 @@ async def balance(client: Client, message: Message):
         saved_amount = int(await sbank(user_id) or 0)
         loan_amount = user_data.get('loan_amount', 0)
 
-        # Use HTML formatting since blockquotes are not supported in Markdown
-        balance_message = capsify(
-            f"<b>💰 WALLET CHECK-IN 💰</b>\n\n"
-            f"<blockquote>✨ <b>Your Treasure Chest:</b> {balance_amount:,} coins</blockquote>\n"
-            f"<blockquote>🏦 <b>Vault Savings:</b> {saved_amount:,} coins</blockquote>\n"
-            f"<blockquote>💸 <b>Outstanding Loan:</b> {loan_amount:,} coins</blockquote>\n\n"
-            f"<i>🔹 Spend wisely, adventurer! 🔹</i>"
-        )
+        balance_message = (
+            "<b>💰 WALLET CHECK-IN 💰</b>\n\n"
+            "<blockquote>✨ Your Treasure Chest: <b>{balance:,}</b> coins</blockquote>\n"
+            "<blockquote>🏦 Vault Savings: <b>{saved:,}</b> coins</blockquote>\n"
+            "<blockquote>💸 Outstanding Loan: <b>{loan:,}</b> coins</blockquote>\n\n"
+            "<i>🔹 Spend wisely, adventurer! 🔹</i>"
+        ).format(balance=balance_amount, saved=saved_amount, loan=loan_amount)
 
-        await message.reply_text(balance_message, parse_mode="html")
+        await message.reply_text(balance_message, parse_mode="HTML")
     else:
         await message.reply_text(
-            capsify("<b>⚠️ YOU HAVEN'T STARTED YET!</b> DM THE BOT TO REGISTER."),
-            parse_mode="html"
+            "⚠️ <b>YOU HAVEN'T STARTED YET!</b> <i>DM the bot to register.</i>",
+            parse_mode="HTML"
         )
