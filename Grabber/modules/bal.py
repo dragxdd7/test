@@ -27,13 +27,13 @@ async def balance(client: Client, message: Message):
 
         balance_message = (
             "💰 WALLET STATUS 💰\n\n"
-            "🔹 COINS: {balance:,}\n"
-            "🔸 AMOUNT SAVED: {saved:,}\n"
-            "🔻 LOAN AMOUNT: {loan:,}\n\n"
+            "<blockquote>🔹 COINS: {balance:,}</blockquote>\n"
+            "<blockquote>🔸 AMOUNT SAVED: {saved:,}</blockquote>\n"
+            "<blockquote>🔻 LOAN AMOUNT: {loan:,}</blockquote>\n\n"
             "💡 Manage your finances wisely!"
         ).format(balance=balance_amount, saved=saved_amount, loan=loan_amount)
 
-        await message.reply_text(balance_message)
+        await message.reply_text(balance_message, parse_mode="html")
     else:
         await message.reply_text(
             "⚠️ YOU HAVEN'T STARTED YET! DM the bot to register."
