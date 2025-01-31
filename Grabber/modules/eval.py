@@ -40,8 +40,8 @@ async def executor(client, message):
     if len(message.command) < 2:
         return await edit_or_reply(
             message, 
-            text="<blockquote>" + capsify("Give me some command to execute.") + "</blockquote>",
-            parse_mode="HTML"
+            text="> " + capsify("Give me some command to execute."),  # Using Markdown blockquote
+            parse_mode="Markdown"
         )
 
     try:
@@ -115,11 +115,13 @@ async def executor(client, message):
             message, text=final_output, reply_markup=keyboard
         )
 
+
 @Client.on_callback_query(filters.regex(r"runtime"))
 @block_cbq
 async def runtime_func_cq(_, cq):
     runtime = cq.data.split(None, 1)[1]
     await cq.answer(runtime, show_alert=True)
+
 
 @Client.on_message(
     filters.command("sh")
@@ -196,5 +198,3 @@ async def aexec_scheduled(code):
         "".join(f"\n {line}" for line in code.split("\n"))
     )
     return await locals()["__aexec"]()
-
-
