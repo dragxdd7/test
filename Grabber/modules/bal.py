@@ -26,18 +26,18 @@ async def balance(client: Client, message: Message):
         saved_amount = int(await sbank(user_id) or 0)
         loan_amount = user_data.get('loan_amount', 0)
 
-        # Custom styling with <blockquote> for Telegram
+        # Markdown blockquote formatting
         balance_message = capsify(
-            f"<blockquote>💰 <b>WALLET CHECK-IN</b> 💰\n\n"
-            f"✨ <b>Your Treasure Chest:</b> <code>{balance_amount:,.0f}</code> coins\n"
-            f"🏦 <b>Vault Savings:</b> <code>{saved_amount:,.0f}</code> coins\n"
-            f"💸 <b>Outstanding Loan:</b> <code>{loan_amount:,.0f}</code> coins\n\n"
-            f"🔹 Spend wisely, adventurer! 🔹</blockquote>"
+            f"> **💰 WALLET CHECK-IN 💰**\n\n"
+            f"> ✨ **Your Treasure Chest:** `{balance_amount:,.0f}` coins\n"
+            f"> 🏦 **Vault Savings:** `{saved_amount:,.0f}` coins\n"
+            f"> 💸 **Outstanding Loan:** `{loan_amount:,.0f}` coins\n\n"
+            f"> 🔹 *Spend wisely, adventurer!* 🔹"
         )
 
-        await message.reply_text(balance_message, parse_mode="HTML")
+        await message.reply_text(balance_message, parse_mode="markdown")
     else:
         await message.reply_text(
-            capsify("<blockquote>⚠️ YOU HAVEN'T STARTED YET! DM THE BOT TO REGISTER.</blockquote>"),
-            parse_mode="HTML"
+            capsify("> ⚠️ **YOU HAVEN'T STARTED YET! DM THE BOT TO REGISTER.**"),
+            parse_mode="markdown"
         )
