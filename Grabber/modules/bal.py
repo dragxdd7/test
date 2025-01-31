@@ -1,7 +1,6 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from . import Grabberu as app, user_collection, show, sbank, capsify
-from datetime import datetime
+from . import Grabberu as app, user_collection, show, sbank
 from .block import block_dec, temp_block
 
 
@@ -9,7 +8,7 @@ from .block import block_dec, temp_block
 @block_dec
 async def balance(client: Client, message: Message):
     if not message.from_user:
-        await message.reply_text("⚠️ <b>COULDN'T RETRIEVE USER INFORMATION.</b>", parse_mode="HTML")
+        await message.reply_text("⚠️ <b>COULDN'T RETRIEVE USER INFORMATION.</b>", parse_mode="html")
         return
 
     user_id = message.from_user.id
@@ -27,16 +26,16 @@ async def balance(client: Client, message: Message):
         loan_amount = user_data.get('loan_amount', 0)
 
         balance_message = (
-            "<b>💰 WALLET CHECK-IN 💰</b>\n\n"
-            "<blockquote>✨ Your Treasure Chest: <b>{balance:,}</b> coins</blockquote>\n"
-            "<blockquote>🏦 Vault Savings: <b>{saved:,}</b> coins</blockquote>\n"
-            "<blockquote>💸 Outstanding Loan: <b>{loan:,}</b> coins</blockquote>\n\n"
-            "<i>🔹 Spend wisely, adventurer! 🔹</i>"
+            "<b>💰 WALLET STATUS 💰</b>\n\n"
+            "<blockquote>🔹 <b>COINS:</b> {balance:,}</blockquote>\n"
+            "<blockquote>🔸 <b>AMOUNT SAVED:</b> {saved:,}</blockquote>\n"
+            "<blockquote>🔻 <b>LOAN AMOUNT:</b> {loan:,}</blockquote>\n\n"
+            "<i>💡 Manage your finances wisely!</i>"
         ).format(balance=balance_amount, saved=saved_amount, loan=loan_amount)
 
-        await message.reply_text(balance_message, parse_mode="HTML")
+        await message.reply_text(balance_message, parse_mode="html")
     else:
         await message.reply_text(
-            "⚠️ <b>YOU HAVEN'T STARTED YET!</b> <i>DM the bot to register.</i>",
-            parse_mode="HTML"
+            "⚠️ <b>YOU HAVEN'T STARTED YET!</b>\n<i>DM the bot to register.</i>",
+            parse_mode="html"
         )
